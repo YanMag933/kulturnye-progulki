@@ -51,7 +51,126 @@ body {
   background: #0a0908;
 }
 
-/* HOME */
+/* HOME — premium */
+.home-shell {
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -10%, #3a3024 0%, transparent 55%),
+    linear-gradient(180deg, #1a1612 0%, #12100e 48%, #0e0c0a 100%);
+  border-color: #2e2820;
+}
+.home-atmosphere {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 80% 70%, rgba(201, 162, 39, 0.06), transparent 40%),
+    radial-gradient(circle at 20% 85%, rgba(143, 191, 154, 0.05), transparent 35%);
+}
+.home-premium {
+  position: relative;
+  z-index: 1;
+  padding: 36px 24px 28px;
+  gap: 0;
+  min-height: 100%;
+  font-family: "Manrope", "Segoe UI", sans-serif;
+}
+.home-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 8px 0 28px;
+}
+.home-logo-lg {
+  width: 96px;
+  height: 96px;
+  border-radius: 24px;
+  margin: 0 0 22px;
+  display: block;
+  box-shadow:
+    0 0 0 1px rgba(212, 168, 75, 0.22),
+    0 18px 40px rgba(0, 0, 0, 0.45);
+}
+.home-premium .eyebrow {
+  color: #c9a24b;
+  letter-spacing: 0.22em;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.home-premium h1 {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 42px;
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  color: #f3ead8;
+  margin: 0 0 14px;
+}
+.home-premium .home-lead {
+  max-width: 280px;
+  margin: 0 auto;
+  color: #9a8f80;
+  font-size: 15px;
+  line-height: 1.45;
+}
+.home-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 16px;
+  padding: 18px 20px;
+  border: 1px solid rgba(212, 168, 75, 0.22);
+  background: linear-gradient(165deg, rgba(42, 36, 28, 0.95), rgba(24, 20, 16, 0.98));
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+}
+.home-cta.walk {
+  border-color: rgba(212, 168, 75, 0.45);
+  background:
+    linear-gradient(135deg, rgba(212, 168, 75, 0.16), transparent 42%),
+    linear-gradient(165deg, #2c241a, #1a1612);
+}
+.home-cta.create {
+  border-color: rgba(90, 110, 95, 0.35);
+  background:
+    linear-gradient(135deg, rgba(143, 191, 154, 0.08), transparent 45%),
+    linear-gradient(165deg, #222820, #161814);
+}
+.home-cta-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #a89878;
+  font-weight: 600;
+}
+.home-cta.walk .home-cta-label { color: #d4a84b; }
+.home-cta.create .home-cta-label { color: #8fbf9a; }
+.home-cta-title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 28px;
+  font-weight: 600;
+  color: #f6f0e6;
+  line-height: 1.1;
+}
+.home-foot {
+  margin-top: auto;
+  padding-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+.home-install { width: 100%; text-align: center; }
+.home-premium .home-note {
+  margin: 0;
+  text-align: center;
+  font-size: 12px;
+  color: #6e6458;
+}
+
+/* HOME legacy */
 .home {
   padding: 28px 22px 32px;
   display: flex;
@@ -243,6 +362,23 @@ body {
 }
 .silhouette-stage svg { width: 72%; height: 90%; display: block; }
 .silhouette-stage.aligned svg path { stroke: #8fbf9a; }
+.sticker-outline {
+  width: 78%;
+  height: auto;
+  max-height: 92%;
+  object-fit: contain;
+  display: block;
+  image-rendering: auto;
+}
+.sticker-outline.ar {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 1px rgba(0,0,0,.9));
+}
+.silhouette-stage.aligned .sticker-outline {
+  filter: hue-rotate(85deg) saturate(0.85);
+}
 
 .ar-stage {
   position: relative;

@@ -1,5 +1,5 @@
 /* Service worker — offline PWA cache */
-const CACHE = "kultprogulki-v5";
+const CACHE = "kultprogulki-v6";
 const ASSETS = [
   "./",
   "./index.html",
@@ -20,6 +20,15 @@ const ASSETS = [
   "./icon.svg",
   "./icon-512.png",
   "./apple-touch-icon.png",
+  "./assets/contours/pushkin-sticker.png",
+  "./assets/contours/pushkin-sticker-preview.png",
+  "./assets/contours/pushkin-sticker-mask.png",
+  "./assets/contours/griboedov-sticker.png",
+  "./assets/contours/griboedov-sticker-preview.png",
+  "./assets/contours/griboedov-sticker-mask.png",
+  "./assets/contours/seated-sticker.png",
+  "./assets/contours/seated-sticker-preview.png",
+  "./assets/contours/seated-sticker-mask.png",
 ];
 
 self.addEventListener("install", (event) => {

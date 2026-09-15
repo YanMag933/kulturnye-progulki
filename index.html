@@ -3,39 +3,43 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#1c1914" />
+  <meta name="theme-color" content="#12100e" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Культурные прогулки</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
 </head>
 <body class="home-body">
-  <div class="phone-shell">
-    <div class="phone-notch" aria-hidden="true"></div>
-    <main class="home">
-      <img class="home-logo" src="icon.svg" width="72" height="72" alt="Культурные прогулки" />
-      <p class="eyebrow">Москва · PWA</p>
-      <h1>Культурные<br />прогулки</h1>
-      <p class="home-lead">Создавайте квесты и гуляйте с телефона. После установки работает без компьютера.</p>
+  <div class="phone-shell home-shell">
+    <div class="home-atmosphere" aria-hidden="true"></div>
+    <main class="home home-premium">
+      <header class="home-brand">
+        <img class="home-logo home-logo-lg" src="icon-512.png" width="96" height="96" alt="" />
+        <p class="eyebrow">Москва</p>
+        <h1>Культурные<br />прогулки</h1>
+        <p class="home-lead">Квесты по памятникам и улицам — с телефона, без компьютера.</p>
+      </header>
 
-      <div class="home-actions">
-        <a class="home-btn create" href="create.html">
-          <span class="home-btn-kicker">Редактор</span>
-          <span class="home-btn-title">Создать</span>
-          <span class="home-btn-desc">Механики, черновик, сразу в прогулку</span>
+      <nav class="home-actions" aria-label="Главное меню">
+        <a class="home-cta walk" href="walk.html">
+          <span class="home-cta-label">Начать</span>
+          <span class="home-cta-title">Гулять</span>
         </a>
-        <a class="home-btn walk" href="walk.html">
-          <span class="home-btn-kicker">Игрок</span>
-          <span class="home-btn-title">Гулять</span>
-          <span class="home-btn-desc">Пройти квест на телефоне</span>
+        <a class="home-cta create" href="create.html">
+          <span class="home-cta-label">Редактор</span>
+          <span class="home-cta-title">Создать маршрут</span>
         </a>
-      </div>
+      </nav>
 
-      <button type="button" class="btn ghost" id="btn-install" hidden style="margin-top:8px;text-align:center">Установить на телефон</button>
-      <p class="home-note" id="home-note"></p>
-      <p class="home-note" id="install-hint">Чтобы пользоваться без ПК: откройте это приложение по ссылке (GitHub Pages / хостинг) → «На экран Домой».</p>
+      <footer class="home-foot">
+        <button type="button" class="btn ghost home-install" id="btn-install" hidden>Установить на телефон</button>
+        <p class="home-note" id="home-note"></p>
+      </footer>
     </main>
   </div>
   <script src="content-db.js"></script>
@@ -43,11 +47,10 @@
   <script src="shared.js"></script>
   <script>
     const active = KP.loadActiveQuest();
-    const used = KP.getUsedTaskIds().size;
     const dbCount = (window.QUEST_DB && QUEST_DB.tasks.length) || 0;
     document.getElementById("home-note").textContent = active
-      ? `Активный квест: ${active.title} · ${active.steps.length} заданий · база ${dbCount} · недавно использовано ${used}`
-      : `База заданий: ${dbCount}. Нажмите «Гулять» — соберётся маршрут.`;
+      ? `${active.title} · ${active.steps.length} заданий`
+      : `${dbCount} заданий в базе`;
 
     let deferred;
     window.addEventListener("beforeinstallprompt", (e) => {

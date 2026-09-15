@@ -167,14 +167,15 @@
 
   function renderContour(step) {
     const key = step.silhouetteKey || "pushkin";
-    const sil = (window.KP_SILHOUETTE_SVG && window.KP_SILHOUETTE_SVG(key, { stroke: "#FFD678", strokeWidth: 3.2, bg: "#0c0b09" })) || "";
+    const silGuess = (window.KP_SILHOUETTE_HTML && window.KP_SILHOUETTE_HTML(key, "guess")) || "";
+    const silAr = (window.KP_SILHOUETTE_HTML && window.KP_SILHOUETTE_HTML(key, "ar")) || "";
     const phase = uiState.phase || "guess"; // guess | camera | done
 
     if (phase === "guess") {
       taskChrome(
         step,
         `<div class="panel">
-          <div class="silhouette-stage">${sil}</div>
+          <div class="silhouette-stage">${silGuess}</div>
           <p class="muted">${step.guessPrompt || "Кто это по внешнему контуру?"}</p>
           <div class="options">
             ${(step.guessOptions || []).map((o, i) => `<button type="button" class="opt" data-i="${i}">${o}</button>`).join("")}
@@ -203,7 +204,7 @@
       taskChrome(
         step,
         `<div class="panel">
-          <div class="silhouette-stage">${sil}</div>
+          <div class="silhouette-stage">${silGuess}</div>
           <p class="muted">${step.contourHint || "Откройте камеру и совместите контур с памятником."}</p>
           <button type="button" class="btn primary" id="open-cam">Открыть камеру</button>
           <button type="button" class="btn ghost" id="fallback">Без камеры — вопрос</button>
@@ -249,7 +250,7 @@
         `<div class="panel">
           <div class="ar-stage">
             <video id="ar-video" playsinline autoplay muted></video>
-            <div class="ar-overlay">${(window.KP_SILHOUETTE_SVG && window.KP_SILHOUETTE_SVG(key, { stroke: "#FFD678", strokeWidth: 2.8, fill: "none", opacity: 0.95 })) || ""}</div>
+            <div class="ar-overlay">${silAr}</div>
             <div class="stage-label">совместите контур</div>
           </div>
           <p class="muted">Наведите камеру так, чтобы памятник совпал с золотым контуром.</p>
@@ -291,7 +292,7 @@
     taskChrome(
       step,
       `<div class="panel">
-        <div class="silhouette-stage aligned">${sil}</div>
+        <div class="silhouette-stage aligned">${silGuess}</div>
         <div class="fact-box">${step.fact}</div>
       </div>`,
       footer(true)
@@ -682,4 +683,5 @@
   }
 
   render();
+  if (window.KP_PRELOAD_SILHOUETTES) window.KP_PRELOAD_SILHOUETTES();
 })();
