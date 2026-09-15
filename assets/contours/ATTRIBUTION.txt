@@ -1,0 +1,4 @@
+Photos from Wikimedia Commons:
+- Moscow Aleksander Griboyedov monument.JPG (Alexey Vikhrov)
+- Pushkin monument Moscow.JPG (Dror Feitelson)
+Contours extracted for object-selection overlay in Cultural Walks app.

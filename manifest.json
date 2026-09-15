@@ -1,0 +1,20 @@
+{
+  "name": "Культурные прогулки",
+  "short_name": "Прогулки",
+  "description": "Квест-прогулки по Москве: создать и гулять",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1c1914",
+  "theme_color": "#1c1914",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

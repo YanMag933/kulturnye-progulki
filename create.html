@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1c1914" />
+  <title>Создать — Культурные прогулки</title>
+  <link rel="stylesheet" href="create-styles.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="nav-row">
+      <a href="index.html">← Меню</a>
+      <a href="walk.html">Гулять</a>
+    </div>
+    <div>
+      <p class="eyebrow">Режим редактора</p>
+      <h1>Создать</h1>
+      <p class="lead">Включайте механики, соберите черновик, затем сразу откройте прогулку на телефоне.</p>
+    </div>
+    <div class="top-actions">
+      <button type="button" id="btn-mvp" class="btn ghost">Только MVP</button>
+      <button type="button" id="btn-all-on" class="btn ghost">Включить все</button>
+      <button type="button" id="btn-all-off" class="btn ghost">Выключить обычные</button>
+      <button type="button" id="btn-export" class="btn ghost">Экспорт JSON</button>
+      <button type="button" id="btn-walk" class="btn primary">Гулять с этим квестом</button>
+    </div>
+  </header>
+
+  <section class="setup">
+    <label>
+      Зона квеста
+      <select id="zone">
+        <option value="garden">Садовое кольцо — 5 заданий</option>
+        <option value="ttk" selected>ТТК — 10 заданий</option>
+      </select>
+    </label>
+    <label>
+      Сложность
+      <select id="difficulty">
+        <option value="easy">Лёгкий</option>
+        <option value="medium" selected>Средний</option>
+        <option value="hard">Сложный</option>
+      </select>
+    </label>
+    <label>
+      Фильтр группы
+      <select id="filter-group">
+        <option value="all">Все группы</option>
+        <option value="unique">Фишки</option>
+        <option value="visual">Визуал</option>
+        <option value="text">Текст</option>
+        <option value="puzzle">Пазлы</option>
+        <option value="space">Пространство</option>
+        <option value="meaning">Смысл</option>
+      </select>
+    </label>
+    <div class="stats" id="stats"></div>
+  </section>
+
+  <section class="quest-preview">
+    <h2>Черновик квеста</h2>
+    <p class="hint">Фишки: ≤1 контур, ≤1 гео. Кнопка «Гулять с этим квестом» собирает демо-контент и открывает режим игрока.</p>
+    <div class="slots" id="slots"></div>
+    <div class="quest-actions">
+      <button type="button" id="btn-auto" class="btn ghost">Автозаполнить из пула</button>
+      <button type="button" id="btn-clear-quest" class="btn ghost">Очистить квест</button>
+      <button type="button" id="btn-walk-2" class="btn primary">Гулять с этим квестом</button>
+    </div>
+  </section>
+
+  <main>
+    <div class="list-head">
+      <h2>Пул механик базы</h2>
+      <input type="search" id="search" placeholder="Поиск…" />
+    </div>
+    <div id="mechanics" class="mechanics"></div>
+  </main>
+
+  <footer>
+    <p>Пул и черновик хранятся в браузере. С телефона откройте эту же папку по локальной сети / GitHub Pages — localStorage общий в рамках origin.</p>
+  </footer>
+
+  <script src="mechanics-data.js"></script>
+  <script src="assets.js"></script>
+  <script src="content-db.js"></script>
+  <script src="demo-quest.js"></script>
+  <script src="shared.js"></script>
+  <script src="create.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    }
+  </script>
+</body>
+</html>

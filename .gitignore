@@ -1,0 +1,5 @@
+# Игнорировать тяжёлые исходники (в репо остаются обработанные контуры)
+assets/photos/*-full.jpg
+assets/photos/*-try.jpg
+.DS_Store
+Thumbs.db

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1c1914" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Культурные прогулки</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+</head>
+<body class="home-body">
+  <div class="phone-shell">
+    <div class="phone-notch" aria-hidden="true"></div>
+    <main class="home">
+      <p class="eyebrow">Москва · PWA</p>
+      <h1>Культурные<br />прогулки</h1>
+      <p class="home-lead">Создавайте квесты и гуляйте с телефона. После установки работает без компьютера.</p>
+
+      <div class="home-actions">
+        <a class="home-btn create" href="create.html">
+          <span class="home-btn-kicker">Редактор</span>
+          <span class="home-btn-title">Создать</span>
+          <span class="home-btn-desc">Механики, черновик, сразу в прогулку</span>
+        </a>
+        <a class="home-btn walk" href="walk.html">
+          <span class="home-btn-kicker">Игрок</span>
+          <span class="home-btn-title">Гулять</span>
+          <span class="home-btn-desc">Пройти квест на телефоне</span>
+        </a>
+      </div>
+
+      <button type="button" class="btn ghost" id="btn-install" hidden style="margin-top:8px;text-align:center">Установить на телефон</button>
+      <p class="home-note" id="home-note"></p>
+      <p class="home-note" id="install-hint">Чтобы пользоваться без ПК: откройте это приложение по ссылке (GitHub Pages / хостинг) → «На экран Домой».</p>
+    </main>
+  </div>
+  <script src="content-db.js"></script>
+  <script src="demo-quest.js"></script>
+  <script src="shared.js"></script>
+  <script>
+    const active = KP.loadActiveQuest();
+    const used = KP.getUsedTaskIds().size;
+    const dbCount = (window.QUEST_DB && QUEST_DB.tasks.length) || 0;
+    document.getElementById("home-note").textContent = active
+      ? `Активный квест: ${active.title} · ${active.steps.length} заданий · база ${dbCount} · недавно использовано ${used}`
+      : `База заданий: ${dbCount}. Нажмите «Гулять» — соберётся маршрут.`;
+
+    let deferred;
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferred = e;
+      document.getElementById("btn-install").hidden = false;
+    });
+    document.getElementById("btn-install").onclick = async () => {
+      if (!deferred) return;
+      deferred.prompt();
+      deferred = null;
+      document.getElementById("btn-install").hidden = true;
+    };
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js").catch(() => {});
+    }
+  </script>
+</body>
+</html>
