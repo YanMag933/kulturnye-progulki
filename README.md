@@ -4,7 +4,9 @@ PWA: создать квест и гулять по Москве.
 
 ## Открыть
 
-После деплоя: `https://yanmag933.github.io/kulturnye-progulki/`
+**Игра по ссылке:** https://yanmag933.github.io/kulturnye-progulki/
+
+Репозиторий: https://github.com/YanMag933/kulturnye-progulki
 
 Локально: откройте `index.html` или `ОТКРЫТЬ.bat`.
 

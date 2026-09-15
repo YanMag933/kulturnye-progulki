@@ -1,6 +1,6 @@
 (() => {
   const DB = window.MECHANICS_DB;
-  const STORAGE_KEY = "kultprogulki.mechanics.enabled.v1";
+  const STORAGE_KEY = "kultprogulki.mechanics.enabled.v2";
   const QUEST_KEY = "kultprogulki.quest.draft.v1";
 
   const GROUP_LABEL = {

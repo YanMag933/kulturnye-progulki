@@ -22,6 +22,7 @@
   }
 
   function nextStep() {
+    stopCamera();
     if (progress.stepIndex < quest.steps.length - 1) {
       progress.stepIndex += 1;
       uiState = {};
@@ -97,7 +98,8 @@
     return okList.includes(val);
   }
 
-  function taskChrome(step, bodyHtml, footerHtml) {
+  function taskChrome(step, bodyHtml, footerHtml, opts = {}) {
+    const hidePlace = opts.hidePlace || (step.hidePlaceUntilGuess && !uiState.guessed);
     shell(
       `<div class="walk-screen">
         <div class="chip-row">
@@ -105,8 +107,8 @@
           <span class="chip">${step.mechanicName}</span>
           ${step.uniqueFeature ? '<span class="chip feature">фишка</span>' : ""}
         </div>
-        <h2 class="place">${step.placeName}</h2>
-        <p class="addr">${step.address || ""}</p>
+        <h2 class="place">${hidePlace ? "???" : step.placeName}</h2>
+        <p class="addr">${hidePlace ? "Сначала угадайте по контуру" : step.address || ""}</p>
         <div class="panel">
           <h2>${step.title}</h2>
           <p>${step.hint}</p>
@@ -115,6 +117,182 @@
       </div>`,
       footerHtml
     );
+  }
+
+  function stopCamera() {
+    if (uiState.stream) {
+      uiState.stream.getTracks().forEach((t) => t.stop());
+      uiState.stream = null;
+    }
+  }
+
+  function scoreCaptureVsSilhouette(video, key, tolerance) {
+    const w = 180;
+    const h = 320;
+    const mask = window.KP_SILHOUETTE_MASK && window.KP_SILHOUETTE_MASK(key, w, h);
+    if (!mask) return { ok: false, score: 0 };
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    const ctx = c.getContext("2d");
+    // cover-fit video into canvas
+    const vw = video.videoWidth || w;
+    const vh = video.videoHeight || h;
+    const scale = Math.max(w / vw, h / vh);
+    const dw = vw * scale;
+    const dh = vh * scale;
+    ctx.drawImage(video, (w - dw) / 2, (h - dh) / 2, dw, dh);
+    const frame = ctx.getImageData(0, 0, w, h);
+    let maskOn = 0;
+    let hit = 0;
+    for (let i = 0; i < mask.data.length; i += 4) {
+      const inMask = mask.data[i] > 180;
+      if (!inMask) continue;
+      maskOn += 1;
+      const r = frame.data[i];
+      const g = frame.data[i + 1];
+      const b = frame.data[i + 2];
+      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      // monument bronze/stone vs bright sky — dark-ish pixels inside silhouette
+      if (lum < 140) hit += 1;
+    }
+    const score = maskOn ? hit / maskOn : 0;
+    const thr = tolerance != null ? tolerance : 0.22;
+    return { ok: score >= thr, score };
+  }
+
+  function renderContour(step) {
+    const key = step.silhouetteKey || "pushkin";
+    const sil = (window.KP_SILHOUETTE_SVG && window.KP_SILHOUETTE_SVG(key, { stroke: "#FFD678", strokeWidth: 3.2, bg: "#0c0b09" })) || "";
+    const phase = uiState.phase || "guess"; // guess | camera | done
+
+    if (phase === "guess") {
+      taskChrome(
+        step,
+        `<div class="panel">
+          <div class="silhouette-stage">${sil}</div>
+          <p class="muted">${step.guessPrompt || "Кто это по внешнему контуру?"}</p>
+          <div class="options">
+            ${(step.guessOptions || []).map((o, i) => `<button type="button" class="opt" data-i="${i}">${o}</button>`).join("")}
+          </div>
+        </div>`,
+        footer(false),
+        { hidePlace: true }
+      );
+      app.querySelectorAll(".opt").forEach((btn) => {
+        btn.onclick = () => {
+          const ok = Number(btn.dataset.i) === step.guessCorrectIndex;
+          btn.classList.add(ok ? "correct" : "wrong");
+          if (ok) {
+            uiState.guessed = true;
+            uiState.phase = "ready";
+            setFeedback("Верно. Теперь совместите контур в камере.", "ok");
+            setTimeout(() => renderContour(step), 350);
+          } else setFeedback("Не тот памятник — смотрите только внешний силуэт", "bad");
+        };
+      });
+      bindNext(false);
+      return;
+    }
+
+    if (phase === "ready") {
+      taskChrome(
+        step,
+        `<div class="panel">
+          <div class="silhouette-stage">${sil}</div>
+          <p class="muted">${step.contourHint || "Откройте камеру и совместите контур с памятником."}</p>
+          <button type="button" class="btn primary" id="open-cam">Открыть камеру</button>
+          <button type="button" class="btn ghost" id="fallback">Без камеры — вопрос</button>
+          <div id="extra"></div>
+        </div>`,
+        footer(!!uiState.done)
+      );
+      document.getElementById("open-cam").onclick = async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
+          });
+          uiState.stream = stream;
+          uiState.phase = "camera";
+          renderContour(step);
+        } catch (err) {
+          setFeedback("Камера недоступна: " + (err.message || "разрешите доступ"), "bad");
+        }
+      };
+      document.getElementById("fallback").onclick = () => {
+        document.getElementById("extra").innerHTML = `
+          <p>${step.fallbackQuestion || "Опишите позу памятника"}</p>
+          <input class="field" id="answer" placeholder="ответ" />
+          <button type="button" class="btn primary" id="check">Проверить</button>`;
+        document.getElementById("check").onclick = () => {
+          if (checkText(step.fallbackAnswer, [])) {
+            uiState.done = true;
+            uiState.phase = "done";
+            setFeedback("Fallback принят", "ok");
+            document.getElementById("extra").innerHTML += `<div class="fact-box">${step.fact}</div>`;
+            bindNext(true);
+          } else setFeedback("Попробуйте ещё", "bad");
+        };
+      };
+      bindNext(!!uiState.done);
+      return;
+    }
+
+    if (phase === "camera") {
+      taskChrome(
+        step,
+        `<div class="panel">
+          <div class="ar-stage">
+            <video id="ar-video" playsinline autoplay muted></video>
+            <div class="ar-overlay">${(window.KP_SILHOUETTE_SVG && window.KP_SILHOUETTE_SVG(key, { stroke: "#FFD678", strokeWidth: 2.8, fill: "none", opacity: 0.95 })) || ""}</div>
+            <div class="stage-label">совместите контур</div>
+          </div>
+          <p class="muted">Наведите камеру так, чтобы памятник совпал с золотым контуром.</p>
+          <button type="button" class="btn primary" id="capture">Сфотографировать и сверить</button>
+          <button type="button" class="btn ghost" id="close-cam">Закрыть камеру</button>
+          <div id="extra"></div>
+        </div>`,
+        footer(!!uiState.done)
+      );
+      const video = document.getElementById("ar-video");
+      if (video && uiState.stream) {
+        video.srcObject = uiState.stream;
+        video.play().catch(() => {});
+      }
+      document.getElementById("close-cam").onclick = () => {
+        stopCamera();
+        uiState.phase = "ready";
+        renderContour(step);
+      };
+      document.getElementById("capture").onclick = () => {
+        const result = scoreCaptureVsSilhouette(video, key, step.matchTolerance);
+        const pct = Math.round(result.score * 100);
+        if (result.ok) {
+          stopCamera();
+          uiState.done = true;
+          uiState.phase = "done";
+          setFeedback(`Совпало (~${pct}%). Засчитано.`, "ok");
+          document.getElementById("extra").innerHTML = `<div class="fact-box">${step.fact}</div>`;
+          bindNext(true);
+        } else {
+          setFeedback(`Пока мимо (~${pct}%). Подвиньте камеру и попробуйте ещё — допускается небольшая погрешность.`, "bad");
+        }
+      };
+      bindNext(!!uiState.done);
+      return;
+    }
+
+    // done
+    taskChrome(
+      step,
+      `<div class="panel">
+        <div class="silhouette-stage aligned">${sil}</div>
+        <div class="fact-box">${step.fact}</div>
+      </div>`,
+      footer(true)
+    );
+    bindNext(true);
   }
 
   function renderStart() {
@@ -180,64 +358,6 @@
     );
     document.getElementById("again").onclick = startWalk;
     document.getElementById("menu").onclick = () => (location.href = "index.html");
-  }
-
-  function renderContour(step) {
-    const key = step.photoKey;
-    let stageHtml;
-    if (key) {
-      const src = uiState.aligned
-        ? `assets/contours/${key}-selected.png`
-        : `assets/contours/${key}-match.png`;
-      stageHtml = `
-        <div class="photo-stage live">
-          <img class="live-photo" src="${src}" alt="Контур памятника с живого фото" />
-          <div class="stage-label">${uiState.aligned ? "совпало" : "выделение с живого фото"}</div>
-        </div>
-        <p class="photo-credit">Фото: Wikimedia Commons · контур снят с оригинала</p>`;
-    } else {
-      const photo = KP.assetSvg(step.photoAsset || "photo_plaza");
-      const contour = KP.assetSvg(step.contourAsset || "contour_seated");
-      stageHtml = `
-        <div class="photo-stage">
-          <div class="photo-bg">${photo}</div>
-          <div class="object-outline ${uiState.aligned ? "aligned" : ""}">${contour}</div>
-          <div class="stage-label">схемный контур</div>
-        </div>`;
-    }
-    taskChrome(
-      step,
-      `<div class="panel">
-        <p class="muted">${step.contourHint || "Совместите контур-выделение с реальным объектом."}</p>
-        ${stageHtml}
-        <button type="button" class="btn primary" id="align">Контур совпал с памятником</button>
-        <button type="button" class="btn ghost" id="fallback">Если AR не работает — вопрос</button>
-        <div id="extra"></div>
-      </div>`,
-      footer(!!uiState.done)
-    );
-    document.getElementById("align").onclick = () => {
-      uiState.aligned = true;
-      uiState.done = true;
-      setFeedback("Силуэт совпал. Засчитано.", "ok");
-      document.getElementById("extra").innerHTML = `<div class="fact-box">${step.fact}</div>`;
-      bindNext(true);
-      renderContour(step);
-    };
-    document.getElementById("fallback").onclick = () => {
-      document.getElementById("extra").innerHTML = `
-        <p>${step.fallbackQuestion || "Опишите позу памятника"}</p>
-        <input class="field" id="answer" placeholder="ответ" />
-        <button type="button" class="btn primary" id="check">Проверить</button>`;
-      document.getElementById("check").onclick = () => {
-        if (checkText(step.fallbackAnswer, [])) {
-          uiState.done = true;
-          setFeedback("Fallback принят", "ok");
-          bindNext(true);
-        } else setFeedback("Попробуйте ещё", "bad");
-      };
-    };
-    bindNext(!!uiState.done);
   }
 
   function renderDetail(step) {

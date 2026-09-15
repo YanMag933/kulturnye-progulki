@@ -1,5 +1,5 @@
 /* Service worker — offline PWA cache */
-const CACHE = "kultprogulki-v3";
+const CACHE = "kultprogulki-v4";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,6 +9,7 @@ const ASSETS = [
   "./create-styles.css",
   "./shared.js",
   "./assets.js",
+  "./silhouettes.js",
   "./content-db.js",
   "./demo-quest.js",
   "./walk.js",
@@ -16,10 +17,8 @@ const ASSETS = [
   "./mechanics-data.js",
   "./manifest.json",
   "./icon.svg",
-  "./assets/contours/griboedov-match.png",
-  "./assets/contours/griboedov-selected.png",
-  "./assets/contours/pushkin-match.png",
-  "./assets/contours/pushkin-selected.png",
+  "./icon-512.png",
+  "./apple-touch-icon.png",
 ];
 
 self.addEventListener("install", (event) => {

@@ -1,7 +1,7 @@
 /* Shared storage + quest builder from QUEST_DB */
 window.KP = (() => {
   const KEYS = {
-    enabled: "kultprogulki.mechanics.enabled.v1",
+    enabled: "kultprogulki.mechanics.enabled.v2",
     draft: "kultprogulki.quest.draft.v1",
     active: "kultprogulki.quest.active.v1",
     progress: "kultprogulki.quest.progress.v1",
@@ -97,6 +97,12 @@ window.KP = (() => {
       ui: task.ui,
       fact: task.fact || "",
       uniqueFeature: task.mechanicId === "contour_camera" || task.mechanicId === "geo_safe",
+      silhouetteKey: task.silhouetteKey,
+      hidePlaceUntilGuess: task.hidePlaceUntilGuess,
+      guessPrompt: task.guessPrompt,
+      guessOptions: task.guessOptions,
+      guessCorrectIndex: task.guessCorrectIndex,
+      matchTolerance: task.matchTolerance,
       contourAsset: task.contourAsset,
       photoAsset: task.photoAsset,
       photoKey: task.photoKey,
@@ -212,7 +218,7 @@ window.KP = (() => {
       durationHint: zone === "garden" ? "~45–75 мин · 5 точек" : "~90–110 мин · 10 точек",
       steps,
       source: "db",
-      contourVersion: 2,
+      contourVersion: 3,
       createdAt: new Date().toISOString(),
     };
   }
@@ -227,7 +233,7 @@ window.KP = (() => {
 
   function ensureDemoQuest() {
     let q = loadActiveQuest();
-    if (q && q.steps && q.steps.length && q.contourVersion === 2) return q;
+    if (q && q.steps && q.steps.length && q.contourVersion === 3) return q;
     const exportObj = window.DEMO_EXPORT || {
       zone: "ttk",
       difficulty: "medium",
@@ -247,8 +253,8 @@ window.KP = (() => {
       },
     };
     q = materializeFromExport(exportObj);
-    q.id = "active-auto-v2";
-    q.contourVersion = 2;
+    q.id = "active-auto-v3";
+    q.contourVersion = 3;
     saveActiveQuest(q);
     return q;
   }
