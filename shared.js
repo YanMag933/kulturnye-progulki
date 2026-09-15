@@ -219,7 +219,7 @@ window.KP = (() => {
       durationHint: zone === "garden" ? "~45–75 мин · 5 точек" : "~90–110 мин · 10 точек",
       steps,
       source: "db",
-      contourVersion: 3,
+      contourVersion: 4,
       createdAt: new Date().toISOString(),
     };
   }
@@ -254,8 +254,8 @@ window.KP = (() => {
       },
     };
     q = materializeFromExport(exportObj);
-    q.id = "active-auto-v3";
-    q.contourVersion = 3;
+    q.id = "active-auto-v4";
+    q.contourVersion = 4;
     saveActiveQuest(q);
     return q;
   }

@@ -87,7 +87,8 @@
           <div class="radar-actions">
             <button type="button" class="btn ghost" id="radar-close">Закрыть</button>
             <button type="button" class="btn primary" id="radar-demo-near">Симуляция: подойти ближе</button>
-          </div>`;
+          </div>
+        </div>`;
       document.body.appendChild(root);
       this.root = root;
       this.canvas = root.querySelector("#radar-canvas");
