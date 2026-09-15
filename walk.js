@@ -23,6 +23,10 @@
 
   function nextStep() {
     stopCamera();
+    if (uiState.radar) {
+      uiState.radar.close();
+      uiState.radar = null;
+    }
     if (progress.stepIndex < quest.steps.length - 1) {
       progress.stepIndex += 1;
       uiState = {};
@@ -513,24 +517,51 @@
     if (ui === "mosaic") return renderMosaic(step);
 
     if (ui === "geo") {
+      const reveal = step.revealM || 150;
+      const unlock = step.radiusM || 35;
       taskChrome(
         step,
         `<div class="panel geo-lock">
           <div class="lock-icon">${uiState.unlocked ? "открыто" : "закрыто"}</div>
           <p>${uiState.unlocked ? step.unlockedText : step.lockedTeaser}</p>
-          <p class="muted">Радиус ~${step.radiusM || 30} м</p>
+          <div class="geo-hint-box">
+            <p class="muted"><b>Подсказка.</b> Радар показывает вас в центре. Красная цель появляется ближе ${reveal}&nbsp;м, пульсирует чаще при сближении и ползёт к центру. Сейф открывается ≤ ${unlock}&nbsp;м.</p>
+          </div>
           ${
             uiState.unlocked
               ? `<div class="fact-box">${step.fact}</div>`
-              : `<button type="button" class="btn primary" id="arrive">Я на месте</button>`
+              : `<button type="button" class="btn primary" id="open-radar">Включить радар</button>
+                 <button type="button" class="btn ghost" id="geo-demo">Демо без GPS</button>`
           }
         </div>`,
         footer(!!uiState.unlocked)
       );
-      document.getElementById("arrive")?.addEventListener("click", () => {
-        uiState.unlocked = true;
-        renderStep();
-      });
+      const openRadar = (demo) => {
+        if (!window.KP_Radar) {
+          setFeedback("Модуль радара не загружен", "bad");
+          return;
+        }
+        if (uiState.radar) return;
+        uiState.radar = new window.KP_Radar({
+          targetLat: step.lat,
+          targetLon: step.lon,
+          unlockM: unlock,
+          revealM: reveal,
+          demo,
+          onUnlock: () => {
+            uiState.unlocked = true;
+            setFeedback("Точка захвачена. Сейф открыт.", "ok");
+            bindNext(true);
+          },
+          onClose: () => {
+            uiState.radar = null;
+            if (uiState.unlocked) renderStep();
+          },
+        });
+        uiState.radar.start();
+      };
+      document.getElementById("open-radar")?.addEventListener("click", () => openRadar(false));
+      document.getElementById("geo-demo")?.addEventListener("click", () => openRadar(true));
       bindNext(!!uiState.unlocked);
       return;
     }

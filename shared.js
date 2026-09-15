@@ -120,6 +120,7 @@ window.KP = (() => {
       correctNumber: task.correctNumber,
       tolerance: task.tolerance,
       radiusM: task.radiusM,
+      revealM: task.revealM,
       lockedTeaser: task.lockedTeaser,
       unlockedText: task.unlockedText,
       puzzleTiles: task.puzzleTiles,
@@ -233,7 +234,7 @@ window.KP = (() => {
 
   function ensureDemoQuest() {
     let q = loadActiveQuest();
-    if (q && q.steps && q.steps.length && q.contourVersion === 3) return q;
+    if (q && q.steps && q.steps.length && q.contourVersion === 4) return q;
     const exportObj = window.DEMO_EXPORT || {
       zone: "ttk",
       difficulty: "medium",
