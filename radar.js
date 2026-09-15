@@ -56,6 +56,8 @@
       this.demoAngle = 40;
       this.demoDist = 280;
       this._pulsePhase = 0;
+      this.chestReady = false;
+      this.chestOpened = false;
 
       this._buildDom();
     }
@@ -79,10 +81,14 @@
             <canvas class="radar-canvas" id="radar-canvas"></canvas>
             <div class="radar-glass"></div>
             <div class="radar-vignette"></div>
+            <button type="button" class="radar-chest" id="radar-chest" hidden aria-label="Открыть сундук">
+              <img class="radar-chest-img closed" src="assets/ui/chest-closed.png" alt="Сундук" />
+              <img class="radar-chest-img open" src="assets/ui/chest-open.png" alt="" />
+            </button>
           </div>
           <div class="radar-legend">
             <span>кольца · ${Math.round(this.revealM / 4)} / ${Math.round(this.revealM / 2)} / ${Math.round((3 * this.revealM) / 4)} / ${this.revealM} м</span>
-            <span>контакт &lt; ${this.revealM} м · захват ≤ ${this.unlockM} м</span>
+            <span>контакт &lt; ${this.revealM} м · сундук ≤ ${this.unlockM} м</span>
           </div>
           <div class="radar-actions">
             <button type="button" class="btn ghost" id="radar-close">Закрыть</button>
@@ -96,6 +102,7 @@
       this.elStatus = root.querySelector("#radar-status");
       this.elDist = root.querySelector("#radar-dist");
       this.elBearing = root.querySelector("#radar-bearing");
+      this.elChest = root.querySelector("#radar-chest");
 
       root.querySelector("#radar-close").onclick = () => this.close();
       root.querySelector("#radar-demo-near").onclick = () => {
@@ -104,8 +111,9 @@
         else this.demoDist = Math.min(this.demoDist ?? 220, this.distance ?? 220);
         this.demoDist = Math.max(8, this.demoDist - 45);
         this.demoAngle = this.demoAngle || 35;
-        if (this.demoDist <= this.unlockM) this._setUnlocked();
+        this._maybeShowChest();
       };
+      this.elChest.onclick = () => this._openChest();
 
       this._resize();
       window.addEventListener("resize", this._onResize = () => this._resize());
@@ -184,7 +192,7 @@
         this._bearingToTarget = bearing;
         this._relativeBearing = this.hasHeading ? (bearing - this.heading + 360) % 360 : bearing;
         this._refreshHud();
-        if (this.distance <= this.unlockM) this._setUnlocked();
+        this._maybeShowChest();
         return;
       }
       if (this.userLat == null) return;
@@ -193,7 +201,7 @@
       this._bearingToTarget = bearing;
       this._relativeBearing = this.hasHeading ? (bearing - this.heading + 360) % 360 : bearing;
       this._refreshHud();
-      if (this.distance <= this.unlockM) this._setUnlocked();
+      this._maybeShowChest();
     }
 
     _refreshHud() {
@@ -205,17 +213,45 @@
       this.elDist.textContent = Math.round(this.distance) + " м";
       this.elBearing.textContent =
         "азимут " + Math.round(this._bearingToTarget || 0) + "°" + (this.hasHeading ? " · компас" : " · север↑");
-      if (this.unlocked) this.elStatus.textContent = "ЦЕЛЬ ЗАХВАЧЕНА";
+      if (this.unlocked) this.elStatus.textContent = "ПОДСКАЗКА ОТКРЫТА";
+      else if (this.chestReady) this.elStatus.textContent = "СУНДУК НАЙДЕН — НАЖМИТЕ";
       else if (this.distance <= this.revealM) this.elStatus.textContent = "КОНТАКТ";
       else this.elStatus.textContent = "ВНЕ РАДИУСА СКАНИРОВАНИЯ";
     }
 
-    _setUnlocked() {
+    _maybeShowChest() {
+      if (this.unlocked || this.chestOpened) return;
+      if (this.distance == null || this.distance > this.unlockM) return;
+      if (this.chestReady) return;
+      this.chestReady = true;
+      this.elStatus.textContent = "СУНДУК НАЙДЕН";
+      this.elChest.hidden = false;
+      requestAnimationFrame(() => this.elChest.classList.add("show"));
+    }
+
+    _openChest() {
+      if (this.chestOpened || this.unlocked) return;
+      this.chestOpened = true;
+      this.elChest.classList.add("opening");
+      this.elStatus.textContent = "ОТКРЫВАЕМ…";
+      setTimeout(() => {
+        this.elChest.classList.add("opened");
+        this.elStatus.textContent = "ПОДСКАЗКА ОТКРЫТА";
+        setTimeout(() => this._setUnlockedAndLeave(), 900);
+      }, 420);
+    }
+
+    _setUnlockedAndLeave() {
       if (this.unlocked) return;
       this.unlocked = true;
-      this.elStatus.textContent = "ЦЕЛЬ ЗАХВАЧЕНА";
-      this.root.classList.add("unlocked");
+      this.root.classList.add("unlocked", "leaving");
       this.onUnlock();
+      setTimeout(() => this.close(), 650);
+    }
+
+    _setUnlocked() {
+      // legacy: only via chest now
+      this._maybeShowChest();
     }
 
     _tick = () => {

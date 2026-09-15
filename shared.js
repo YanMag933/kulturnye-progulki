@@ -103,6 +103,7 @@ window.KP = (() => {
       guessOptions: task.guessOptions,
       guessCorrectIndex: task.guessCorrectIndex,
       matchTolerance: task.matchTolerance,
+      matchMinScore: task.matchMinScore,
       contourAsset: task.contourAsset,
       photoAsset: task.photoAsset,
       photoKey: task.photoKey,
@@ -219,7 +220,7 @@ window.KP = (() => {
       durationHint: zone === "garden" ? "~45–75 мин · 5 точек" : "~90–110 мин · 10 точек",
       steps,
       source: "db",
-      contourVersion: 4,
+      contourVersion: 5,
       createdAt: new Date().toISOString(),
     };
   }
@@ -234,7 +235,7 @@ window.KP = (() => {
 
   function ensureDemoQuest() {
     let q = loadActiveQuest();
-    if (q && q.steps && q.steps.length && q.contourVersion === 4) return q;
+    if (q && q.steps && q.steps.length && q.contourVersion === 5) return q;
     const exportObj = window.DEMO_EXPORT || {
       zone: "ttk",
       difficulty: "medium",
@@ -254,8 +255,8 @@ window.KP = (() => {
       },
     };
     q = materializeFromExport(exportObj);
-    q.id = "active-auto-v4";
-    q.contourVersion = 4;
+    q.id = "active-auto-v5";
+    q.contourVersion = 5;
     saveActiveQuest(q);
     return q;
   }

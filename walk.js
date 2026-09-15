@@ -130,39 +130,11 @@
     }
   }
 
-  function scoreCaptureVsSilhouette(video, key, tolerance) {
-    const w = 180;
-    const h = 320;
-    const mask = window.KP_SILHOUETTE_MASK && window.KP_SILHOUETTE_MASK(key, w, h);
-    if (!mask) return { ok: false, score: 0 };
-    const c = document.createElement("canvas");
-    c.width = w;
-    c.height = h;
-    const ctx = c.getContext("2d");
-    // cover-fit video into canvas
-    const vw = video.videoWidth || w;
-    const vh = video.videoHeight || h;
-    const scale = Math.max(w / vw, h / vh);
-    const dw = vw * scale;
-    const dh = vh * scale;
-    ctx.drawImage(video, (w - dw) / 2, (h - dh) / 2, dw, dh);
-    const frame = ctx.getImageData(0, 0, w, h);
-    let maskOn = 0;
-    let hit = 0;
-    for (let i = 0; i < mask.data.length; i += 4) {
-      const inMask = mask.data[i] > 180;
-      if (!inMask) continue;
-      maskOn += 1;
-      const r = frame.data[i];
-      const g = frame.data[i + 1];
-      const b = frame.data[i + 2];
-      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-      // monument bronze/stone vs bright sky — dark-ish pixels inside silhouette
-      if (lum < 140) hit += 1;
+  function scoreCaptureVsSilhouette(video, key, minScore) {
+    if (window.KP_MATCH && window.KP_MATCH.scoreCapture) {
+      return window.KP_MATCH.scoreCapture(video, key, { minScore: minScore || 0.86 });
     }
-    const score = maskOn ? hit / maskOn : 0;
-    const thr = tolerance != null ? tolerance : 0.22;
-    return { ok: score >= thr, score };
+    return { ok: false, score: 0, reason: "no-matcher" };
   }
 
   function renderContour(step) {
@@ -253,7 +225,7 @@
             <div class="ar-overlay">${silAr}</div>
             <div class="stage-label">совместите контур</div>
           </div>
-          <p class="muted">Наведите камеру так, чтобы памятник совпал с золотым контуром.</p>
+          <p class="muted">Совместите красный контур с памятником. Сверка строгая: погрешность не больше 10–15%.</p>
           <button type="button" class="btn primary" id="capture">Сфотографировать и сверить</button>
           <button type="button" class="btn ghost" id="close-cam">Закрыть камеру</button>
           <div id="extra"></div>
@@ -271,17 +243,21 @@
         renderContour(step);
       };
       document.getElementById("capture").onclick = () => {
-        const result = scoreCaptureVsSilhouette(video, key, step.matchTolerance);
-        const pct = Math.round(result.score * 100);
+        const result = scoreCaptureVsSilhouette(video, key, step.matchMinScore || 0.86);
+        const pct = Math.round((result.score || 0) * 100);
+        const errPct = Math.round((1 - (result.score || 0)) * 100);
         if (result.ok) {
           stopCamera();
           uiState.done = true;
           uiState.phase = "done";
-          setFeedback(`Совпало (~${pct}%). Засчитано.`, "ok");
+          setFeedback(`Совпало (${pct}%, погрешность ~${errPct}%). Засчитано.`, "ok");
           document.getElementById("extra").innerHTML = `<div class="fact-box">${step.fact}</div>`;
           bindNext(true);
         } else {
-          setFeedback(`Пока мимо (~${pct}%). Подвиньте камеру и попробуйте ещё — допускается небольшая погрешность.`, "bad");
+          setFeedback(
+            `Не совпало (~${pct}%, ошибка ~${errPct}%). Нужно ≤15%. Совместите контур точнее с памятником — стол/стена не засчитываются.`,
+            "bad"
+          );
         }
       };
       bindNext(!!uiState.done);

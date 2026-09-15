@@ -1,5 +1,5 @@
 /* Service worker — offline PWA cache */
-const CACHE = "kultprogulki-v6";
+const CACHE = "kultprogulki-v7";
 const ASSETS = [
   "./",
   "./index.html",
@@ -10,8 +10,10 @@ const ASSETS = [
   "./shared.js",
   "./assets.js",
   "./silhouettes.js",
+  "./match.js",
   "./radar.js",
   "./content-db.js",
+  "./monuments-extra.js",
   "./demo-quest.js",
   "./walk.js",
   "./create.js",
@@ -20,15 +22,8 @@ const ASSETS = [
   "./icon.svg",
   "./icon-512.png",
   "./apple-touch-icon.png",
-  "./assets/contours/pushkin-sticker.png",
-  "./assets/contours/pushkin-sticker-preview.png",
-  "./assets/contours/pushkin-sticker-mask.png",
-  "./assets/contours/griboedov-sticker.png",
-  "./assets/contours/griboedov-sticker-preview.png",
-  "./assets/contours/griboedov-sticker-mask.png",
-  "./assets/contours/seated-sticker.png",
-  "./assets/contours/seated-sticker-preview.png",
-  "./assets/contours/seated-sticker-mask.png",
+  "./assets/ui/chest-closed.png",
+  "./assets/ui/chest-open.png",
 ];
 
 self.addEventListener("install", (event) => {
