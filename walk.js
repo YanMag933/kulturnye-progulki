@@ -525,9 +525,10 @@
           unlockM: unlock,
           revealM: reveal,
           demo,
+          hintText: step.unlockedText || step.fact || "Подсказка открыта.",
           onUnlock: () => {
             uiState.unlocked = true;
-            setFeedback("Точка захвачена. Сейф открыт.", "ok");
+            setFeedback("Сундук открыт. Подсказка получена.", "ok");
             bindNext(true);
           },
           onClose: () => {

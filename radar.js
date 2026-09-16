@@ -39,17 +39,18 @@
       this.revealM = opts.revealM || REVEAL_M;
       this.onUnlock = opts.onUnlock || (() => {});
       this.onClose = opts.onClose || (() => {});
+      this.hintText = opts.hintText || "Подсказка открыта.";
       this.demo = !!opts.demo;
 
       this.userLat = null;
       this.userLon = null;
-      this.heading = 0; // device heading degrees, 0 = north
+      this.heading = 0;
       this.hasHeading = false;
       this.distance = null;
       this.unlocked = false;
       this.running = false;
       this.sweep = 0;
-      this.blips = []; // afterglow echoes
+      this.blips = [];
       this.watchId = null;
       this.orientHandler = null;
       this.raf = 0;
@@ -58,6 +59,8 @@
       this._pulsePhase = 0;
       this.chestReady = false;
       this.chestOpened = false;
+      this.scrollReady = false;
+      this.scrollOpened = false;
 
       this._buildDom();
     }
@@ -81,10 +84,6 @@
             <canvas class="radar-canvas" id="radar-canvas"></canvas>
             <div class="radar-glass"></div>
             <div class="radar-vignette"></div>
-            <button type="button" class="radar-chest" id="radar-chest" hidden aria-label="Открыть сундук">
-              <img class="radar-chest-img closed" src="assets/ui/chest-closed.png" alt="Сундук" />
-              <img class="radar-chest-img open" src="assets/ui/chest-open.png" alt="" />
-            </button>
           </div>
           <div class="radar-legend">
             <span>кольца · ${Math.round(this.revealM / 4)} / ${Math.round(this.revealM / 2)} / ${Math.round((3 * this.revealM) / 4)} / ${this.revealM} м</span>
@@ -94,6 +93,32 @@
             <button type="button" class="btn ghost" id="radar-close">Закрыть</button>
             <button type="button" class="btn primary" id="radar-demo-near">Симуляция: подойти ближе</button>
           </div>
+        </div>
+
+        <div class="loot-stage" id="loot-stage" hidden>
+          <div class="chest-stage" id="chest-stage">
+            <div class="chest-glow" aria-hidden="true"></div>
+            <button type="button" class="chest-3d" id="radar-chest" aria-label="Открыть сундук">
+              <div class="chest-pivot">
+                <img class="chest-lid" src="assets/ui/chest-lid.png" alt="" draggable="false" />
+              </div>
+              <img class="chest-body" src="assets/ui/chest-body.png" alt="Сундук" draggable="false" />
+            </button>
+          </div>
+
+          <button type="button" class="scroll-fly" id="scroll-fly" hidden aria-label="Открыть свиток">
+            <img class="scroll-rolled-img" src="assets/ui/scroll-rolled.png" alt="" draggable="false" />
+            <span class="scroll-label">Подсказка</span>
+          </button>
+
+          <div class="scroll-sheet" id="scroll-sheet" hidden>
+            <img class="scroll-bg" src="assets/ui/scroll-unrolled.png" alt="" draggable="false" />
+            <div class="scroll-text">
+              <p class="scroll-title">Подсказка</p>
+              <p class="scroll-body" id="scroll-hint-text"></p>
+              <button type="button" class="btn primary" id="scroll-done">Продолжить</button>
+            </div>
+          </div>
         </div>`;
       document.body.appendChild(root);
       this.root = root;
@@ -102,7 +127,12 @@
       this.elStatus = root.querySelector("#radar-status");
       this.elDist = root.querySelector("#radar-dist");
       this.elBearing = root.querySelector("#radar-bearing");
+      this.elLoot = root.querySelector("#loot-stage");
+      this.elChestStage = root.querySelector("#chest-stage");
       this.elChest = root.querySelector("#radar-chest");
+      this.elScrollFly = root.querySelector("#scroll-fly");
+      this.elScrollSheet = root.querySelector("#scroll-sheet");
+      this.elScrollHint = root.querySelector("#scroll-hint-text");
 
       root.querySelector("#radar-close").onclick = () => this.close();
       root.querySelector("#radar-demo-near").onclick = () => {
@@ -114,6 +144,8 @@
         this._maybeShowChest();
       };
       this.elChest.onclick = () => this._openChest();
+      this.elScrollFly.onclick = () => this._openScroll();
+      root.querySelector("#scroll-done").onclick = () => this._setUnlockedAndLeave();
 
       this._resize();
       window.addEventListener("resize", this._onResize = () => this._resize());
@@ -224,21 +256,43 @@
       if (this.distance == null || this.distance > this.unlockM) return;
       if (this.chestReady) return;
       this.chestReady = true;
-      this.elStatus.textContent = "СУНДУК НАЙДЕН";
-      this.elChest.hidden = false;
-      requestAnimationFrame(() => this.elChest.classList.add("show"));
+      this.elStatus.textContent = "СУНДУК НАЙДЕН — НАЖМИТЕ";
+      this.elLoot.hidden = false;
+      requestAnimationFrame(() => {
+        this.elLoot.classList.add("show");
+        this.elChestStage.classList.add("rise");
+      });
     }
 
     _openChest() {
       if (this.chestOpened || this.unlocked) return;
       this.chestOpened = true;
       this.elChest.classList.add("opening");
+      this.elChestStage.classList.add("glowing");
       this.elStatus.textContent = "ОТКРЫВАЕМ…";
+      // lid open ~1.1s, then scroll flies
       setTimeout(() => {
         this.elChest.classList.add("opened");
-        this.elStatus.textContent = "ПОДСКАЗКА ОТКРЫТА";
-        setTimeout(() => this._setUnlockedAndLeave(), 900);
-      }, 420);
+        this.elStatus.textContent = "СВИТОК!";
+        this._spawnScroll();
+      }, 1100);
+    }
+
+    _spawnScroll() {
+      if (this.scrollReady) return;
+      this.scrollReady = true;
+      this.elScrollFly.hidden = false;
+      requestAnimationFrame(() => this.elScrollFly.classList.add("fly"));
+    }
+
+    _openScroll() {
+      if (this.scrollOpened) return;
+      this.scrollOpened = true;
+      this.elScrollFly.classList.add("hide");
+      this.elScrollHint.textContent = this.hintText;
+      this.elScrollSheet.hidden = false;
+      requestAnimationFrame(() => this.elScrollSheet.classList.add("unfurl"));
+      this.elStatus.textContent = "ЧИТАЙТЕ ПОДСКАЗКУ";
     }
 
     _setUnlockedAndLeave() {
@@ -246,11 +300,10 @@
       this.unlocked = true;
       this.root.classList.add("unlocked", "leaving");
       this.onUnlock();
-      setTimeout(() => this.close(), 650);
+      setTimeout(() => this.close(), 700);
     }
 
     _setUnlocked() {
-      // legacy: only via chest now
       this._maybeShowChest();
     }
 

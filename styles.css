@@ -499,39 +499,215 @@ body {
 }
 
 .radar-chest {
+  display: none;
+}
+
+.loot-stage {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%) scale(0.92);
-  width: min(46%, 180px);
-  aspect-ratio: 1;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
+  z-index: 8;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+.loot-stage.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.chest-stage {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  padding: 0 0 env(safe-area-inset-bottom, 8px);
+  transform: translateY(110%);
+  transition: transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  perspective: 900px;
+}
+.chest-stage.rise {
+  transform: translateY(0);
+}
+.chest-glow {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 18%;
+  height: 55%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 80%, rgba(255, 200, 80, 0.55), rgba(255, 140, 40, 0.15) 45%, transparent 70%);
+  opacity: 0;
+  transform: scaleY(0.4) translateY(30%);
+  filter: blur(6px);
+  transition: opacity 0.9s ease, transform 1.1s cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+  z-index: 0;
+}
+.chest-stage.glowing .chest-glow {
+  opacity: 1;
+  transform: scaleY(1.15) translateY(-10%);
+  animation: chest-glow-pulse 1.8s ease-in-out infinite alternate;
+}
+@keyframes chest-glow-pulse {
+  from { filter: blur(5px) brightness(1); }
+  to { filter: blur(9px) brightness(1.25); }
+}
+
+.chest-3d {
+  position: relative;
+  width: min(100%, 420px);
   border: 0;
   padding: 0;
   background: transparent;
   cursor: pointer;
-  z-index: 5;
-  opacity: 0;
+  z-index: 1;
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 12px 28px rgba(0,0,0,.55));
+}
+.chest-body {
+  display: block;
+  width: 100%;
+  height: auto;
+  position: relative;
+  z-index: 1;
   pointer-events: none;
-  transition: opacity 1.1s ease, transform 1.1s ease;
 }
-.radar-chest.show {
+.chest-pivot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 42%;
+  transform-origin: 50% 100%;
+  transform-style: preserve-3d;
+  z-index: 2;
+  transition: transform 1.05s cubic-bezier(0.22, 0.61, 0.24, 1);
+  pointer-events: none;
+}
+.chest-lid {
+  display: block;
+  width: 100%;
+  height: auto;
+  transform-origin: 50% 100%;
+}
+.chest-3d.opening .chest-pivot,
+.chest-3d.opened .chest-pivot {
+  transform: rotateX(-118deg) translateZ(4px);
+}
+.chest-3d.opening {
+  animation: chest-nudge 0.35s ease;
+}
+@keyframes chest-nudge {
+  0% { transform: translateY(0); }
+  40% { transform: translateY(4px) scale(0.99); }
+  100% { transform: translateY(0); }
+}
+
+.scroll-fly {
+  position: absolute;
+  left: 50%;
+  bottom: 28%;
+  width: min(38vw, 150px);
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  z-index: 9;
+  transform: translate(-50%, 80px) scale(0.4);
+  opacity: 0;
+  filter: drop-shadow(0 0 16px rgba(255, 210, 90, 0.65));
+  transition:
+    transform 0.95s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.5s ease;
+}
+.scroll-fly.fly {
   opacity: 1;
-  pointer-events: auto;
-  transform: translate(-50%, -50%) scale(1);
+  transform: translate(-50%, -40px) scale(1);
 }
-.radar-chest-img {
+.scroll-fly.hide {
+  opacity: 0;
+  transform: translate(-50%, -80px) scale(1.1);
+  pointer-events: none;
+}
+.scroll-rolled-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.scroll-label {
+  display: block;
+  margin-top: 6px;
+  text-align: center;
+  font-family: "Marck Script", "Caveat", cursive;
+  font-size: 28px;
+  color: #ffe08a;
+  text-shadow: 0 0 10px rgba(255, 200, 80, 0.55), 0 2px 4px rgba(0,0,0,.7);
+}
+
+.scroll-sheet {
+  position: absolute;
+  inset: 8% 6% 12%;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform: scaleY(0.12) scaleX(0.55);
+  transform-origin: 50% 8%;
+  transition:
+    opacity 0.35s ease,
+    transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+.scroll-sheet.unfurl {
+  opacity: 1;
+  transform: scaleY(1) scaleX(1);
+  pointer-events: auto;
+}
+.scroll-bg {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 8px 18px rgba(0,0,0,.55));
-  transition: opacity 0.45s ease, transform 0.45s ease;
+  filter: drop-shadow(0 10px 24px rgba(0,0,0,.45));
+  pointer-events: none;
 }
-.radar-chest-img.open { opacity: 0; transform: scale(0.96); }
-.radar-chest.opening .closed { transform: scale(1.04) rotate(-2deg); }
-.radar-chest.opened .closed { opacity: 0; }
-.radar-chest.opened .open { opacity: 1; transform: scale(1.05); }
+.scroll-text {
+  position: relative;
+  z-index: 1;
+  width: min(78%, 280px);
+  max-height: 70%;
+  overflow: auto;
+  text-align: center;
+  padding: 18px 10px;
+}
+.scroll-title {
+  margin: 0 0 10px;
+  font-family: "Marck Script", "Caveat", cursive;
+  font-size: 34px;
+  color: #5a3a18;
+}
+.scroll-body {
+  margin: 0 0 16px;
+  font-family: "Caveat", "Marck Script", cursive;
+  font-size: 26px;
+  line-height: 1.35;
+  color: #3d2914;
+  font-weight: 600;
+}
+.scroll-text .btn {
+  width: auto;
+  min-width: 160px;
+  margin: 0 auto;
+}
+
 .radar-overlay.leaving {
   opacity: 0;
   transition: opacity 0.6s ease;
