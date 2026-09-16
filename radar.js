@@ -91,6 +91,7 @@
               <div class="radar-readout sub" id="radar-bearing">азимут —°</div>
             </div>
           </div>
+          <button type="button" class="btn primary radar-hud-open" id="radar-open-safe" hidden>Открыть сейф</button>
           <div class="radar-scope-wrap">
             <canvas class="radar-canvas" id="radar-canvas"></canvas>
             <div class="radar-glass"></div>
@@ -101,7 +102,6 @@
             <span>контакт &lt; ${this.revealM} м · сундук ≤ ${this.unlockM} м · верх = взгляд</span>
           </div>
           <div class="radar-actions">
-            <button type="button" class="btn primary" id="radar-open-safe" hidden>Открыть сейф</button>
             <button type="button" class="btn primary" id="radar-demo-near">Симуляция: подойти ближе</button>
             <button type="button" class="btn ghost" id="radar-demo-turn">Симуляция: повернуть +45°</button>
             <button type="button" class="btn ghost" id="radar-close">Закрыть</button>
@@ -333,12 +333,9 @@
       this.elLoot.classList.add("show");
       this.elLoot.setAttribute("aria-hidden", "false");
       this.elOpenSafe.hidden = false;
-      // dual rAF: гарантируем стартовый translateY до rise
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          this.elChestStage.classList.add("rise");
-        });
-      });
+      // force reflow, then rise — иначе transition может не стартовать
+      void this.elChestStage.offsetWidth;
+      this.elChestStage.classList.add("rise");
       this.elStatus.textContent = "СЕЙФ РЯДОМ — ОТКРОЙТЕ";
     }
 
