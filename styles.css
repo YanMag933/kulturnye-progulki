@@ -508,13 +508,15 @@ body {
   right: 0;
   bottom: 0;
   top: 0;
-  z-index: 8;
+  z-index: 20;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.45s ease;
+  visibility: hidden;
+  transition: opacity 0.45s ease, visibility 0.45s;
 }
 .loot-stage.show {
   opacity: 1;
+  visibility: visible;
   pointer-events: auto;
 }
 
@@ -524,17 +526,25 @@ body {
   right: 0;
   bottom: 0;
   width: 100%;
-  padding: 0 0 calc(10px + env(safe-area-inset-bottom, 0px));
-  transform: translateY(115%);
+  padding: 0 12px calc(16px + env(safe-area-inset-bottom, 0px));
+  transform: translateY(110%);
   transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
-  justify-content: center;
-  align-items: flex-end;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
   perspective: 1200px;
   perspective-origin: 50% 70%;
+  box-sizing: border-box;
 }
 .chest-stage.rise {
   transform: translateY(0);
+}
+.chest-open-btn {
+  width: min(100%, 440px);
+  z-index: 2;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55);
 }
 .chest-glow {
   position: absolute;
@@ -565,6 +575,7 @@ body {
 .chest-3d {
   position: relative;
   width: min(100%, 440px);
+  min-height: 180px;
   border: 0;
   padding: 0;
   background: transparent;
@@ -774,6 +785,7 @@ body {
   justify-content: center;
   padding: env(safe-area-inset-top, 8px) 12px env(safe-area-inset-bottom, 12px);
   animation: radar-in 0.35s ease;
+  overflow: hidden;
 }
 @keyframes radar-in {
   from { opacity: 0; transform: scale(0.97); }

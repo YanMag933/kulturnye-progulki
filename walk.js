@@ -494,7 +494,7 @@
     if (ui === "mosaic") return renderMosaic(step);
 
     if (ui === "geo") {
-      const reveal = step.revealM || 150;
+      const reveal = step.revealM || 300;
       const unlock = step.radiusM || 35;
       taskChrome(
         step,
@@ -502,7 +502,7 @@
           <div class="lock-icon">${uiState.unlocked ? "открыто" : "закрыто"}</div>
           <p>${uiState.unlocked ? step.unlockedText : step.lockedTeaser}</p>
           <div class="geo-hint-box">
-            <p class="muted"><b>Подсказка.</b> Радар показывает вас в центре. Красная цель появляется ближе ${reveal}&nbsp;м, пульсирует чаще при сближении и ползёт к центру. Сейф открывается ≤ ${unlock}&nbsp;м.</p>
+            <p class="muted"><b>Подсказка.</b> Радар: вы в центре, верх экрана — куда смотрите. Красная цель с ${reveal}&nbsp;м, при повороте уходит как на реальном радаре. Сейф ≤ ${unlock}&nbsp;м — кнопка «Открыть сейф».</p>
           </div>
           ${
             uiState.unlocked
