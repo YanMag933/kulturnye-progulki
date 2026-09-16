@@ -99,10 +99,11 @@
           <div class="chest-stage" id="chest-stage">
             <div class="chest-glow" aria-hidden="true"></div>
             <button type="button" class="chest-3d" id="radar-chest" aria-label="Открыть сундук">
+              <div class="chest-interior" aria-hidden="true"></div>
+              <img class="chest-body" src="assets/ui/chest-body.png" alt="Сундук" draggable="false" />
               <div class="chest-pivot">
                 <img class="chest-lid" src="assets/ui/chest-lid.png" alt="" draggable="false" />
               </div>
-              <img class="chest-body" src="assets/ui/chest-body.png" alt="Сундук" draggable="false" />
             </button>
           </div>
 
@@ -270,12 +271,12 @@
       this.elChest.classList.add("opening");
       this.elChestStage.classList.add("glowing");
       this.elStatus.textContent = "ОТКРЫВАЕМ…";
-      // lid open ~1.1s, then scroll flies
+      // two-phase lid: open → settle, then scroll
       setTimeout(() => {
         this.elChest.classList.add("opened");
         this.elStatus.textContent = "СВИТОК!";
-        this._spawnScroll();
-      }, 1100);
+      }, 1050);
+      setTimeout(() => this._spawnScroll(), 1450);
     }
 
     _spawnScroll() {
