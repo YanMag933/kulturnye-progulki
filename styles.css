@@ -1154,6 +1154,66 @@ body {
   text-shadow: 0 0 8px rgba(255, 200, 80, 0.7), 0 2px 4px rgba(0,0,0,.8);
   pointer-events: none;
 }
+.radar-crystal {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(30%, 120px);
+  z-index: 4;
+  transform: translate(-50%, -50%) scale(var(--crystal-scale, 0.95));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  --crystal-alpha: 0;
+  --crystal-glow: 0;
+  --crystal-scale: 0.95;
+}
+.radar-crystal.active {
+  opacity: 1;
+}
+.radar-crystal-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 160%;
+  height: 160%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 24, 48, calc(var(--crystal-glow) * 0.9)) 0%,
+    rgba(255, 40, 60, calc(var(--crystal-glow) * 0.35)) 38%,
+    transparent 70%
+  );
+  filter: blur(2px);
+  z-index: 0;
+}
+.radar-crystal-img {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: auto;
+  display: block;
+  opacity: calc(0.28 + var(--crystal-alpha) * 0.72);
+  filter:
+    drop-shadow(0 0 calc(6px + var(--crystal-glow) * 28px) rgba(255, 30, 50, calc(var(--crystal-alpha) * 0.95)))
+    brightness(calc(0.75 + var(--crystal-glow) * 0.7))
+    saturate(calc(1 + var(--crystal-glow) * 1.4));
+}
+.radar-crystal.hot .radar-crystal-img {
+  filter:
+    drop-shadow(0 0 22px rgba(255, 20, 40, 0.95))
+    drop-shadow(0 0 40px rgba(255, 60, 80, 0.65))
+    brightness(1.35)
+    saturate(1.8);
+}
+.radar-crystal.near .radar-crystal-glow {
+  animation: crystal-near-flash 0.45s ease-in-out infinite alternate;
+}
+@keyframes crystal-near-flash {
+  from { opacity: 0.75; transform: translate(-50%, -50%) scale(0.95); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+}
 .radar-compass-disk {
   width: 100%;
   height: 100%;
