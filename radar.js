@@ -1,9 +1,16 @@
 /**
- * Полноэкранный гео-радар: sweep, кольца дальности, красный blip < 300 м.
- * Режим heading-up: верх экрана = направление взгляда; точка и N/E/S/W крутятся с компасом.
+ * Полноэкранный гео-оверлей: тёмный экран + кристалл (красный свет с 300 м).
+ * Сейф открывается в unlock-радиусе. В demo — цикл по всем типам сейфов.
  */
 (function () {
   const REVEAL_M = 300;
+
+  const DEMO_SAFE_CYCLE = [
+    { type: "wheel", code: "", prompt: "Крутите ручку · 3 оборота", label: "ручка" },
+    { type: "year", code: "1893", prompt: "Год (тест): 1893", label: "год" },
+    { type: "code", code: "1925", prompt: "Код (тест): 1925", label: "код" },
+    { type: "dial", code: "10-25-0", prompt: "Шифр (тест): 10-25-0", label: "шифр" },
+  ];
 
   function toRad(d) {
     return (d * Math.PI) / 180;
@@ -33,13 +40,6 @@
 
   function norm360(d) {
     return ((d % 360) + 360) % 360;
-  }
-
-  function lerpAngle(from, to, t) {
-    let d = to - from;
-    if (d > 180) d -= 360;
-    if (d < -180) d += 360;
-    return norm360(from + d * t);
   }
 
   class Radar {
@@ -109,6 +109,16 @@
           </div>
           <div class="radar-actions">
             <button type="button" class="btn primary" id="radar-demo-near">Симуляция: подойти ближе</button>
+            <div class="radar-demo-safes" id="radar-demo-safes" hidden>
+              <div class="radar-demo-safe-label" id="radar-demo-safe-label">Сейф: ручка</div>
+              <div class="radar-demo-safe-row">
+                <button type="button" class="btn ghost demo-safe-btn" data-safe="wheel">ручка</button>
+                <button type="button" class="btn ghost demo-safe-btn" data-safe="year">год</button>
+                <button type="button" class="btn ghost demo-safe-btn" data-safe="code">код</button>
+                <button type="button" class="btn ghost demo-safe-btn" data-safe="dial">шифр</button>
+              </div>
+              <button type="button" class="btn ghost" id="radar-demo-safe-next">Следующий сейф</button>
+            </div>
             <button type="button" class="btn ghost" id="radar-close">Закрыть</button>
           </div>
         </div>
@@ -149,13 +159,17 @@
       this.elScrollSheet = root.querySelector("#scroll-sheet");
       this.elScrollHint = root.querySelector("#scroll-hint-text");
       this.elDemoNear = root.querySelector("#radar-demo-near");
-      this.elDemoTurn = null;
-      this.elCal = null;
-      this.elCalDeg = null;
+      this.elDemoSafes = root.querySelector("#radar-demo-safes");
+      this.elDemoSafeLabel = root.querySelector("#radar-demo-safe-label");
+      this.elDemoSafeNext = root.querySelector("#radar-demo-safe-next");
       this.elCrystal = root.querySelector("#radar-crystal");
       this.elCrystalGlow = root.querySelector("#radar-crystal-glow");
       this._crystalPhase = 0;
       this._crystalOn = false;
+      this._demoSafeIdx = Math.max(
+        0,
+        DEMO_SAFE_CYCLE.findIndex((s) => s.type === this.safeType)
+      );
 
       this._spinTurnsNeeded = 3;
       this._spinAccum = 0;
@@ -170,6 +184,7 @@
       this.needsCalibration = false;
 
       this._mountSafePanel();
+      this._syncDemoSafeUi();
 
       root.querySelector("#radar-close").onclick = () => this.close();
       this.elDemoNear.onclick = () => {
@@ -178,13 +193,91 @@
         const cur = this.distance != null ? this.distance : this.demoDist;
         this.demoDist = Math.max(5, Math.min(this.demoDist, cur) - 55);
         this.demoAngle = this.demoAngle ?? 40;
+        this._syncDemoSafeUi();
         this._updateMetrics();
       };
+      if (this.elDemoSafeNext) {
+        this.elDemoSafeNext.onclick = () => this._cycleDemoSafe(1);
+      }
+      root.querySelectorAll(".demo-safe-btn").forEach((btn) => {
+        btn.onclick = () => this._setDemoSafeType(btn.dataset.safe);
+      });
       this.elOpenSafe.onclick = () => this._forceShowSafeAndFocus();
       this.elScrollFly.onclick = () => this._openScroll();
       root.querySelector("#scroll-done").onclick = () => this._setUnlockedAndLeave();
 
       this._updateCrystal();
+    }
+
+    _syncDemoSafeUi() {
+      if (!this.elDemoSafes) return;
+      this.elDemoSafes.hidden = !this.demo;
+      const cur = DEMO_SAFE_CYCLE[this._demoSafeIdx] || DEMO_SAFE_CYCLE[0];
+      if (this.elDemoSafeLabel) {
+        this.elDemoSafeLabel.textContent = "Сейф: " + (cur.label || cur.type);
+      }
+      this.root.querySelectorAll(".demo-safe-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.safe === this.safeType);
+      });
+    }
+
+    _cycleDemoSafe(dir) {
+      if (!this.demo) return;
+      const n = DEMO_SAFE_CYCLE.length;
+      this._demoSafeIdx = ((this._demoSafeIdx + (dir || 1)) % n + n) % n;
+      const next = DEMO_SAFE_CYCLE[this._demoSafeIdx];
+      this._applyDemoSafe(next);
+    }
+
+    _setDemoSafeType(type) {
+      if (!this.demo) return;
+      const idx = DEMO_SAFE_CYCLE.findIndex((s) => s.type === type);
+      if (idx < 0) return;
+      this._demoSafeIdx = idx;
+      this._applyDemoSafe(DEMO_SAFE_CYCLE[idx]);
+    }
+
+    _applyDemoSafe(spec) {
+      this.safeType = spec.type;
+      this.safeCode = String(spec.code || "");
+      this.safePrompt = spec.prompt || "";
+      // сброс прогресса открытия, чтобы сразу подогнать новый ассет
+      this.chestReady = false;
+      this.chestOpened = false;
+      this.scrollReady = false;
+      this.scrollOpened = false;
+      this.unlocked = false;
+      this._spinAccum = 0;
+      this._spinAngle = 0;
+      this._spinReady = false;
+      this._codeBuffer = "";
+      this._dialAngle = 0;
+      this._dialMarks = [];
+      this._yearDigits = [0, 0, 0, 0];
+      if (this._onSpinMove) {
+        window.removeEventListener("pointermove", this._onSpinMove);
+        this._onSpinMove = null;
+      }
+      if (this._onSpinEnd) {
+        window.removeEventListener("pointerup", this._onSpinEnd);
+        window.removeEventListener("pointercancel", this._onSpinEnd);
+        this._onSpinEnd = null;
+      }
+      this.elScrollFly.hidden = true;
+      this.elScrollFly.classList.remove("fly", "hide");
+      this.elScrollSheet.hidden = true;
+      this.elScrollSheet.classList.remove("unfurl");
+      this.elSafe.classList.remove("vanishing");
+      if (this.elSafeStage) {
+        this.elSafeStage.style.display = "";
+        this.elSafeStage.classList.remove("rise", "glowing");
+      }
+      this._mountSafePanel();
+      this._syncDemoSafeUi();
+      this.demoDist = Math.min(this.demoDist ?? this.unlockM - 1, this.unlockM - 1);
+      this.distance = this.demoDist;
+      this._forceShowSafeAndFocus();
+      this.elStatus.textContent = "ДЕМО · СЕЙФ: " + (spec.label || spec.type).toUpperCase();
     }
 
     _mountSafePanel() {
@@ -294,6 +387,7 @@
       if (this.demo) {
         this.demoDist = Math.max(this.revealM - 40, 220);
         this.demoAngle = 40;
+        this._syncDemoSafeUi();
         this._updateMetrics();
         this._tick();
         return;
@@ -303,6 +397,7 @@
         this.elStatus.textContent = "ГЕО НЕДОСТУПНО — демо";
         this.demo = true;
         this.demoDist = Math.max(this.revealM - 40, 220);
+        this._syncDemoSafeUi();
         this._updateMetrics();
         this._tick();
         return;
@@ -318,66 +413,12 @@
           this.elStatus.textContent = "GPS: " + (err.message || "ошибка") + " — демо";
           this.demo = true;
           this.demoDist = Math.max(this.revealM - 20, 260);
+          this._syncDemoSafeUi();
           this._updateMetrics();
         },
         { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 }
       );
       this._tick();
-    }
-
-    async _requestOrientation() {
-      const DOE = window.DeviceOrientationEvent;
-      if (DOE && typeof DOE.requestPermission === "function") {
-        const res = await DOE.requestPermission();
-        if (res !== "granted") {
-          this.elStatus.textContent = "НЕТ ДОСТУПА К КОМПАСУ";
-          return;
-        }
-      }
-
-      this._alpha0 = null;
-      this._compassMode = null; // webkit | absolute | relative
-      this.orientHandler = (e) => {
-        let h = null;
-        let mode = null;
-        if (typeof e.webkitCompassHeading === "number" && !Number.isNaN(e.webkitCompassHeading)) {
-          h = e.webkitCompassHeading;
-          mode = "webkit";
-        } else if (e.absolute === true && typeof e.alpha === "number" && !Number.isNaN(e.alpha)) {
-          if (this._compassMode === "webkit") return;
-          h = norm360(360 - e.alpha);
-          const so =
-            (screen.orientation && typeof screen.orientation.angle === "number"
-              ? screen.orientation.angle
-              : typeof window.orientation === "number"
-                ? window.orientation
-                : 0) || 0;
-          h = norm360(h + so);
-          mode = "absolute";
-        } else if (typeof e.alpha === "number" && !Number.isNaN(e.alpha)) {
-          if (this._compassMode === "webkit" || this._compassMode === "absolute") return;
-          if (this._alpha0 == null) this._alpha0 = e.alpha;
-          h = norm360(this._alpha0 - e.alpha);
-          mode = "relative";
-        }
-        if (h == null) return;
-
-        if (mode) this._compassMode = mode;
-        this._compassRaw = h;
-        this.liveCompass = true;
-        this.hasHeading = true;
-        this.heading = this._compassInited ? lerpAngle(this.heading, h, 0.9) : h;
-        this._compassInited = true;
-        if (this.elCalDeg) this.elCalDeg.textContent = "курс " + Math.round(this.heading) + "°";
-        if (this.running) this._applyCompassRotate();
-      };
-
-      window.addEventListener("deviceorientationabsolute", this.orientHandler, true);
-      window.addEventListener("deviceorientation", this.orientHandler, true);
-    }
-
-    _applyCompassRotate() {
-      this._refreshHud();
     }
 
     _updateMetrics() {
@@ -792,10 +833,6 @@
       el.style.setProperty("--glow-size", String(size.toFixed(3)));
       el.classList.toggle("hot", t > 0.72);
       el.classList.toggle("near", this.chestReady || dist <= this.unlockM);
-    }
-
-    _draw() {
-      /* radar canvas removed */
     }
 
     close() {

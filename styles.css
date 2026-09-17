@@ -649,11 +649,11 @@ body {
 .safe-img-body {
   z-index: 1;
 }
-/* progress ring around handle: cx 66.667%, cy 46.515%, size ~44% */
+/* progress ring shares body hub with handle pivot */
 .safe-progress {
   position: absolute;
-  left: 66.667%;
-  top: 46.515%;
+  left: 52.5%;
+  top: 47.5%;
   width: 48%;
   height: auto;
   aspect-ratio: 1;
@@ -1236,6 +1236,37 @@ body {
 }
 .radar-actions .btn {
   width: 100%;
+}
+.radar-demo-safes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(200, 170, 100, 0.28);
+  background: rgba(12, 10, 8, 0.72);
+}
+.radar-demo-safe-label {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: #f0d9a8;
+  text-align: center;
+}
+.radar-demo-safe-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.radar-demo-safe-row .demo-safe-btn {
+  width: 100%;
+  padding: 8px 4px;
+  font-size: 12px;
+}
+.radar-demo-safe-row .demo-safe-btn.active {
+  border-color: rgba(240, 193, 74, 0.7);
+  color: #ffe6a8;
+  background: rgba(80, 55, 20, 0.55);
 }
 
 .crop-box {

@@ -661,12 +661,12 @@
           <div class="lock-icon">${uiState.unlocked ? "открыто" : "закрыто"}</div>
           <p>${uiState.unlocked ? step.unlockedText : step.lockedTeaser}</p>
           <div class="geo-hint-box">
-            <p class="muted"><b>Подсказка.</b> Радар: вы в центре, верх экрана — куда смотрите. Красная цель с ${reveal}&nbsp;м, при повороте уходит как на реальном радаре. Сейф ≤ ${unlock}&nbsp;м — кнопка «Открыть сейф».</p>
+            <p class="muted"><b>Подсказка.</b> Кристалл мигает красным светом с ${reveal}&nbsp;м (ближе — ярче и чаще). Сейф ≤ ${unlock}&nbsp;м — кнопка «Открыть сейф». В демо можно переключать типы сейфов.</p>
           </div>
           ${
             uiState.unlocked
               ? `<div class="fact-box">${step.fact}</div>`
-              : `<button type="button" class="btn primary" id="open-radar">Включить радар</button>
+              : `<button type="button" class="btn primary" id="open-radar">Включить кристалл</button>
                  <button type="button" class="btn ghost" id="geo-demo">Демо без GPS</button>`
           }
         </div>`,
