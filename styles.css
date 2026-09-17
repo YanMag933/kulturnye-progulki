@@ -567,7 +567,7 @@ body {
 
 .safe-stage {
   position: relative;
-  width: min(68vw, 280px);
+  width: min(82vw, 320px);
   transform: translateY(48px) scale(0.55);
   opacity: 0;
   transition:
@@ -694,30 +694,269 @@ body {
   cursor: grabbing;
 }
 
+/* —— multi-safe overlays —— */
+.safe-variant {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.safe-variant .safe-img-body {
+  position: relative;
+  width: 100%;
+  height: auto;
+  aspect-ratio: auto;
+  max-height: min(52vh, 360px);
+  object-fit: contain;
+}
+.safe-overlay-card {
+  position: relative;
+  z-index: 4;
+  width: 100%;
+  margin-top: -8px;
+  padding: 10px 12px 12px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(28, 24, 18, 0.92), rgba(12, 10, 8, 0.96));
+  border: 1px solid rgba(200, 170, 100, 0.35);
+  box-shadow: inset 0 1px 0 rgba(255, 220, 150, 0.12), 0 10px 24px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* year tumblers */
+.year-lock {
+  position: relative;
+  display: flex;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #1a1a1a;
+  box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.85), 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.year-drum {
+  width: 42px;
+  height: 132px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #9a9a9a 0%, #d8d8d8 18%, #efefef 50%, #c8c8c8 82%, #8a8a8a 100%);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35), inset 0 8px 10px rgba(0, 0, 0, 0.25), inset 0 -8px 10px rgba(0, 0, 0, 0.2);
+}
+.year-drum::-webkit-scrollbar {
+  display: none;
+}
+.year-track {
+  padding: 44px 0;
+}
+.year-cell {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Segoe UI", "Arial Narrow", sans-serif;
+  font-weight: 700;
+  font-size: 26px;
+  color: #1a1a1a;
+  scroll-snap-align: center;
+  user-select: none;
+}
+.year-window {
+  pointer-events: none;
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 210, 120, 0.55);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), inset 0 0 12px rgba(255, 200, 80, 0.12);
+}
+
+/* code keypad */
+.code-display {
+  font-family: "Share Tech Mono", ui-monospace, monospace;
+  font-size: 28px;
+  letter-spacing: 0.35em;
+  color: #9dffb0;
+  text-shadow: 0 0 8px rgba(80, 255, 140, 0.35);
+  background: #0a120e;
+  border: 1px solid rgba(120, 200, 140, 0.35);
+  border-radius: 8px;
+  padding: 8px 14px;
+  min-width: 160px;
+  text-align: center;
+}
+.code-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  width: min(100%, 220px);
+}
+.code-key {
+  appearance: none;
+  border: 1px solid rgba(180, 180, 190, 0.45);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #3a3a40, #1c1c20);
+  color: #f2f2f2;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 10px 0;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+.code-key:active {
+  transform: translateY(1px);
+  filter: brightness(1.15);
+}
+
+/* dial cipher */
+.dial-readout {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  font-family: "Share Tech Mono", ui-monospace, monospace;
+  color: #e8f0ff;
+}
+.dial-readout #dial-num {
+  font-size: 32px;
+  font-weight: 700;
+  min-width: 1.4em;
+  text-align: center;
+}
+.dial-marks {
+  font-size: 16px;
+  opacity: 0.85;
+  letter-spacing: 0.06em;
+}
+.dial-ring {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  touch-action: none;
+  cursor: grab;
+  background:
+    radial-gradient(circle at 50% 50%, #2a2e36 0 28%, transparent 29%),
+    conic-gradient(from -90deg, #1e5a9a 0 12deg, #163e6e 12deg 24deg);
+  box-shadow:
+    inset 0 0 0 10px #c8d0d8,
+    inset 0 0 0 14px #8a929a,
+    0 8px 18px rgba(0, 0, 0, 0.5);
+}
+.dial-ring:active {
+  cursor: grabbing;
+}
+.dial-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 42%;
+  height: 42%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(145deg, #d8dde4, #8a9098);
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.45), 0 2px 6px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+.dial-notch {
+  position: absolute;
+  left: 50%;
+  top: 6px;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 10px solid #f4f6f8;
+  pointer-events: none;
+  z-index: 2;
+}
+.dial-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* compass calibration */
+.compass-cal {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(4, 8, 6, 0.78);
+  backdrop-filter: blur(4px);
+}
+.compass-cal.show {
+  display: flex;
+}
+.compass-cal-card {
+  width: min(100%, 340px);
+  padding: 20px 18px;
+  border-radius: 16px;
+  background: linear-gradient(165deg, #1c241c, #0c120e);
+  border: 1px solid rgba(160, 190, 140, 0.35);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.compass-cal-title {
+  margin: 0;
+  font-size: 18px;
+  color: #dce8d4;
+  letter-spacing: 0.04em;
+}
+.compass-cal-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: rgba(220, 232, 212, 0.82);
+}
+.compass-cal-readout {
+  font-family: "Share Tech Mono", ui-monospace, monospace;
+  font-size: 22px;
+  color: #9dffb0;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
 .scroll-fly {
   position: absolute;
   left: 50%;
-  top: 58%;
-  width: min(38vw, 150px);
+  top: 50%;
+  width: min(28vw, 112px);
   border: 0;
   padding: 0;
   background: transparent;
   cursor: pointer;
   z-index: 9;
-  transform: translate(-50%, 40px) scale(0.4);
+  transform: translate(-50%, 36px) scale(0.4);
   opacity: 0;
-  filter: drop-shadow(0 0 16px rgba(255, 210, 90, 0.65));
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.55));
   transition:
     transform 0.95s cubic-bezier(0.16, 1, 0.3, 1),
     opacity 0.5s ease;
 }
 .scroll-fly.fly {
   opacity: 1;
-  transform: translate(-50%, -30px) scale(1);
+  transform: translate(-50%, -24px) scale(1);
 }
 .scroll-fly.hide {
   opacity: 0;
-  transform: translate(-50%, -80px) scale(1.1);
+  transform: translate(-50%, -70px) scale(1.08);
   pointer-events: none;
 }
 .scroll-rolled-img {
@@ -730,28 +969,32 @@ body {
   margin-top: 6px;
   text-align: center;
   font-family: "Marck Script", "Caveat", cursive;
-  font-size: 28px;
+  font-size: 22px;
   color: #ffe08a;
-  text-shadow: 0 0 10px rgba(255, 200, 80, 0.55), 0 2px 4px rgba(0,0,0,.7);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
 }
 
 .scroll-sheet {
   position: absolute;
-  inset: 8% 6% 12%;
+  left: 50%;
+  top: 50%;
+  width: min(78vw, 300px);
+  height: min(58vh, 420px);
+  transform: translate(-50%, -50%) scaleY(0.12) scaleX(0.55);
+  transform-origin: 50% 20%;
   z-index: 10;
   display: grid;
   place-items: center;
   opacity: 0;
-  transform: scaleY(0.12) scaleX(0.55);
-  transform-origin: 50% 8%;
   transition:
     opacity 0.35s ease,
     transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
   pointer-events: none;
+  filter: none;
 }
 .scroll-sheet.unfurl {
   opacity: 1;
-  transform: scaleY(1) scaleX(1);
+  transform: translate(-50%, -50%) scaleY(1) scaleX(1);
   pointer-events: auto;
 }
 .scroll-bg {
@@ -760,13 +1003,15 @@ body {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 10px 24px rgba(0,0,0,.45));
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.45));
   pointer-events: none;
+  /* без розового свечения */
+  mix-blend-mode: normal;
 }
 .scroll-text {
   position: relative;
   z-index: 1;
-  width: min(78%, 280px);
+  width: min(78%, 240px);
   max-height: 70%;
   overflow: auto;
   text-align: center;
@@ -775,13 +1020,13 @@ body {
 .scroll-title {
   margin: 0 0 10px;
   font-family: "Marck Script", "Caveat", cursive;
-  font-size: 34px;
+  font-size: 30px;
   color: #5a3a18;
 }
 .scroll-body {
   margin: 0 0 16px;
   font-family: "Caveat", "Marck Script", cursive;
-  font-size: 26px;
+  font-size: 24px;
   line-height: 1.35;
   color: #3d2914;
   font-weight: 600;
@@ -802,8 +1047,8 @@ body {
   margin: 12px 0;
   padding: 12px;
   border-radius: 12px;
-  border: 1px solid var(--line);
   background: rgba(0,0,0,.22);
+  border: 1px solid var(--line);
 }
 .geo-hint-box p { margin: 0; line-height: 1.45; }
 

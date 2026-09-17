@@ -685,6 +685,9 @@
           revealM: reveal,
           demo,
           hintText: step.unlockedText || step.fact || "Подсказка открыта.",
+          safeType: step.safeType || "wheel",
+          safeCode: step.safeCode || "",
+          safePrompt: step.safePrompt || "",
           onUnlock: () => {
             uiState.unlocked = true;
             setFeedback("Сейф открыт. Подсказка получена.", "ok");

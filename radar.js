@@ -52,6 +52,10 @@
       this.onClose = opts.onClose || (() => {});
       this.hintText = opts.hintText || "Подсказка открыта.";
       this.demo = !!opts.demo;
+      this.safeType = opts.safeType || "wheel"; // wheel | year | code | dial
+      this.safeCode = String(opts.safeCode || "").trim();
+      this.safePrompt = opts.safePrompt || "";
+      this.needsCalibration = opts.needsCalibration !== false;
 
       this.userLat = null;
       this.userLon = null;
@@ -113,21 +117,20 @@
           </div>
         </div>
 
+        <div class="compass-cal" id="compass-cal">
+          <div class="compass-cal-card">
+            <p class="compass-cal-title">Калибровка компаса</p>
+            <p class="compass-cal-text">Поводите телефоном «восьмёркой», держите экран вверх. Диск должен крутиться при повороте.</p>
+            <div class="compass-cal-readout" id="compass-cal-deg">курс —°</div>
+            <button type="button" class="btn primary" id="compass-cal-done">Готово · смотреть радар</button>
+            <button type="button" class="btn ghost" id="compass-cal-skip">Пропустить</button>
+          </div>
+        </div>
+
         <div class="loot-stage" id="loot-stage" aria-hidden="true">
           <div class="safe-stage" id="safe-stage">
             <div class="safe-glow" aria-hidden="true"></div>
-            <div class="safe-photo-wrap" id="radar-safe">
-              <div class="safe-photo-stack" id="safe-stack">
-                <img class="safe-img safe-img-body" src="assets/ui/safe-body.png" alt="Сейф" draggable="false" />
-                <svg class="safe-progress" id="safe-progress" viewBox="0 0 100 100" aria-hidden="true">
-                  <circle class="safe-progress-bg" cx="50" cy="50" r="46" />
-                  <circle class="safe-progress-fg" id="safe-progress-fg" cx="50" cy="50" r="46" />
-                </svg>
-                <img class="safe-handle-spin" id="safe-handle-spin" src="assets/ui/safe-handle.png" alt="" draggable="false" />
-              </div>
-              <p class="safe-tap-hint" id="safe-tap-hint">Крутите ручку пальцем · 3 оборота</p>
-              <button type="button" class="btn primary safe-unlock-btn" id="safe-unlock-btn" hidden>Открыть</button>
-            </div>
+            <div class="safe-photo-wrap" id="radar-safe"></div>
           </div>
 
           <button type="button" class="scroll-fly" id="scroll-fly" hidden aria-label="Открыть свиток">
@@ -155,29 +158,31 @@
       this.elLoot = root.querySelector("#loot-stage");
       this.elSafeStage = root.querySelector("#safe-stage");
       this.elSafe = root.querySelector("#radar-safe");
-      this.elHandleSpin = root.querySelector("#safe-handle-spin");
-      this.elProgressFg = root.querySelector("#safe-progress-fg");
-      this.elUnlockBtn = root.querySelector("#safe-unlock-btn");
       this.elOpenSafe = root.querySelector("#radar-open-safe");
-      this.elTapHint = root.querySelector("#safe-tap-hint");
       this.elScrollFly = root.querySelector("#scroll-fly");
       this.elScrollSheet = root.querySelector("#scroll-sheet");
       this.elScrollHint = root.querySelector("#scroll-hint-text");
       this.elDemoNear = root.querySelector("#radar-demo-near");
       this.elDemoTurn = root.querySelector("#radar-demo-turn");
+      this.elCal = root.querySelector("#compass-cal");
+      this.elCalDeg = root.querySelector("#compass-cal-deg");
 
-      // progress ring geometry
-      const circ = 2 * Math.PI * 46;
-      this.elProgressFg.style.strokeDasharray = String(circ);
-      this.elProgressFg.style.strokeDashoffset = String(circ);
       this._spinTurnsNeeded = 3;
       this._spinAccum = 0;
       this._spinAngle = 0;
       this._spinReady = false;
       this._spinDragging = false;
       this._spinLastAng = null;
+      this._codeBuffer = "";
+      this._dialAngle = 0;
+      this._dialMarks = [];
+      this._calDone = !this.needsCalibration;
+
+      this._mountSafePanel();
 
       root.querySelector("#radar-close").onclick = () => this.close();
+      root.querySelector("#compass-cal-done").onclick = () => this._finishCalibration();
+      root.querySelector("#compass-cal-skip").onclick = () => this._finishCalibration();
       this.elDemoNear.onclick = () => {
         this.demo = true;
         if (this.demoDist == null) this.demoDist = Math.max(this.revealM + 20, 320);
@@ -189,16 +194,120 @@
       this.elDemoTurn.onclick = () => {
         this.heading = norm360(this.heading + 45);
         this.hasHeading = true;
+        this.liveCompass = true;
+        this._applyCompassRotate();
         this._updateMetrics();
       };
       this.elOpenSafe.onclick = () => this._forceShowSafeAndFocus();
-      this.elUnlockBtn.onclick = () => this._revealScroll();
       this.elScrollFly.onclick = () => this._openScroll();
       root.querySelector("#scroll-done").onclick = () => this._setUnlockedAndLeave();
-      this._bindHandleSpin();
 
       this._resize();
       window.addEventListener("resize", (this._onResize = () => this._resize()));
+      if (!this._calDone) this.elCal.classList.add("show");
+      else this.elCal.hidden = true;
+    }
+
+    _finishCalibration() {
+      this._calDone = true;
+      this.elCal.classList.remove("show");
+      this.elCal.hidden = true;
+      this.elStatus.textContent = this.liveCompass ? "КОМПАС ОК" : "СКАНИРОВАНИЕ…";
+    }
+
+    _mountSafePanel() {
+      const type = this.safeType;
+      const prompt = this.safePrompt || "";
+      let html = "";
+      if (type === "year") {
+        const digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+        // тройной цикл — бесконечная прокрутка барабанов
+        const strip = [...digits, ...digits, ...digits]
+          .map((d) => `<div class="year-cell">${d}</div>`)
+          .join("");
+        html = `
+          <div class="safe-variant safe-year">
+            <img class="safe-img safe-img-body" src="assets/ui/safe-dial-body.png" alt="Сейф" draggable="false" />
+            <div class="safe-overlay-card">
+              <p class="safe-tap-hint">${prompt || "Прокрутите год"}</p>
+              <div class="year-lock" id="year-drums">
+                ${[0, 1, 2, 3]
+                  .map(
+                    (i) => `<div class="year-drum" data-i="${i}">
+                  <div class="year-track" id="year-track-${i}">${strip}</div>
+                </div>`
+                  )
+                  .join("")}
+                <div class="year-window" aria-hidden="true"></div>
+              </div>
+              <button type="button" class="btn primary safe-unlock-btn" id="safe-unlock-btn">Открыть</button>
+            </div>
+          </div>`;
+      } else if (type === "code") {
+        html = `
+          <div class="safe-variant safe-code">
+            <img class="safe-img safe-img-body" src="assets/ui/safe-keypad-body.png" alt="Сейф" draggable="false" />
+            <div class="safe-overlay-card">
+              <p class="safe-tap-hint">${prompt || "Введите код"}</p>
+              <div class="code-display" id="code-display">****</div>
+              <div class="code-pad" id="code-pad">
+                ${[1, 2, 3, 4, 5, 6, 7, 8, 9, "C", 0, "OK"]
+                  .map((k) => `<button type="button" class="code-key" data-k="${k}">${k}</button>`)
+                  .join("")}
+              </div>
+            </div>
+          </div>`;
+      } else if (type === "dial") {
+        html = `
+          <div class="safe-variant safe-dial">
+            <img class="safe-img safe-img-body" src="assets/ui/safe-dial-body.png" alt="Сейф" draggable="false" />
+            <div class="safe-overlay-card">
+              <p class="safe-tap-hint">${prompt || "Крутите диск · зафиксируйте 3 числа"}</p>
+              <div class="dial-readout"><span id="dial-num">0</span><span class="dial-marks" id="dial-marks">—</span></div>
+              <div class="dial-ring" id="dial-ring" role="slider" aria-label="Диск шифра">
+                <div class="dial-knob" id="dial-knob"></div>
+                <div class="dial-notch"></div>
+              </div>
+              <div class="dial-actions">
+                <button type="button" class="btn ghost" id="dial-mark">Зафиксировать</button>
+                <button type="button" class="btn ghost" id="dial-reset">Сброс</button>
+              </div>
+              <button type="button" class="btn primary safe-unlock-btn" id="safe-unlock-btn" hidden>Открыть</button>
+            </div>
+          </div>`;
+      } else {
+        // wheel — медный сейф анфас
+        html = `
+          <div class="safe-variant safe-wheel">
+            <div class="safe-photo-stack" style="aspect-ratio:560/709">
+              <img class="safe-img safe-img-body" src="assets/ui/safe-wheel-body.png" alt="Сейф" draggable="false" />
+              <svg class="safe-progress" id="safe-progress" viewBox="0 0 100 100" aria-hidden="true"
+                style="left:51.607%;top:46.121%;width:48%">
+                <circle class="safe-progress-bg" cx="50" cy="50" r="46" />
+                <circle class="safe-progress-fg" id="safe-progress-fg" cx="50" cy="50" r="46" />
+              </svg>
+              <img class="safe-handle-spin" id="safe-handle-spin" src="assets/ui/safe-wheel-handle.png" alt=""
+                draggable="false" style="left:51.607%;top:46.121%;width:43.9%" />
+            </div>
+            <p class="safe-tap-hint" id="safe-tap-hint">Крутите ручку пальцем · 3 оборота</p>
+            <button type="button" class="btn primary safe-unlock-btn" id="safe-unlock-btn" hidden>Открыть</button>
+          </div>`;
+      }
+      this.elSafe.innerHTML = html;
+      this.elHandleSpin = this.elSafe.querySelector("#safe-handle-spin");
+      this.elProgressFg = this.elSafe.querySelector("#safe-progress-fg");
+      this.elUnlockBtn = this.elSafe.querySelector("#safe-unlock-btn");
+      this.elTapHint = this.elSafe.querySelector("#safe-tap-hint") || this.elSafe.querySelector(".safe-tap-hint");
+      if (this.elProgressFg) {
+        const circ = 2 * Math.PI * 46;
+        this.elProgressFg.style.strokeDasharray = String(circ);
+        this.elProgressFg.style.strokeDashoffset = String(circ);
+      }
+      if (this.elUnlockBtn) this.elUnlockBtn.onclick = () => this._tryUnlockSafe();
+      if (type === "wheel") this._bindHandleSpin();
+      if (type === "year") this._bindYearDrums();
+      if (type === "code") this._bindCodePad();
+      if (type === "dial") this._bindDial();
     }
 
     _resize() {
@@ -270,21 +379,13 @@
         }
       }
 
+      this._alpha0 = null;
       this.orientHandler = (e) => {
         let h = null;
-        let absolute = false;
         if (typeof e.webkitCompassHeading === "number" && !Number.isNaN(e.webkitCompassHeading)) {
           h = e.webkitCompassHeading;
-          absolute = true;
         } else if (e.absolute === true && typeof e.alpha === "number" && !Number.isNaN(e.alpha)) {
           h = norm360(360 - e.alpha);
-          absolute = true;
-        } else if (typeof e.alpha === "number" && !Number.isNaN(e.alpha)) {
-          h = norm360(360 - e.alpha);
-        }
-        if (h == null) return;
-
-        if (!e.webkitCompassHeading) {
           const so =
             (screen.orientation && typeof screen.orientation.angle === "number"
               ? screen.orientation.angle
@@ -292,52 +393,24 @@
                 ? window.orientation
                 : 0) || 0;
           h = norm360(h + so);
+        } else if (typeof e.alpha === "number" && !Number.isNaN(e.alpha)) {
+          // относительный режим: крутится при повороте даже без абсолютного севера
+          if (this._alpha0 == null) this._alpha0 = e.alpha;
+          h = norm360(this._alpha0 - e.alpha);
         }
+        if (h == null) return;
 
         this._compassRaw = h;
         this.liveCompass = true;
         this.hasHeading = true;
-        // почти без задержки — как живой компас
-        this.heading = this.hasHeading && this._compassInited
-          ? lerpAngle(this.heading, h, 0.85)
-          : h;
+        this.heading = this._compassInited ? lerpAngle(this.heading, h, 0.9) : h;
         this._compassInited = true;
+        if (this.elCalDeg) this.elCalDeg.textContent = "курс " + Math.round(this.heading) + "°";
         if (this.running) this._applyCompassRotate();
       };
 
       window.addEventListener("deviceorientationabsolute", this.orientHandler, true);
       window.addEventListener("deviceorientation", this.orientHandler, true);
-
-      // AbsoluteOrientationSensor — если есть
-      try {
-        if (typeof AbsoluteOrientationSensor === "function") {
-          const sensor = new AbsoluteOrientationSensor({ frequency: 30, referenceFrame: "device" });
-          sensor.addEventListener("reading", () => {
-            const q = sensor.quaternion;
-            if (!q) return;
-            const [x, y, z, w] = q;
-            // yaw around Z → heading
-            const siny = 2 * (w * z + x * y);
-            const cosy = 1 - 2 * (y * y + z * z);
-            let yaw = Math.atan2(siny, cosy) * (180 / Math.PI);
-            let h = norm360(-yaw);
-            const so =
-              (screen.orientation && typeof screen.orientation.angle === "number"
-                ? screen.orientation.angle
-                : 0) || 0;
-            h = norm360(h + so);
-            this.liveCompass = true;
-            this.hasHeading = true;
-            this.heading = this._compassInited ? lerpAngle(this.heading || h, h, 0.85) : h;
-            this._compassInited = true;
-            if (this.running) this._applyCompassRotate();
-          });
-          sensor.start();
-          this._absSensor = sensor;
-        }
-      } catch (_) {
-        /* ignore */
-      }
     }
 
     _applyCompassRotate() {
@@ -404,9 +477,14 @@
 
       if (this.unlocked) this.elStatus.textContent = "ПОДСКАЗКА ОТКРЫТА";
       else if (this.chestOpened) this.elStatus.textContent = "СВИТОК!";
-      else if (this.chestReady && this._spinReady) this.elStatus.textContent = "НАЖМИТЕ «ОТКРЫТЬ»";
-      else if (this.chestReady || inRange) this.elStatus.textContent = "КРУТИТЕ РУЧКУ СЕЙФА";
-      else if (this.distance <= this.revealM) this.elStatus.textContent = "КОНТАКТ";
+      else if (this.chestReady || inRange) {
+        const t = this.safeType;
+        if (t === "year") this.elStatus.textContent = "ПРОКРУТИТЕ ГОД";
+        else if (t === "code") this.elStatus.textContent = "ВВЕДИТЕ КОД";
+        else if (t === "dial") this.elStatus.textContent = "НАБЕРИТЕ ШИФР";
+        else if (this._spinReady) this.elStatus.textContent = "НАЖМИТЕ «ОТКРЫТЬ»";
+        else this.elStatus.textContent = "КРУТИТЕ РУЧКУ СЕЙФА";
+      } else if (this.distance <= this.revealM) this.elStatus.textContent = "КОНТАКТ";
       else this.elStatus.textContent = this.liveCompass ? "ВНЕ РАДИУСА · КОМПАС ОК" : "ВНЕ РАДИУСА СКАНИРОВАНИЯ";
     }
 
@@ -426,16 +504,26 @@
         const circ = 2 * Math.PI * 46;
         this.elProgressFg.style.strokeDashoffset = String(circ);
       }
-      if (this.elUnlockBtn) this.elUnlockBtn.hidden = true;
-      if (this.elTapHint) this.elTapHint.textContent = "Крутите ручку пальцем · 3 оборота";
+      const t = this.safeType;
+      if (t === "wheel") {
+        if (this.elUnlockBtn) this.elUnlockBtn.hidden = true;
+        if (this.elTapHint) this.elTapHint.textContent = "Крутите ручку пальцем · 3 оборота";
+      } else if (t === "year") {
+        if (this.elUnlockBtn) this.elUnlockBtn.hidden = false;
+        if (this.elTapHint) this.elTapHint.textContent = this.safePrompt || "Прокрутите год на барабанах";
+      } else if (t === "code") {
+        if (this.elTapHint) this.elTapHint.textContent = this.safePrompt || "Введите код";
+      } else if (t === "dial") {
+        if (this.elUnlockBtn) this.elUnlockBtn.hidden = true;
+        if (this.elTapHint) this.elTapHint.textContent = this.safePrompt || "Крутите диск · 3 числа";
+      }
       if (this.elSafeStage) this.elSafeStage.style.display = "";
-      this.elSafe.classList.remove("vanishing");
       this.elLoot.classList.add("show");
       this.elLoot.setAttribute("aria-hidden", "false");
-      this.elOpenSafe.hidden = false;
-      void this.elSafeStage.offsetWidth;
-      this.elSafeStage.classList.add("rise");
-      this.elStatus.textContent = "КРУТИТЕ РУЧКУ СЕЙФА";
+      requestAnimationFrame(() => {
+        this.elSafeStage.classList.add("rise", "glowing");
+      });
+      this._refreshHud();
     }
 
     _forceShowSafeAndFocus() {
@@ -513,9 +601,9 @@
     }
 
     _revealScroll() {
-      if (!this._spinReady || this.chestOpened) return;
+      if (this.chestOpened) return;
       this.chestOpened = true;
-      this.elUnlockBtn.hidden = true;
+      if (this.elUnlockBtn) this.elUnlockBtn.hidden = true;
       this.elOpenSafe.hidden = true;
       this.elSafe.classList.add("vanishing");
       this.elStatus.textContent = "СВИТОК!";
@@ -525,9 +613,178 @@
       }, 450);
     }
 
+    _tryUnlockSafe() {
+      const type = this.safeType;
+      if (type === "wheel") {
+        if (!this._spinReady) return;
+        this._revealScroll();
+        return;
+      }
+      if (type === "year") {
+        const got = [0, 1, 2, 3].map((i) => String(this._yearDigits[i])).join("");
+        if (got === this.safeCode) this._revealScroll();
+        else {
+          this.elStatus.textContent = "НЕВЕРНЫЙ ГОД";
+          if (this.elTapHint) this.elTapHint.textContent = "Не то — крутите барабаны";
+        }
+        return;
+      }
+      if (type === "code") {
+        if (this._codeBuffer === this.safeCode) this._revealScroll();
+        else {
+          this.elStatus.textContent = "НЕВЕРНЫЙ КОД";
+          this._codeBuffer = "";
+          const disp = this.root.querySelector("#code-display");
+          if (disp) disp.textContent = "****";
+        }
+        return;
+      }
+      if (type === "dial") {
+        const got = this._dialMarks.join("-");
+        if (got === this.safeCode) this._revealScroll();
+        else {
+          this.elStatus.textContent = "НЕВЕРНЫЙ ШИФР";
+          if (this.elTapHint) this.elTapHint.textContent = "Сбросьте и наберите снова: " + this.safeCode;
+        }
+      }
+    }
+
     _openSafe() {
-      // совместимость: если уже готово — открыть
-      if (this._spinReady) this._revealScroll();
+      this._tryUnlockSafe();
+    }
+
+    _bindYearDrums() {
+      this._yearDigits = [0, 0, 0, 0];
+      const cellH = 44;
+      const midStart = 10; // средняя копия 0..9
+      this.root.querySelectorAll(".year-drum").forEach((drum) => {
+        const i = Number(drum.dataset.i);
+        const track = drum.querySelector(".year-track");
+        if (!track) return;
+        // стартуем на «0» средней копии
+        drum.scrollTop = midStart * cellH;
+        this._yearDigits[i] = 0;
+        let snapTimer = null;
+        const readDigit = () => {
+          const idx = Math.round(drum.scrollTop / cellH);
+          this._yearDigits[i] = ((idx % 10) + 10) % 10;
+        };
+        const snap = () => {
+          const idx = Math.round(drum.scrollTop / cellH);
+          const target = idx * cellH;
+          drum.scrollTo({ top: target, behavior: "smooth" });
+          // держим скролл в средней копии
+          const wrapped = midStart + (idx % 10);
+          if (idx < 5 || idx > 24) {
+            requestAnimationFrame(() => {
+              drum.scrollTop = wrapped * cellH;
+            });
+          }
+          readDigit();
+        };
+        drum.addEventListener(
+          "scroll",
+          () => {
+            readDigit();
+            clearTimeout(snapTimer);
+            snapTimer = setTimeout(snap, 80);
+          },
+          { passive: true }
+        );
+      });
+    }
+
+    _bindCodePad() {
+      this._codeBuffer = "";
+      const disp = this.root.querySelector("#code-display");
+      this.root.querySelectorAll(".code-key").forEach((btn) => {
+        btn.onclick = () => {
+          const k = btn.dataset.k;
+          if (k === "C") {
+            this._codeBuffer = "";
+            if (disp) disp.textContent = "****";
+            return;
+          }
+          if (k === "OK") {
+            this._tryUnlockSafe();
+            return;
+          }
+          if (this._codeBuffer.length >= 8) return;
+          this._codeBuffer += k;
+          if (disp) disp.textContent = this._codeBuffer.replace(/./g, "•");
+        };
+      });
+    }
+
+    _bindDial() {
+      this._dialAngle = 0;
+      this._dialMarks = [];
+      const ring = this.root.querySelector("#dial-ring");
+      const knob = this.root.querySelector("#dial-knob");
+      const numEl = this.root.querySelector("#dial-num");
+      const marksEl = this.root.querySelector("#dial-marks");
+      const paint = () => {
+        // 0..39 like classic dial
+        const n = Math.round(norm360(this._dialAngle) / 9) % 40;
+        if (numEl) numEl.textContent = String(n);
+        if (knob) knob.style.transform = `translate(-50%,-50%) rotate(${this._dialAngle}deg)`;
+        if (marksEl) marksEl.textContent = this._dialMarks.length ? this._dialMarks.join("-") : "—";
+        if (this.elUnlockBtn) this.elUnlockBtn.hidden = this._dialMarks.length < 3;
+      };
+      paint();
+      let dragging = false;
+      let last = null;
+      const angAt = (ev) => {
+        const rect = ring.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const pt = ev.touches ? ev.touches[0] : ev;
+        return (Math.atan2(pt.clientY - cy, pt.clientX - cx) * 180) / Math.PI;
+      };
+      ring.addEventListener(
+        "pointerdown",
+        (ev) => {
+          dragging = true;
+          last = angAt(ev);
+          try {
+            ring.setPointerCapture(ev.pointerId);
+          } catch (_) {}
+          ev.preventDefault();
+        },
+        { passive: false }
+      );
+      ring.addEventListener(
+        "pointermove",
+        (ev) => {
+          if (!dragging) return;
+          const a = angAt(ev);
+          let d = a - last;
+          if (d > 180) d -= 360;
+          if (d < -180) d += 360;
+          last = a;
+          this._dialAngle += d;
+          paint();
+          ev.preventDefault();
+        },
+        { passive: false }
+      );
+      const end = () => {
+        dragging = false;
+        last = null;
+      };
+      ring.addEventListener("pointerup", end);
+      ring.addEventListener("pointercancel", end);
+      this.root.querySelector("#dial-mark").onclick = () => {
+        if (this._dialMarks.length >= 3) return;
+        const n = Math.round(norm360(this._dialAngle) / 9) % 40;
+        this._dialMarks.push(n);
+        paint();
+        if (this._dialMarks.length >= 3) this.elStatus.textContent = "ШИФР НАБРАН — ОТКРОЙТЕ";
+      };
+      this.root.querySelector("#dial-reset").onclick = () => {
+        this._dialMarks = [];
+        paint();
+      };
     }
 
     _spawnScroll() {
@@ -776,12 +1033,6 @@
       if (this.orientHandler) {
         window.removeEventListener("deviceorientationabsolute", this.orientHandler, true);
         window.removeEventListener("deviceorientation", this.orientHandler, true);
-      }
-      if (this._absSensor) {
-        try {
-          this._absSensor.stop();
-        } catch (_) {}
-        this._absSensor = null;
       }
       if (this._onSpinMove) window.removeEventListener("pointermove", this._onSpinMove);
       if (this._onSpinEnd) {
