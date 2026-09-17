@@ -144,6 +144,12 @@ body {
     linear-gradient(135deg, rgba(200, 150, 70, 0.12), transparent 45%),
     linear-gradient(165deg, #2a2218, #181410);
 }
+.home-cta.safes {
+  border-color: rgba(200, 90, 100, 0.45);
+  background:
+    linear-gradient(135deg, rgba(200, 70, 90, 0.14), transparent 45%),
+    linear-gradient(165deg, #2a181c, #181014);
+}
 .home-cta-label {
   font-size: 11px;
   text-transform: uppercase;
@@ -154,6 +160,7 @@ body {
 .home-cta.walk .home-cta-label { color: #d4a84b; }
 .home-cta.create .home-cta-label { color: #8fbf9a; }
 .home-cta.test .home-cta-label { color: #c9a06a; }
+.home-cta.safes .home-cta-label { color: #e08a94; }
 .test-banner {
   margin: 0 0 8px;
   padding: 8px 12px;
@@ -557,12 +564,31 @@ body {
   transition: opacity 0.45s ease, visibility 0.45s;
   display: grid;
   place-items: center;
-  background: rgba(0, 0, 0, 0.35);
+  background:
+    radial-gradient(circle at 50% 42%, rgba(160, 20, 35, 0.55) 0%, rgba(40, 8, 12, 0.72) 45%, rgba(0, 0, 0, 0.88) 100%);
 }
 .loot-stage.show {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
+}
+
+.radar-overlay.loot-focus .radar-scope-wrap {
+  background:
+    radial-gradient(circle at 50% 50%, rgba(140, 18, 32, 0.55) 0%, rgba(20, 6, 10, 0.95) 70%, #050304 100%);
+}
+.radar-overlay.loot-focus .radar-crystal-glow {
+  /* статичный красный — без анимаций */
+  transition: none !important;
+  animation: none !important;
+}
+.radar-crystal.frozen .radar-crystal-glow {
+  animation: none !important;
+  transition: none !important;
+}
+
+.radar-hud-open {
+  display: none !important;
 }
 
 .safe-stage {
@@ -583,7 +609,7 @@ body {
   position: absolute;
   inset: -18% -12%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 200, 90, 0.4), transparent 68%);
+  background: radial-gradient(circle, rgba(255, 60, 70, 0.45), transparent 68%);
   opacity: 0;
   filter: blur(10px);
   pointer-events: none;
@@ -591,12 +617,8 @@ body {
   transition: opacity 0.8s ease;
 }
 .safe-stage.glowing .safe-glow {
-  opacity: 1;
-  animation: safe-glow-pulse 1.4s ease-in-out infinite alternate;
-}
-@keyframes safe-glow-pulse {
-  from { opacity: 0.55; filter: blur(8px); }
-  to { opacity: 1; filter: blur(14px) brightness(1.2); }
+  opacity: 0.85;
+  animation: none;
 }
 
 .safe-photo-wrap {
@@ -1097,9 +1119,7 @@ body {
   z-index: 25;
 }
 .radar-hud-open {
-  width: 100%;
-  position: relative;
-  z-index: 25;
+  display: none !important;
 }
 .radar-title {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;

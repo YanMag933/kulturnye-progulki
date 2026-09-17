@@ -97,7 +97,7 @@
               <div class="radar-readout sub" id="radar-bearing">сейф ≤ ${this.unlockM} м</div>
             </div>
           </div>
-          <button type="button" class="btn primary radar-hud-open" id="radar-open-safe" hidden>Открыть сейф</button>
+          <button type="button" class="btn primary radar-hud-open" id="radar-open-safe" hidden style="display:none">Открыть сейф</button>
           <div class="radar-scope-wrap crystal-stage">
             <div class="radar-crystal" id="radar-crystal">
               <div class="radar-crystal-glow" id="radar-crystal-glow"></div>
@@ -268,6 +268,8 @@
       this.elScrollSheet.hidden = true;
       this.elScrollSheet.classList.remove("unfurl");
       this.elSafe.classList.remove("vanishing");
+      this.root.classList.remove("loot-focus");
+      if (this.elCrystal) this.elCrystal.classList.remove("frozen");
       if (this.elSafeStage) {
         this.elSafeStage.style.display = "";
         this.elSafeStage.classList.remove("rise", "glowing");
@@ -449,7 +451,8 @@
       if (this.elBearing) this.elBearing.textContent = "сейф ≤ " + this.unlockM + " м";
 
       const inRange = this.distance <= this.unlockM;
-      this.elOpenSafe.hidden = !(inRange || this.chestReady) || this.chestOpened || this.unlocked;
+      // верхняя «Открыть сейф» убрана — открытие только у сейфа снизу
+      if (this.elOpenSafe) this.elOpenSafe.hidden = true;
 
       if (this.unlocked) this.elStatus.textContent = "ПОДСКАЗКА ОТКРЫТА";
       else if (this.chestOpened) this.elStatus.textContent = "СВИТОК!";
@@ -499,6 +502,8 @@
       if (this.elSafeStage) this.elSafeStage.style.display = "";
       this.elLoot.classList.add("show");
       this.elLoot.setAttribute("aria-hidden", "false");
+      this.root.classList.add("loot-focus");
+      this._freezeCrystalGlow();
       requestAnimationFrame(() => {
         this.elSafeStage.classList.add("rise", "glowing");
       });
@@ -584,9 +589,11 @@
       if (this.chestOpened) return;
       this.chestOpened = true;
       if (this.elUnlockBtn) this.elUnlockBtn.hidden = true;
-      this.elOpenSafe.hidden = true;
+      if (this.elOpenSafe) this.elOpenSafe.hidden = true;
       this.elSafe.classList.add("vanishing");
       this.elStatus.textContent = "СВИТОК!";
+      this.root.classList.add("loot-focus");
+      this._freezeCrystalGlow();
       setTimeout(() => {
         this.elSafeStage.style.display = "none";
         this._spawnScroll();
@@ -770,6 +777,8 @@
     _spawnScroll() {
       if (this.scrollReady) return;
       this.scrollReady = true;
+      this.root.classList.add("loot-focus");
+      this._freezeCrystalGlow();
       this.elScrollFly.hidden = false;
       requestAnimationFrame(() => this.elScrollFly.classList.add("fly"));
     }
@@ -777,6 +786,8 @@
     _openScroll() {
       if (this.scrollOpened) return;
       this.scrollOpened = true;
+      this.root.classList.add("loot-focus");
+      this._freezeCrystalGlow();
       this.elScrollFly.classList.add("hide");
       this.elScrollHint.textContent = this.hintText;
       this.elScrollSheet.hidden = false;
@@ -807,8 +818,14 @@
       const glow = this.elCrystalGlow;
       if (!el || !glow) return;
 
-      // кристалл всегда чёткий и видимый; пульсирует только красный свет
+      // кристалл всегда чёткий; пульсирует только красный свет — и только пока нет сейфа/свитка
       el.classList.add("active");
+      const lootFocus = this.chestReady || this.chestOpened || this.scrollOpened || this.unlocked;
+      if (lootFocus) {
+        this._freezeCrystalGlow();
+        return;
+      }
+
       const dist = this.distance;
       const inRange = dist != null && dist <= this.revealM;
 
@@ -826,13 +843,23 @@
       const period = 2.6 - t * 2.4;
       this._crystalPhase += (0.016 * Math.PI * 2) / Math.max(0.18, period);
       const wave = (Math.sin(this._crystalPhase) + 1) / 2;
-      // тускло/редко далеко, ярко/часто близко — только glow
       const alpha = (0.08 + t * 0.92) * (0.15 + wave * 0.85);
       const size = 0.7 + t * 0.9 + wave * (0.05 + t * 0.15);
       el.style.setProperty("--glow-alpha", String(alpha.toFixed(3)));
       el.style.setProperty("--glow-size", String(size.toFixed(3)));
       el.classList.toggle("hot", t > 0.72);
-      el.classList.toggle("near", this.chestReady || dist <= this.unlockM);
+      el.classList.toggle("near", dist <= this.unlockM);
+    }
+
+    _freezeCrystalGlow() {
+      const el = this.elCrystal;
+      if (!el) return;
+      el.classList.add("active", "frozen");
+      el.classList.remove("hot", "near");
+      // статичное красное свечение — без мигания
+      el.style.setProperty("--glow-alpha", "0.72");
+      el.style.setProperty("--glow-size", "1.15");
+      this.root.classList.add("loot-focus");
     }
 
     close() {
