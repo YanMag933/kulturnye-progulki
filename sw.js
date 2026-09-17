@@ -1,5 +1,5 @@
 /* Service worker — offline PWA cache */
-const CACHE = "kultprogulki-v13";
+const CACHE = "kultprogulki-v14";
 const ASSETS = [
   "./",
   "./index.html",
@@ -22,8 +22,7 @@ const ASSETS = [
   "./icon.svg",
   "./icon-512.png",
   "./apple-touch-icon.png",
-  "./assets/ui/safe-closed.png",
-  "./assets/ui/safe-open.png",
+  "./assets/ui/safe-body.png",
   "./assets/ui/safe-handle.png",
   "./assets/ui/scroll-rolled.png",
   "./assets/ui/scroll-unrolled.png",

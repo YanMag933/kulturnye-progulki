@@ -583,24 +583,35 @@ body {
   border: 0;
   padding: 0;
   background: transparent;
-  cursor: pointer;
   z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.7));
+  transition: opacity 0.4s ease, transform 0.45s ease;
+}
+.safe-photo-wrap.vanishing {
+  opacity: 0;
+  transform: scale(0.85);
+  pointer-events: none;
 }
 .safe-tap-hint {
   font-size: 13px;
   color: #f0d9a8;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
   letter-spacing: 0.04em;
+  margin: 0;
+  text-align: center;
+}
+.safe-unlock-btn {
+  width: min(100%, 280px);
+  z-index: 6;
 }
 .safe-photo-stack {
   position: relative;
   width: 100%;
-  aspect-ratio: 732 / 956;
+  aspect-ratio: 720 / 660;
 }
 .safe-img {
   position: absolute;
@@ -613,50 +624,52 @@ body {
   user-select: none;
   -webkit-user-drag: none;
 }
-.safe-img-closed {
-  opacity: 1;
+.safe-img-body {
   z-index: 1;
-  transition: opacity 0.55s ease;
 }
-.safe-img-open {
-  opacity: 0;
+/* progress ring around handle: cx 66.667%, cy 46.515%, size ~44% */
+.safe-progress {
+  position: absolute;
+  left: 66.667%;
+  top: 46.515%;
+  width: 48%;
+  height: auto;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%) rotate(-90deg);
   z-index: 2;
-  transition: opacity 0.7s ease;
+  pointer-events: none;
+  overflow: visible;
 }
-/* handle overlay: cx=433/732≈59.15%, cy=531/956≈55.54%, size≈26% width */
+.safe-progress-bg {
+  fill: none;
+  stroke: rgba(255, 220, 140, 0.2);
+  stroke-width: 3.5;
+}
+.safe-progress-fg {
+  fill: none;
+  stroke: #f0c14a;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.05s linear;
+  filter: drop-shadow(0 0 4px rgba(240, 193, 74, 0.65));
+}
 .safe-handle-spin {
   position: absolute;
-  left: 59.15%;
-  top: 55.54%;
-  width: 26.2%;
+  left: 66.667%;
+  top: 46.515%;
+  width: 43.9%;
   height: auto;
   transform: translate(-50%, -50%) rotate(0deg);
   z-index: 3;
-  pointer-events: none;
+  cursor: grab;
+  touch-action: none;
   user-select: none;
   -webkit-user-drag: none;
   transform-origin: 50% 50%;
-  transition: opacity 0.35s ease;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.45));
 }
-.safe-photo-wrap.unlocking .safe-handle-spin {
-  animation: safe-handle-turn 1.05s cubic-bezier(0.2, 0.75, 0.25, 1) forwards;
-}
-@keyframes safe-handle-turn {
-  0% { transform: translate(-50%, -50%) rotate(0deg); }
-  40% { transform: translate(-50%, -50%) rotate(-95deg); }
-  100% { transform: translate(-50%, -50%) rotate(360deg); }
-}
-.safe-photo-wrap.opening .safe-img-open,
-.safe-photo-wrap.opened .safe-img-open {
-  opacity: 1;
-}
-.safe-photo-wrap.opening .safe-img-closed,
-.safe-photo-wrap.opened .safe-img-closed {
-  opacity: 0;
-}
-.safe-photo-wrap.opening .safe-handle-spin,
-.safe-photo-wrap.opened .safe-handle-spin {
-  opacity: 0;
+.safe-handle-spin:active {
+  cursor: grabbing;
 }
 
 .scroll-fly {
@@ -861,6 +874,28 @@ body {
     0 0 0 8px rgba(20,30,24,0.95),
     0 20px 50px rgba(0,0,0,.55),
     inset 0 0 40px rgba(0,0,0,.55);
+}
+.radar-you-marker {
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  color: #ffe08a;
+  font-size: 18px;
+  line-height: 1;
+  text-shadow: 0 0 8px rgba(255, 200, 80, 0.7), 0 2px 4px rgba(0,0,0,.8);
+  pointer-events: none;
+}
+.radar-compass-disk {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  transition: transform 0.08s linear;
+  will-change: transform;
+  z-index: 1;
 }
 .radar-canvas {
   display: block;
