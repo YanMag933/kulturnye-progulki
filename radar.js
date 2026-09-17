@@ -99,7 +99,7 @@
           </div>
           <div class="radar-legend">
             <span>кольца · ${Math.round(this.revealM / 4)} / ${Math.round(this.revealM / 2)} / ${Math.round((3 * this.revealM) / 4)} / ${this.revealM} м</span>
-            <span>контакт &lt; ${this.revealM} м · сундук ≤ ${this.unlockM} м · верх = взгляд</span>
+            <span>контакт &lt; ${this.revealM} м · сейф ≤ ${this.unlockM} м · верх = взгляд</span>
           </div>
           <div class="radar-actions">
             <button type="button" class="btn primary" id="radar-demo-near">Симуляция: подойти ближе</button>
@@ -109,16 +109,32 @@
         </div>
 
         <div class="loot-stage" id="loot-stage" aria-hidden="true">
-          <div class="chest-stage" id="chest-stage">
-            <div class="chest-glow" aria-hidden="true"></div>
-            <button type="button" class="chest-3d" id="radar-chest" aria-label="Открыть сундук">
-              <div class="chest-interior" aria-hidden="true"></div>
-              <img class="chest-body" src="assets/ui/chest-body.png" alt="Сундук" draggable="false" />
-              <div class="chest-pivot">
-                <img class="chest-lid" src="assets/ui/chest-lid.png" alt="" draggable="false" />
+          <div class="safe-stage" id="safe-stage">
+            <div class="safe-glow" aria-hidden="true"></div>
+            <button type="button" class="safe-unit" id="radar-safe" aria-label="Открыть сейф">
+              <div class="safe-casing">
+                <div class="safe-bolts" aria-hidden="true"></div>
+                <div class="safe-interior" aria-hidden="true">
+                  <div class="safe-shelf"></div>
+                </div>
+                <div class="safe-door" id="safe-door">
+                  <div class="safe-door-face">
+                    <div class="safe-brand">KP SAFE</div>
+                    <div class="safe-dial-wrap">
+                      <div class="safe-dial" id="safe-dial">
+                        <div class="safe-dial-marks"></div>
+                        <div class="safe-dial-knob"></div>
+                        <div class="safe-dial-pointer"></div>
+                      </div>
+                    </div>
+                    <div class="safe-handle"></div>
+                    <div class="safe-hinge safe-hinge-t"></div>
+                    <div class="safe-hinge safe-hinge-b"></div>
+                  </div>
+                </div>
               </div>
+              <span class="safe-tap-hint" id="safe-tap-hint">Нажмите, чтобы открыть</span>
             </button>
-            <button type="button" class="btn primary chest-open-btn" id="chest-open-btn">Открыть сейф</button>
           </div>
 
           <button type="button" class="scroll-fly" id="scroll-fly" hidden aria-label="Открыть свиток">
@@ -143,10 +159,12 @@
       this.elDist = root.querySelector("#radar-dist");
       this.elBearing = root.querySelector("#radar-bearing");
       this.elLoot = root.querySelector("#loot-stage");
-      this.elChestStage = root.querySelector("#chest-stage");
-      this.elChest = root.querySelector("#radar-chest");
+      this.elSafeStage = root.querySelector("#safe-stage");
+      this.elSafe = root.querySelector("#radar-safe");
+      this.elDial = root.querySelector("#safe-dial");
+      this.elDoor = root.querySelector("#safe-door");
       this.elOpenSafe = root.querySelector("#radar-open-safe");
-      this.elChestOpenBtn = root.querySelector("#chest-open-btn");
+      this.elTapHint = root.querySelector("#safe-tap-hint");
       this.elScrollFly = root.querySelector("#scroll-fly");
       this.elScrollSheet = root.querySelector("#scroll-sheet");
       this.elScrollHint = root.querySelector("#scroll-hint-text");
@@ -163,7 +181,6 @@
         this._updateMetrics();
       };
       this.elDemoTurn.onclick = () => {
-        // симуляция поворота корпуса: сдвигаем heading (или фиксированный азимут цели в north-up)
         if (this.hasHeading || !this.demo) {
           this.heading = norm360(this.heading + 45);
           this.hasHeading = true;
@@ -172,9 +189,8 @@
         }
         this._updateMetrics();
       };
-      this.elOpenSafe.onclick = () => this._forceShowChestAndFocus();
-      this.elChest.onclick = () => this._openChest();
-      this.elChestOpenBtn.onclick = () => this._openChest();
+      this.elOpenSafe.onclick = () => this._forceShowSafeAndFocus();
+      this.elSafe.onclick = () => this._openSafe();
       this.elScrollFly.onclick = () => this._openScroll();
       root.querySelector("#scroll-done").onclick = () => this._setUnlockedAndLeave();
 
@@ -333,16 +349,14 @@
       this.elLoot.classList.add("show");
       this.elLoot.setAttribute("aria-hidden", "false");
       this.elOpenSafe.hidden = false;
-      // force reflow, then rise — иначе transition может не стартовать
-      void this.elChestStage.offsetWidth;
-      this.elChestStage.classList.add("rise");
+      void this.elSafeStage.offsetWidth;
+      this.elSafeStage.classList.add("rise");
       this.elStatus.textContent = "СЕЙФ РЯДОМ — ОТКРОЙТЕ";
     }
 
-    _forceShowChestAndFocus() {
+    _forceShowSafeAndFocus() {
       if (this.unlocked) return;
       if (this.distance == null || this.distance > this.unlockM) {
-        // в демо форсируем дистанцию в радиус сейфа
         if (this.demo) {
           this.demoDist = Math.min(this.demoDist, this.unlockM - 1);
           this._updateMetrics();
@@ -353,26 +367,30 @@
       }
       this._maybeShowChest();
       if (!this.chestOpened) {
-        // если сундук уже на экране — сразу открываем
-        if (this.elChestStage.classList.contains("rise")) this._openChest();
-        else setTimeout(() => this._openChest(), 950);
+        if (this.elSafeStage.classList.contains("rise")) this._openSafe();
+        else setTimeout(() => this._openSafe(), 700);
       }
     }
 
-    _openChest() {
+    _openSafe() {
       if (this.chestOpened || this.unlocked) return;
       if (!this.chestReady) this._maybeShowChest();
       this.chestOpened = true;
       this.elOpenSafe.hidden = true;
-      this.elChestOpenBtn.hidden = true;
-      this.elChest.classList.add("opening");
-      this.elChestStage.classList.add("glowing");
-      this.elStatus.textContent = "ОТКРЫВАЕМ…";
+      if (this.elTapHint) this.elTapHint.hidden = true;
+      this.elSafe.classList.add("unlocking");
+      this.elSafeStage.classList.add("glowing");
+      this.elStatus.textContent = "КОД…";
+      // dial spin → door open → scroll
       setTimeout(() => {
-        this.elChest.classList.add("opened");
+        this.elSafe.classList.add("opening");
+        this.elStatus.textContent = "ОТКРЫВАЕМ…";
+      }, 900);
+      setTimeout(() => {
+        this.elSafe.classList.add("opened");
         this.elStatus.textContent = "СВИТОК!";
-      }, 1050);
-      setTimeout(() => this._spawnScroll(), 1450);
+      }, 1750);
+      setTimeout(() => this._spawnScroll(), 2100);
     }
 
     _spawnScroll() {

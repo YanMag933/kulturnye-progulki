@@ -1,15 +1,20 @@
 (() => {
+  const TEST_MODE = new URLSearchParams(location.search).has("test");
+  const TEST_PROGRESS_KEY = "kultprogulki.progress.test";
   const app = document.getElementById("app");
   let quest = KP.ensureDemoQuest();
-  let progress = KP.loadProgress();
+  let progress = TEST_MODE
+    ? JSON.parse(localStorage.getItem(TEST_PROGRESS_KEY) || "null")
+    : KP.loadProgress();
   if (!progress || progress.questId !== quest.id) {
     progress = { questId: quest.id, stepIndex: -1, answers: [], startedAt: Date.now() };
-    KP.saveProgress(progress);
+    save();
   }
   let uiState = {};
 
   function save() {
-    KP.saveProgress(progress);
+    if (TEST_MODE) localStorage.setItem(TEST_PROGRESS_KEY, JSON.stringify(progress));
+    else KP.saveProgress(progress);
   }
 
   function startWalk() {
@@ -19,6 +24,25 @@
     uiState = {};
     save();
     render();
+  }
+
+  function prevStep() {
+    stopCamera();
+    if (uiState.radar) {
+      uiState.radar.close();
+      uiState.radar = null;
+    }
+    if (progress.stepIndex > 0) {
+      progress.stepIndex -= 1;
+      uiState = {};
+      save();
+      render();
+    } else if (progress.stepIndex === 0) {
+      progress.stepIndex = -1;
+      uiState = {};
+      save();
+      render();
+    }
   }
 
   function nextStep() {
@@ -39,11 +63,121 @@
     }
   }
 
+  function stepIsComplete() {
+    if (progress.stepIndex < 0) return true;
+    const step = currentStep();
+    if (!step) return true;
+    const ui = step.ui || "generic";
+    if (ui === "geo") return !!uiState.unlocked;
+    if (ui === "contour") return !!uiState.done || uiState.phase === "done";
+    return !!uiState.done;
+  }
+
+  /** В тестовом режиме: заполняет правильный ответ / отмечает опции. */
+  function autoSolveCurrent() {
+    const step = currentStep();
+    if (!step) return;
+    const ui = step.ui || "generic";
+    stopCamera();
+    if (uiState.radar) {
+      uiState.radar.close();
+      uiState.radar = null;
+    }
+
+    if (ui === "contour") {
+      uiState.guessed = true;
+      uiState.done = true;
+      uiState.phase = "done";
+      setFeedback("Тест: верный ответ показан", "ok");
+      renderContour(step);
+      return;
+    }
+    if (ui === "geo") {
+      uiState.unlocked = true;
+      setFeedback("Тест: сейф открыт", "ok");
+      renderStep();
+      return;
+    }
+    if (ui === "detail" || ui === "quiz" || ui === "finale") {
+      uiState.done = true;
+      renderStep();
+      requestAnimationFrame(() => {
+        const opts = app.querySelectorAll(".opt");
+        opts.forEach((b, i) => {
+          b.classList.toggle("correct", i === step.correctIndex);
+          b.classList.remove("wrong");
+        });
+        const fact = document.getElementById("fact");
+        if (fact) fact.innerHTML = `<div class="fact-box">${step.fact || ""}</div>`;
+        setFeedback("Тест: верный вариант отмечен", "ok");
+      });
+      return;
+    }
+    if (ui === "puzzle") {
+      const tiles = step.puzzleTiles || [];
+      uiState.order = tiles.map((_, i) => i);
+      uiState.done = true;
+      setFeedback("Тест: панно собрано", "ok");
+      renderPuzzle(step);
+      return;
+    }
+    if (ui === "circle") {
+      uiState.doneCp = (step.checkpoints || []).map((_, i) => i);
+      uiState.done = true;
+      setFeedback("Тест: обход отмечен", "ok");
+      renderCircle(step);
+      return;
+    }
+    if (ui === "mosaic") {
+      uiState.sel = {};
+      (step.pairs || []).forEach((p, i) => {
+        uiState.sel[i] = p.target;
+      });
+      uiState.done = true;
+      setFeedback("Тест: пары заполнены", "ok");
+      renderMosaic(step);
+      return;
+    }
+    if (ui === "plaque" || ui === "year" || ui === "count") {
+      uiState.done = true;
+      const ans =
+        ui === "count" ? String(step.correctNumber) : String(step.expected || "");
+      renderStep();
+      requestAnimationFrame(() => {
+        const input = document.getElementById("answer");
+        if (input) input.value = ans;
+        const fact = document.getElementById("fact");
+        if (fact) fact.innerHTML = `<div class="fact-box">${step.fact || ""}</div>`;
+        setFeedback("Тест: ответ подставлен — " + ans, "ok");
+      });
+      return;
+    }
+    if (ui === "myth") {
+      uiState.marks = (step.statements || []).map((s) => s.truth);
+      uiState.done = true;
+      renderStep();
+      requestAnimationFrame(() => {
+        app.querySelectorAll("[data-v]").forEach((btn) => {
+          const i = Number(btn.dataset.i);
+          const want = btn.dataset.v === "true";
+          if (uiState.marks[i] === want) btn.style.borderColor = "var(--accent)";
+        });
+        const fact = document.getElementById("fact");
+        if (fact) fact.innerHTML = `<div class="fact-box">${step.fact || ""}</div>`;
+        setFeedback("Тест: миф/факт отмечены", "ok");
+      });
+      return;
+    }
+    uiState.done = true;
+    setFeedback("Тест: засчитано", "ok");
+    renderStep();
+  }
+
   function currentStep() {
     return quest.steps[progress.stepIndex];
   }
 
-  function shell(inner, footer) {
+  function shell(inner, footerHtml) {
     const dots =
       progress.stepIndex < 0
         ? ""
@@ -63,27 +197,48 @@
           <a href="index.html">← Меню</a>
           <a href="create.html">Создать</a>
         </div>
-        <h1 class="walk-title">${quest.title}</h1>
+        ${TEST_MODE ? `<p class="test-banner">ТЕСТОВАЯ ПРОГУЛКА · Далее подставляет ответ</p>` : ""}
+        <h1 class="walk-title">${quest.title}${TEST_MODE ? " · тест" : ""}</h1>
         <p class="walk-meta">${quest.zoneLabel} · ${quest.difficultyLabel} · ${quest.durationHint}</p>
         ${dots}
       </div>
       ${inner}
-      ${footer || ""}
+      ${footerHtml || ""}
     `;
   }
 
   function footer(canNext, feedback) {
+    const nextEnabled = TEST_MODE || canNext;
+    const backBtn = TEST_MODE
+      ? `<button type="button" class="btn ghost" id="prev">Назад</button>`
+      : "";
     return `<div class="walk-footer">
       <div class="feedback ${feedback?.cls || ""}" id="feedback">${feedback?.text || ""}</div>
-      <button type="button" class="btn primary" id="next" ${canNext ? "" : "disabled"}>
-        ${progress.stepIndex >= quest.steps.length - 1 ? "Завершить" : "Далее"}
-      </button>
+      <div class="walk-footer-row">
+        ${backBtn}
+        <button type="button" class="btn primary" id="next" ${nextEnabled ? "" : "disabled"}>
+          ${progress.stepIndex >= quest.steps.length - 1 ? "Завершить" : "Далее"}
+        </button>
+      </div>
     </div>`;
   }
 
   function bindNext(enabled) {
     const btn = document.getElementById("next");
+    const prev = document.getElementById("prev");
+    if (prev) prev.onclick = () => prevStep();
     if (!btn) return;
+    if (TEST_MODE) {
+      btn.disabled = false;
+      btn.onclick = () => {
+        if (!stepIsComplete()) {
+          autoSolveCurrent();
+          return;
+        }
+        nextStep();
+      };
+      return;
+    }
     btn.disabled = !enabled;
     btn.onclick = () => nextStep();
   }
@@ -279,9 +434,13 @@
   function renderStart() {
     shell(
       `<div class="start-hero">
-        <p class="eyebrow">Режим игрока</p>
+        <p class="eyebrow">${TEST_MODE ? "Режим проверки" : "Режим игрока"}</p>
         <h1>${quest.title}</h1>
-        <p class="muted">${quest.subtitle}</p>
+        <p class="muted">${
+          TEST_MODE
+            ? "Далее подставляет верный ответ или отмечает вариант — можно пройти все шаги без ввода."
+            : quest.subtitle
+        }</p>
         <div class="map-fake">Кластер точек · ${quest.zoneLabel}</div>
         <div class="steps-mini">
           ${quest.steps
@@ -291,7 +450,7 @@
             )
             .join("")}
         </div>
-        <button type="button" class="btn primary" id="start">Начать прогулку</button>
+        <button type="button" class="btn primary" id="start">${TEST_MODE ? "Смотреть задания" : "Начать прогулку"}</button>
         <button type="button" class="btn ghost" id="rebuild">Новая сборка из базы (без повторов)</button>
         <button type="button" class="btn ghost" id="import">Импорт JSON</button>
         <input type="file" id="file" accept="application/json,.json" hidden />
@@ -528,7 +687,7 @@
           hintText: step.unlockedText || step.fact || "Подсказка открыта.",
           onUnlock: () => {
             uiState.unlocked = true;
-            setFeedback("Сундук открыт. Подсказка получена.", "ok");
+            setFeedback("Сейф открыт. Подсказка получена.", "ok");
             bindNext(true);
           },
           onClose: () => {
