@@ -13,7 +13,7 @@
     <div class="panel" style="margin:16px;text-align:center">
       <p class="eyebrow">Тест ассетов</p>
       <h1 class="walk-title" style="font-size:1.4rem">Прогон сейфов</h1>
-      <p class="muted">Переключайте типы и подгоняйте картинки. Без GPS.</p>
+      <p class="muted">Сначала выберите тип сейфа — он появится. Крестик закрывает и даёт выбрать другой.</p>
       <p><a href="index.html">← Меню</a></p>
     </div>
   </div>
@@ -27,6 +27,7 @@
         unlockM: 35,
         revealM: 300,
         demo: true,
+        fitMode: true,
         safeType: "wheel",
         safeCode: "",
         safePrompt: "Крутите ручку · 3 оборота",
@@ -38,13 +39,6 @@
         },
       });
       radar.start();
-      // сразу показать первый сейф для подгонки
-      requestAnimationFrame(() => {
-        radar.demoDist = 10;
-        radar._updateMetrics();
-        radar._forceShowSafeAndFocus();
-        radar._syncDemoSafeUi();
-      });
     })();
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("./sw.js").catch(() => {});

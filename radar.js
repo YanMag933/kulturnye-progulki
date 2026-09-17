@@ -52,6 +52,7 @@
       this.onClose = opts.onClose || (() => {});
       this.hintText = opts.hintText || "Подсказка открыта.";
       this.demo = !!opts.demo;
+      this.fitMode = !!opts.fitMode; // прогон сейфов: без автопоказа
       this.safeType = opts.safeType || "wheel"; // wheel | year | code | dial
       this.safeCode = String(opts.safeCode || "").trim();
       this.safePrompt = opts.safePrompt || "";
@@ -124,6 +125,7 @@
         </div>
 
         <div class="loot-stage" id="loot-stage" aria-hidden="true">
+          <button type="button" class="loot-close-x" id="loot-close-x" aria-label="Закрыть сейф">×</button>
           <div class="safe-stage" id="safe-stage">
             <div class="safe-glow" aria-hidden="true"></div>
             <div class="safe-photo-wrap" id="radar-safe"></div>
@@ -162,6 +164,7 @@
       this.elDemoSafes = root.querySelector("#radar-demo-safes");
       this.elDemoSafeLabel = root.querySelector("#radar-demo-safe-label");
       this.elDemoSafeNext = root.querySelector("#radar-demo-safe-next");
+      this.elLootClose = root.querySelector("#loot-close-x");
       this.elCrystal = root.querySelector("#radar-crystal");
       this.elCrystalGlow = root.querySelector("#radar-crystal-glow");
       this._crystalPhase = 0;
@@ -170,6 +173,7 @@
         0,
         DEMO_SAFE_CYCLE.findIndex((s) => s.type === this.safeType)
       );
+      this._demoSafePicked = false;
 
       this._spinTurnsNeeded = 3;
       this._spinAccum = 0;
@@ -202,11 +206,20 @@
       root.querySelectorAll(".demo-safe-btn").forEach((btn) => {
         btn.onclick = () => this._setDemoSafeType(btn.dataset.safe);
       });
+      if (this.elLootClose) {
+        this.elLootClose.onclick = () => this._hideLootPanel();
+      }
       this.elOpenSafe.onclick = () => this._forceShowSafeAndFocus();
       this.elScrollFly.onclick = () => this._openScroll();
       root.querySelector("#scroll-done").onclick = () => this._setUnlockedAndLeave();
 
       this._updateCrystal();
+      if (this.fitMode) {
+        this.demoDist = Math.max(this.revealM + 80, 400);
+        this.elStatus.textContent = "ВЫБЕРИТЕ СЕЙФ";
+        if (this.elDemoNear) this.elDemoNear.hidden = true;
+        this._syncDemoSafeUi();
+      }
     }
 
     _syncDemoSafeUi() {
@@ -214,10 +227,12 @@
       this.elDemoSafes.hidden = !this.demo;
       const cur = DEMO_SAFE_CYCLE[this._demoSafeIdx] || DEMO_SAFE_CYCLE[0];
       if (this.elDemoSafeLabel) {
-        this.elDemoSafeLabel.textContent = "Сейф: " + (cur.label || cur.type);
+        this.elDemoSafeLabel.textContent = this._demoSafePicked
+          ? "Сейф: " + (cur.label || cur.type)
+          : "Выберите сейф";
       }
       this.root.querySelectorAll(".demo-safe-btn").forEach((btn) => {
-        btn.classList.toggle("active", btn.dataset.safe === this.safeType);
+        btn.classList.toggle("active", this._demoSafePicked && btn.dataset.safe === this.safeType);
       });
     }
 
@@ -241,6 +256,7 @@
       this.safeType = spec.type;
       this.safeCode = String(spec.code || "");
       this.safePrompt = spec.prompt || "";
+      this._demoSafePicked = true;
       // сброс прогресса открытия, чтобы сразу подогнать новый ассет
       this.chestReady = false;
       this.chestOpened = false;
@@ -274,12 +290,49 @@
         this.elSafeStage.style.display = "";
         this.elSafeStage.classList.remove("rise", "glowing");
       }
+      this.elLoot.classList.remove("show");
+      this.elLoot.setAttribute("aria-hidden", "true");
       this._mountSafePanel();
       this._syncDemoSafeUi();
-      this.demoDist = Math.min(this.demoDist ?? this.unlockM - 1, this.unlockM - 1);
+      // показываем сейф только после выбора типа
+      this.demoDist = Math.min(this.unlockM - 1, 10);
       this.distance = this.demoDist;
       this._forceShowSafeAndFocus();
       this.elStatus.textContent = "ДЕМО · СЕЙФ: " + (spec.label || spec.type).toUpperCase();
+    }
+
+    _hideLootPanel() {
+      // закрыть сейф/свиток и вернуться к выбору
+      this.chestReady = false;
+      this.chestOpened = false;
+      this.scrollReady = false;
+      this.scrollOpened = false;
+      this.unlocked = false;
+      this._spinAccum = 0;
+      this._spinAngle = 0;
+      this._spinReady = false;
+      this._demoSafePicked = false;
+      this.elScrollFly.hidden = true;
+      this.elScrollFly.classList.remove("fly", "hide");
+      this.elScrollSheet.hidden = true;
+      this.elScrollSheet.classList.remove("unfurl");
+      this.elSafe.classList.remove("vanishing");
+      if (this.elSafeStage) {
+        this.elSafeStage.style.display = "";
+        this.elSafeStage.classList.remove("rise", "glowing");
+      }
+      this.elLoot.classList.remove("show");
+      this.elLoot.setAttribute("aria-hidden", "true");
+      this.root.classList.remove("loot-focus");
+      if (this.elCrystal) this.elCrystal.classList.remove("frozen");
+      if (this.demo) {
+        this.demoDist = Math.max(this.revealM + 80, 400);
+        this.distance = this.demoDist;
+      }
+      this._syncDemoSafeUi();
+      this._updateCrystal();
+      this._refreshHud();
+      if (this.fitMode || this.demo) this.elStatus.textContent = "ВЫБЕРИТЕ СЕЙФ";
     }
 
     _mountSafePanel() {
@@ -387,7 +440,12 @@
       this.running = true;
 
       if (this.demo) {
-        this.demoDist = Math.max(this.revealM - 40, 220);
+        if (this.fitMode) {
+          this.demoDist = Math.max(this.revealM + 80, 400);
+          this.elStatus.textContent = "ВЫБЕРИТЕ СЕЙФ";
+        } else {
+          this.demoDist = Math.max(this.revealM - 40, 220);
+        }
         this.demoAngle = 40;
         this._syncDemoSafeUi();
         this._updateMetrics();
