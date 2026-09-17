@@ -187,6 +187,28 @@ body {
   align-items: center;
 }
 .home-install { width: 100%; text-align: center; }
+.home-settings {
+  width: 100%;
+  margin-top: 8px;
+  padding: 14px 14px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(212, 168, 75, 0.22);
+  background: rgba(20, 16, 12, 0.55);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+}
+.home-settings-label {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #a89878;
+  font-weight: 600;
+  text-align: center;
+}
+.home-settings .btn { width: 100%; }
 .home-premium .home-note {
   margin: 0;
   text-align: center;

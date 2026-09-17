@@ -42,6 +42,11 @@
 
       <footer class="home-foot">
         <button type="button" class="btn ghost home-install" id="btn-install" hidden>Установить на телефон</button>
+        <div class="home-settings">
+          <p class="home-settings-label">Настройки</p>
+          <button type="button" class="btn primary" id="btn-update-app">Обновить приложение</button>
+          <p class="home-note" id="update-note">Та же ссылка · сброс кэша и загрузка новой версии</p>
+        </div>
         <p class="home-note" id="home-note"></p>
       </footer>
     </main>
@@ -68,6 +73,28 @@
       deferred.prompt();
       deferred = null;
       document.getElementById("btn-install").hidden = true;
+    };
+
+    document.getElementById("btn-update-app").onclick = async () => {
+      const btn = document.getElementById("btn-update-app");
+      const note = document.getElementById("update-note");
+      btn.disabled = true;
+      note.textContent = "Обновляем…";
+      try {
+        if ("serviceWorker" in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map((r) => r.unregister()));
+        }
+        if (window.caches) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((k) => caches.delete(k)));
+        }
+      } catch (_) {
+        /* всё равно перезагрузим */
+      }
+      const url = new URL(location.href);
+      url.searchParams.set("v", String(Date.now()));
+      location.replace(url.pathname + url.search + url.hash);
     };
 
     if ("serviceWorker" in navigator) {
