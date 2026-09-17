@@ -187,7 +187,8 @@
       this._calDone = true;
       this.needsCalibration = false;
 
-      this._mountSafePanel();
+      // в fitMode сейф монтируем только после выбора типа
+      if (!this.fitMode) this._mountSafePanel();
       this._syncDemoSafeUi();
 
       root.querySelector("#radar-close").onclick = () => this.close();
@@ -512,6 +513,11 @@
       // верхняя «Открыть сейф» убрана — открытие только у сейфа снизу
       if (this.elOpenSafe) this.elOpenSafe.hidden = true;
 
+      if (this.fitMode && !this._demoSafePicked && !this.chestReady) {
+        this.elStatus.textContent = "ВЫБЕРИТЕ СЕЙФ";
+        return;
+      }
+
       if (this.unlocked) this.elStatus.textContent = "ПОДСКАЗКА ОТКРЫТА";
       else if (this.chestOpened) this.elStatus.textContent = "СВИТОК!";
       else if (this.chestReady || inRange) {
@@ -530,6 +536,8 @@
 
     _maybeShowChest() {
       if (this.unlocked || this.chestOpened) return;
+      // прогон сейфов: не всплывать само — только после выбора типа
+      if (this.fitMode && !this._demoSafePicked) return;
       if (this.distance == null || this.distance > this.unlockM) return;
       if (this.chestReady) {
         this._refreshHud();

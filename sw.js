@@ -1,5 +1,5 @@
 /* Service worker — offline PWA cache */
-const CACHE = "kultprogulki-v21";
+const CACHE = "kultprogulki-v22";
 const ASSETS = [
   "./",
   "./index.html",
@@ -45,6 +45,31 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
+  const url = new URL(req.url);
+  const path = url.pathname;
+  // HTML/JS/CSS — сначала сеть, чтобы правки UI не залипали в кэше
+  const networkFirst =
+    req.mode === "navigate" ||
+    path.endsWith(".html") ||
+    path.endsWith(".js") ||
+    path.endsWith(".css") ||
+    path.endsWith("/sw.js") ||
+    /\/(index|walk|safes-fit|radar|styles)(\.html|\.js|\.css)?$/.test(path) ||
+    path.endsWith("/");
+
+  if (networkFirst) {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+          return res;
+        })
+        .catch(() => caches.match(req))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(req).then((cached) => {
       const fetched = fetch(req)
