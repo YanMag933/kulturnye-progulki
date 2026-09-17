@@ -72,6 +72,8 @@
       this.chestOpened = false;
       this.scrollReady = false;
       this.scrollOpened = false;
+      this.liveCompass = false;
+      this._compassRaw = null;
 
       this._buildDom();
     }
@@ -111,27 +113,11 @@
         <div class="loot-stage" id="loot-stage" aria-hidden="true">
           <div class="safe-stage" id="safe-stage">
             <div class="safe-glow" aria-hidden="true"></div>
-            <button type="button" class="safe-unit" id="radar-safe" aria-label="Открыть сейф">
-              <div class="safe-casing">
-                <div class="safe-bolts" aria-hidden="true"></div>
-                <div class="safe-interior" aria-hidden="true">
-                  <div class="safe-shelf"></div>
-                </div>
-                <div class="safe-door" id="safe-door">
-                  <div class="safe-door-face">
-                    <div class="safe-brand">KP SAFE</div>
-                    <div class="safe-dial-wrap">
-                      <div class="safe-dial" id="safe-dial">
-                        <div class="safe-dial-marks"></div>
-                        <div class="safe-dial-knob"></div>
-                        <div class="safe-dial-pointer"></div>
-                      </div>
-                    </div>
-                    <div class="safe-handle"></div>
-                    <div class="safe-hinge safe-hinge-t"></div>
-                    <div class="safe-hinge safe-hinge-b"></div>
-                  </div>
-                </div>
+            <button type="button" class="safe-photo-wrap" id="radar-safe" aria-label="Открыть сейф">
+              <div class="safe-photo-stack">
+                <img class="safe-img safe-img-closed" src="assets/ui/safe-closed.png" alt="Сейф" draggable="false" />
+                <img class="safe-img safe-img-open" src="assets/ui/safe-open.png" alt="" draggable="false" />
+                <img class="safe-handle-spin" id="safe-handle-spin" src="assets/ui/safe-handle.png" alt="" draggable="false" />
               </div>
               <span class="safe-tap-hint" id="safe-tap-hint">Нажмите, чтобы открыть</span>
             </button>
@@ -161,8 +147,7 @@
       this.elLoot = root.querySelector("#loot-stage");
       this.elSafeStage = root.querySelector("#safe-stage");
       this.elSafe = root.querySelector("#radar-safe");
-      this.elDial = root.querySelector("#safe-dial");
-      this.elDoor = root.querySelector("#safe-door");
+      this.elHandleSpin = root.querySelector("#safe-handle-spin");
       this.elOpenSafe = root.querySelector("#radar-open-safe");
       this.elTapHint = root.querySelector("#safe-tap-hint");
       this.elScrollFly = root.querySelector("#scroll-fly");
@@ -181,12 +166,12 @@
         this._updateMetrics();
       };
       this.elDemoTurn.onclick = () => {
-        if (this.hasHeading || !this.demo) {
-          this.heading = norm360(this.heading + 45);
-          this.hasHeading = true;
-        } else {
-          this.demoAngle = norm360((this.demoAngle || 0) + 45);
+        if (this.liveCompass) {
+          this.elStatus.textContent = "КОМПАС АКТИВЕН — ПОВЕРНИТЕ ТЕЛЕФОН";
+          return;
         }
+        this.heading = norm360(this.heading + 45);
+        this.hasHeading = true;
         this._updateMetrics();
       };
       this.elOpenSafe.onclick = () => this._forceShowSafeAndFocus();
@@ -261,22 +246,27 @@
       const DOE = window.DeviceOrientationEvent;
       if (DOE && typeof DOE.requestPermission === "function") {
         const res = await DOE.requestPermission();
-        if (res !== "granted") return;
+        if (res !== "granted") {
+          this.elStatus.textContent = "НЕТ ДОСТУПА К КОМПАСУ";
+          return;
+        }
       }
 
       this.orientHandler = (e) => {
         let h = null;
-        let fromWebkit = false;
+        let absolute = false;
         if (typeof e.webkitCompassHeading === "number" && !Number.isNaN(e.webkitCompassHeading)) {
           h = e.webkitCompassHeading;
-          fromWebkit = true;
+          absolute = true;
+        } else if (e.absolute === true && typeof e.alpha === "number" && !Number.isNaN(e.alpha)) {
+          h = norm360(360 - e.alpha);
+          absolute = true;
         } else if (typeof e.alpha === "number" && !Number.isNaN(e.alpha)) {
-          // absolute alpha: 0 = north; screen-up compass ≈ 360 - alpha
           h = norm360(360 - e.alpha);
         }
         if (h == null) return;
 
-        if (!fromWebkit) {
+        if (!e.webkitCompassHeading) {
           const so =
             (screen.orientation && typeof screen.orientation.angle === "number"
               ? screen.orientation.angle
@@ -286,16 +276,50 @@
           h = norm360(h + so);
         }
 
-        if (this.hasHeading) this.heading = lerpAngle(this.heading, h, 0.28);
+        this._compassRaw = h;
+        this.liveCompass = true;
+        // быстрее реагируем на поворот — меньше сглаживания
+        if (this.hasHeading) this.heading = lerpAngle(this.heading, h, absolute ? 0.45 : 0.55);
         else {
           this.heading = h;
           this.hasHeading = true;
         }
+        // сразу пересчитать точку (важно для демо)
+        if (this.running) this._updateMetrics();
       };
 
-      // absolute first (Android), then generic
       window.addEventListener("deviceorientationabsolute", this.orientHandler, true);
       window.addEventListener("deviceorientation", this.orientHandler, true);
+
+      // AbsoluteOrientationSensor — если есть
+      try {
+        if (typeof AbsoluteOrientationSensor === "function") {
+          const sensor = new AbsoluteOrientationSensor({ frequency: 30, referenceFrame: "device" });
+          sensor.addEventListener("reading", () => {
+            const q = sensor.quaternion;
+            if (!q) return;
+            const [x, y, z, w] = q;
+            // yaw around Z → heading
+            const siny = 2 * (w * z + x * y);
+            const cosy = 1 - 2 * (y * y + z * z);
+            let yaw = Math.atan2(siny, cosy) * (180 / Math.PI);
+            let h = norm360(-yaw);
+            const so =
+              (screen.orientation && typeof screen.orientation.angle === "number"
+                ? screen.orientation.angle
+                : 0) || 0;
+            h = norm360(h + so);
+            this.liveCompass = true;
+            this.hasHeading = true;
+            this.heading = lerpAngle(this.heading || h, h, 0.5);
+            if (this.running) this._updateMetrics();
+          });
+          sensor.start();
+          this._absSensor = sensor;
+        }
+      } catch (_) {
+        /* ignore */
+      }
     }
 
     _updateMetrics() {
@@ -303,6 +327,7 @@
         this.distance = this.demoDist;
         const bearing = this.demoAngle;
         this._bearingToTarget = bearing;
+        // в демо всегда heading-up, если есть хоть какой-то heading (компас или кнопка)
         this._relativeBearing = this.hasHeading ? norm360(bearing - this.heading) : bearing;
         this._refreshHud();
         this._maybeShowChest();
@@ -320,13 +345,22 @@
     _refreshHud() {
       if (this.distance == null) {
         this.elDist.textContent = "— м";
-        this.elStatus.textContent = "ОЖИДАНИЕ GPS…";
+        this.elStatus.textContent = this.demo ? "ДЕМО · ЖДИТЕ КОМПАС…" : "ОЖИДАНИЕ GPS…";
         return;
       }
       this.elDist.textContent = Math.round(this.distance) + " м";
-      const mode = this.hasHeading ? "компас · взгляд↑" : "север↑";
+      const mode = this.liveCompass
+        ? "компас · взгляд↑"
+        : this.hasHeading
+          ? "курс · взгляд↑"
+          : "север↑";
       this.elBearing.textContent =
-        "азимут " + Math.round(this._bearingToTarget || 0) + "° · " + mode;
+        "азимут " +
+        Math.round(this._bearingToTarget || 0) +
+        "° · отн. " +
+        Math.round(this._relativeBearing || 0) +
+        "° · " +
+        mode;
 
       const inRange = this.distance <= this.unlockM;
       this.elOpenSafe.hidden = !(inRange || this.chestReady) || this.chestOpened || this.unlocked;
@@ -335,7 +369,7 @@
       else if (this.chestOpened) this.elStatus.textContent = "СВИТОК!";
       else if (this.chestReady || inRange) this.elStatus.textContent = "СЕЙФ РЯДОМ — ОТКРОЙТЕ";
       else if (this.distance <= this.revealM) this.elStatus.textContent = "КОНТАКТ";
-      else this.elStatus.textContent = "ВНЕ РАДИУСА СКАНИРОВАНИЯ";
+      else this.elStatus.textContent = this.liveCompass ? "ВНЕ РАДИУСА · КОМПАС ОК" : "ВНЕ РАДИУСА СКАНИРОВАНИЯ";
     }
 
     _maybeShowChest() {
@@ -380,17 +414,17 @@
       if (this.elTapHint) this.elTapHint.hidden = true;
       this.elSafe.classList.add("unlocking");
       this.elSafeStage.classList.add("glowing");
-      this.elStatus.textContent = "КОД…";
-      // dial spin → door open → scroll
+      this.elStatus.textContent = "РУЧКА…";
+      // 1) крутим ручку  →  2) открываем дверцу (crossfade open)  →  3) свиток
       setTimeout(() => {
         this.elSafe.classList.add("opening");
-        this.elStatus.textContent = "ОТКРЫВАЕМ…";
-      }, 900);
+        this.elStatus.textContent = "ДВЕРЦА…";
+      }, 1100);
       setTimeout(() => {
         this.elSafe.classList.add("opened");
         this.elStatus.textContent = "СВИТОК!";
-      }, 1750);
-      setTimeout(() => this._spawnScroll(), 2100);
+      }, 1900);
+      setTimeout(() => this._spawnScroll(), 2300);
     }
 
     _spawnScroll() {
@@ -420,13 +454,17 @@
 
     _tick = () => {
       if (!this.running) return;
-      if (this.demo) this._updateMetrics();
-      else if (this.userLat != null) {
-        // пересчёт relative bearing каждый кадр — точка следует за поворотом телефона
-        const bearing = this._bearingToTarget;
-        if (bearing != null) {
-          this._relativeBearing = this.hasHeading ? norm360(bearing - this.heading) : bearing;
-        }
+      // каждый кадр: relative bearing от живого heading (демо и GPS)
+      if (this.demo) {
+        this.distance = this.demoDist;
+        this._bearingToTarget = this.demoAngle;
+        this._relativeBearing = this.hasHeading
+          ? norm360(this.demoAngle - this.heading)
+          : this.demoAngle;
+      } else if (this.userLat != null && this._bearingToTarget != null) {
+        this._relativeBearing = this.hasHeading
+          ? norm360(this._bearingToTarget - this.heading)
+          : this._bearingToTarget;
       }
       this.sweep = (this.sweep + 2.2) % 360;
       this._pulsePhase += 0.05;
@@ -639,6 +677,12 @@
       if (this.orientHandler) {
         window.removeEventListener("deviceorientationabsolute", this.orientHandler, true);
         window.removeEventListener("deviceorientation", this.orientHandler, true);
+      }
+      if (this._absSensor) {
+        try {
+          this._absSensor.stop();
+        } catch (_) {}
+        this._absSensor = null;
       }
       window.removeEventListener("resize", this._onResize);
       this.root.remove();
