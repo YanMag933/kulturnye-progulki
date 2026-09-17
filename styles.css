@@ -675,23 +675,30 @@ body {
   transition: stroke-dashoffset 0.05s linear;
   filter: drop-shadow(0 0 4px rgba(240, 193, 74, 0.65));
 }
-.safe-handle-spin {
+.safe-handle-pivot {
   position: absolute;
-  left: 66.667%;
-  top: 46.515%;
-  width: 43.9%;
-  height: auto;
-  transform: translate(-50%, -50%) rotate(0deg);
+  transform: translate(-50%, -50%);
   z-index: 3;
   cursor: grab;
   touch-action: none;
+  line-height: 0;
+}
+.safe-handle-pivot:active {
+  cursor: grabbing;
+}
+.safe-handle-spin {
+  position: relative;
+  left: auto;
+  top: auto;
+  width: 100%;
+  height: auto;
+  display: block;
+  transform: rotate(0deg);
+  transform-origin: 50% 50%;
+  pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
-  transform-origin: 50% 50%;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.45));
-}
-.safe-handle-spin:active {
-  cursor: grabbing;
 }
 
 /* —— multi-safe overlays —— */
@@ -1130,43 +1137,30 @@ body {
   min-height: 280px;
   display: grid;
   place-items: center;
-  border-radius: 50%;
+  border-radius: 18px;
   margin: 4px auto;
   width: min(92vw, 420px);
   height: min(92vw, 420px);
-  background:
-    radial-gradient(circle at 50% 50%, #12261a 0%, #08140e 70%, #030806 100%);
+  background: #050505;
   box-shadow:
-    0 0 0 3px rgba(160,130,70,0.28),
-    0 0 0 8px rgba(20,30,24,0.95),
-    0 20px 50px rgba(0,0,0,.55),
-    inset 0 0 40px rgba(0,0,0,.55);
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 20px 50px rgba(0, 0, 0, 0.55),
+    inset 0 0 60px rgba(0, 0, 0, 0.85);
 }
-.radar-you-marker {
-  position: absolute;
-  top: 6%;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 5;
-  color: #ffe08a;
-  font-size: 18px;
-  line-height: 1;
-  text-shadow: 0 0 8px rgba(255, 200, 80, 0.7), 0 2px 4px rgba(0,0,0,.8);
-  pointer-events: none;
+.radar-scope-wrap.crystal-stage {
+  border-radius: 16px;
 }
 .radar-crystal {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: min(30%, 120px);
+  position: relative;
+  left: auto;
+  top: auto;
+  width: min(46%, 180px);
   z-index: 4;
-  transform: translate(-50%, -50%) scale(var(--crystal-scale, 0.95));
-  opacity: 0;
+  transform: none;
+  opacity: 1;
   pointer-events: none;
-  transition: opacity 0.35s ease;
-  --crystal-alpha: 0;
-  --crystal-glow: 0;
-  --crystal-scale: 0.95;
+  --glow-alpha: 0;
+  --glow-size: 0.7;
 }
 .radar-crystal.active {
   opacity: 1;
@@ -1175,18 +1169,19 @@ body {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 160%;
-  height: 160%;
+  width: calc(170% * var(--glow-size));
+  height: calc(170% * var(--glow-size));
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    rgba(255, 24, 48, calc(var(--crystal-glow) * 0.9)) 0%,
-    rgba(255, 40, 60, calc(var(--crystal-glow) * 0.35)) 38%,
-    transparent 70%
+    rgba(255, 20, 40, calc(var(--glow-alpha) * 0.95)) 0%,
+    rgba(255, 40, 60, calc(var(--glow-alpha) * 0.4)) 42%,
+    transparent 72%
   );
-  filter: blur(2px);
+  filter: blur(3px);
   z-index: 0;
+  pointer-events: none;
 }
 .radar-crystal-img {
   position: relative;
@@ -1194,35 +1189,14 @@ body {
   width: 100%;
   height: auto;
   display: block;
-  opacity: calc(0.28 + var(--crystal-alpha) * 0.72);
-  filter:
-    drop-shadow(0 0 calc(6px + var(--crystal-glow) * 28px) rgba(255, 30, 50, calc(var(--crystal-alpha) * 0.95)))
-    brightness(calc(0.75 + var(--crystal-glow) * 0.7))
-    saturate(calc(1 + var(--crystal-glow) * 1.4));
+  opacity: 1;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.55));
 }
-.radar-crystal.hot .radar-crystal-img {
-  filter:
-    drop-shadow(0 0 22px rgba(255, 20, 40, 0.95))
-    drop-shadow(0 0 40px rgba(255, 60, 80, 0.65))
-    brightness(1.35)
-    saturate(1.8);
+.radar-crystal.hot .radar-crystal-glow {
+  filter: blur(2px) brightness(1.15);
 }
 .radar-crystal.near .radar-crystal-glow {
-  animation: crystal-near-flash 0.45s ease-in-out infinite alternate;
-}
-@keyframes crystal-near-flash {
-  from { opacity: 0.75; transform: translate(-50%, -50%) scale(0.95); }
-  to { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
-}
-.radar-compass-disk {
-  width: 100%;
-  height: 100%;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  transition: transform 0.08s linear;
-  will-change: transform;
-  z-index: 1;
+  /* пульсация только у света, не у самого кристалла */
 }
 .radar-canvas {
   display: block;

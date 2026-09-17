@@ -89,45 +89,27 @@
         <div class="radar-bezel">
           <div class="radar-hud">
             <div class="radar-hud-left">
-              <div class="radar-title">GEO RADAR</div>
-              <div class="radar-status" id="radar-status">СКАНИРОВАНИЕ…</div>
+              <div class="radar-title">КРИСТАЛЛ</div>
+              <div class="radar-status" id="radar-status">ПОИСК…</div>
             </div>
             <div class="radar-hud-right">
               <div class="radar-readout" id="radar-dist">— м</div>
-              <div class="radar-readout sub" id="radar-bearing">азимут —°</div>
+              <div class="radar-readout sub" id="radar-bearing">сейф ≤ ${this.unlockM} м</div>
             </div>
           </div>
           <button type="button" class="btn primary radar-hud-open" id="radar-open-safe" hidden>Открыть сейф</button>
-          <div class="radar-scope-wrap">
-            <div class="radar-you-marker" aria-hidden="true">▲</div>
-            <div class="radar-compass-disk" id="radar-compass-disk">
-              <canvas class="radar-canvas" id="radar-canvas"></canvas>
-            </div>
-            <div class="radar-crystal" id="radar-crystal" aria-hidden="true">
+          <div class="radar-scope-wrap crystal-stage">
+            <div class="radar-crystal" id="radar-crystal">
               <div class="radar-crystal-glow" id="radar-crystal-glow"></div>
               <img class="radar-crystal-img" src="assets/ui/crystal.png" alt="" draggable="false" />
             </div>
-            <div class="radar-glass"></div>
-            <div class="radar-vignette"></div>
           </div>
           <div class="radar-legend">
-            <span>кристалл · мигает с 300 м · ярче и чаще при сближении</span>
-            <span>компас · верх = взгляд · сейф ≤ ${this.unlockM} м</span>
+            <span>красный свет · с 300 м тускло · ближе ярче и чаще</span>
           </div>
           <div class="radar-actions">
             <button type="button" class="btn primary" id="radar-demo-near">Симуляция: подойти ближе</button>
-            <button type="button" class="btn ghost" id="radar-demo-turn">Симуляция: повернуть +45°</button>
             <button type="button" class="btn ghost" id="radar-close">Закрыть</button>
-          </div>
-        </div>
-
-        <div class="compass-cal" id="compass-cal">
-          <div class="compass-cal-card">
-            <p class="compass-cal-title">Калибровка компаса</p>
-            <p class="compass-cal-text">Поводите телефоном «восьмёркой», держите экран вверх. Диск должен крутиться при повороте.</p>
-            <div class="compass-cal-readout" id="compass-cal-deg">курс —°</div>
-            <button type="button" class="btn primary" id="compass-cal-done">Готово · смотреть радар</button>
-            <button type="button" class="btn ghost" id="compass-cal-skip">Пропустить</button>
           </div>
         </div>
 
@@ -153,9 +135,9 @@
         </div>`;
       document.body.appendChild(root);
       this.root = root;
-      this.canvas = root.querySelector("#radar-canvas");
-      this.elDisk = root.querySelector("#radar-compass-disk");
-      this.ctx = this.canvas.getContext("2d");
+      this.canvas = null;
+      this.elDisk = null;
+      this.ctx = null;
       this.elStatus = root.querySelector("#radar-status");
       this.elDist = root.querySelector("#radar-dist");
       this.elBearing = root.querySelector("#radar-bearing");
@@ -167,9 +149,9 @@
       this.elScrollSheet = root.querySelector("#scroll-sheet");
       this.elScrollHint = root.querySelector("#scroll-hint-text");
       this.elDemoNear = root.querySelector("#radar-demo-near");
-      this.elDemoTurn = root.querySelector("#radar-demo-turn");
-      this.elCal = root.querySelector("#compass-cal");
-      this.elCalDeg = root.querySelector("#compass-cal-deg");
+      this.elDemoTurn = null;
+      this.elCal = null;
+      this.elCalDeg = null;
       this.elCrystal = root.querySelector("#radar-crystal");
       this.elCrystalGlow = root.querySelector("#radar-crystal-glow");
       this._crystalPhase = 0;
@@ -184,13 +166,12 @@
       this._codeBuffer = "";
       this._dialAngle = 0;
       this._dialMarks = [];
-      this._calDone = !this.needsCalibration;
+      this._calDone = true;
+      this.needsCalibration = false;
 
       this._mountSafePanel();
 
       root.querySelector("#radar-close").onclick = () => this.close();
-      root.querySelector("#compass-cal-done").onclick = () => this._finishCalibration();
-      root.querySelector("#compass-cal-skip").onclick = () => this._finishCalibration();
       this.elDemoNear.onclick = () => {
         this.demo = true;
         if (this.demoDist == null) this.demoDist = Math.max(this.revealM + 20, 320);
@@ -199,30 +180,10 @@
         this.demoAngle = this.demoAngle ?? 40;
         this._updateMetrics();
       };
-      this.elDemoTurn.onclick = () => {
-        this.heading = norm360(this.heading + 45);
-        this.hasHeading = true;
-        this.liveCompass = true;
-        this._applyCompassRotate();
-        this._updateMetrics();
-      };
       this.elOpenSafe.onclick = () => this._forceShowSafeAndFocus();
       this.elScrollFly.onclick = () => this._openScroll();
       root.querySelector("#scroll-done").onclick = () => this._setUnlockedAndLeave();
 
-      this._resize();
-      window.addEventListener("resize", (this._onResize = () => this._resize()));
-      if (!this._calDone) this.elCal.classList.add("show");
-      else this.elCal.hidden = true;
-    }
-
-    _finishCalibration() {
-      this._calDone = true;
-      this.elCal.classList.remove("show");
-      this.elCal.hidden = true;
-      this.elStatus.textContent = this.liveCompass ? "КОМПАС ОК" : "СКАНИРОВАНИЕ…";
-      this._resize();
-      this._applyCompassRotate();
       this._updateCrystal();
     }
 
@@ -287,7 +248,7 @@
             </div>
           </div>`;
       } else {
-        // wheel — тёмный сейф AIKO + трёхлучевая ручка в центре
+        // wheel — тёмный сейф AIKO + трёхлучевая ручка (pivot = центр ступицы)
         html = `
           <div class="safe-variant safe-wheel">
             <div class="safe-photo-stack" style="aspect-ratio:3/4">
@@ -297,8 +258,10 @@
                 <circle class="safe-progress-bg" cx="50" cy="50" r="46" />
                 <circle class="safe-progress-fg" id="safe-progress-fg" cx="50" cy="50" r="46" />
               </svg>
-              <img class="safe-handle-spin" id="safe-handle-spin" src="assets/ui/safe-aiko-handle.png" alt=""
-                draggable="false" style="left:52.5%;top:47.5%;width:42%" />
+              <div class="safe-handle-pivot" id="safe-handle-pivot" style="left:52.5%;top:47.5%;width:42%">
+                <img class="safe-handle-spin" id="safe-handle-spin" src="assets/ui/safe-aiko-handle.png" alt=""
+                  draggable="false" />
+              </div>
             </div>
             <p class="safe-tap-hint" id="safe-tap-hint">Крутите ручку пальцем · 3 оборота</p>
             <button type="button" class="btn primary safe-unlock-btn" id="safe-unlock-btn" hidden>Открыть</button>
@@ -322,24 +285,11 @@
     }
 
     _resize() {
-      const wrap = this.root.querySelector(".radar-scope-wrap");
-      const size = Math.floor(Math.min(wrap.clientWidth, wrap.clientHeight, 520));
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      this.size = size;
-      this.canvas.style.width = size + "px";
-      this.canvas.style.height = size + "px";
-      this.canvas.width = Math.floor(size * dpr);
-      this.canvas.height = Math.floor(size * dpr);
-      this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      /* crystal stage — no canvas */
     }
 
     async start() {
       this.running = true;
-      try {
-        await this._requestOrientation();
-      } catch (_) {
-        /* north-up ok */
-      }
 
       if (this.demo) {
         this.demoDist = Math.max(this.revealM - 40, 220);
@@ -362,11 +312,6 @@
         (pos) => {
           this.userLat = pos.coords.latitude;
           this.userLon = pos.coords.longitude;
-          // GPS course as soft fallback when compass silent
-          if (!this.hasHeading && typeof pos.coords.heading === "number" && !Number.isNaN(pos.coords.heading) && pos.coords.heading >= 0) {
-            this.heading = pos.coords.heading;
-            this.hasHeading = true;
-          }
           this._updateMetrics();
         },
         (err) => {
@@ -432,63 +377,35 @@
     }
 
     _applyCompassRotate() {
-      // диск компаса крутится против курса — N/E/S/W и точка едут вместе
-      if (this.elDisk) {
-        const h = this.hasHeading ? this.heading : 0;
-        this.elDisk.style.transform = `rotate(${-h}deg)`;
-      }
-      if (this.demo) {
-        this.distance = this.demoDist;
-        this._bearingToTarget = this.demoAngle;
-        this._relativeBearing = this.hasHeading ? norm360(this.demoAngle - this.heading) : this.demoAngle;
-      } else if (this._bearingToTarget != null) {
-        this._relativeBearing = this.hasHeading
-          ? norm360(this._bearingToTarget - this.heading)
-          : this._bearingToTarget;
-      }
       this._refreshHud();
     }
 
     _updateMetrics() {
       if (this.demo) {
         this.distance = this.demoDist;
-        const bearing = this.demoAngle;
-        this._bearingToTarget = bearing;
-        this._relativeBearing = this.hasHeading ? norm360(bearing - this.heading) : bearing;
-        this._applyCompassRotate();
+        this._bearingToTarget = this.demoAngle ?? 40;
         this._refreshHud();
+        this._updateCrystal();
         this._maybeShowChest();
         return;
       }
       if (this.userLat == null) return;
       this.distance = haversineM(this.userLat, this.userLon, this.targetLat, this.targetLon);
-      const bearing = bearingDeg(this.userLat, this.userLon, this.targetLat, this.targetLon);
-      this._bearingToTarget = bearing;
-      this._relativeBearing = this.hasHeading ? norm360(bearing - this.heading) : bearing;
-      this._applyCompassRotate();
+      this._bearingToTarget = bearingDeg(this.userLat, this.userLon, this.targetLat, this.targetLon);
       this._refreshHud();
+      this._updateCrystal();
       this._maybeShowChest();
     }
 
     _refreshHud() {
       if (this.distance == null) {
         this.elDist.textContent = "— м";
-        this.elStatus.textContent = this.demo ? "ДЕМО · ЖДИТЕ КОМПАС…" : "ОЖИДАНИЕ GPS…";
+        this.elStatus.textContent = this.demo ? "ДЕМО" : "ОЖИДАНИЕ GPS…";
+        if (this.elBearing) this.elBearing.textContent = "сейф ≤ " + this.unlockM + " м";
         return;
       }
       this.elDist.textContent = Math.round(this.distance) + " м";
-      const mode = this.liveCompass
-        ? "компас · взгляд↑"
-        : this.hasHeading
-          ? "курс · взгляд↑"
-          : "север↑";
-      this.elBearing.textContent =
-        "азимут " +
-        Math.round(this._bearingToTarget || 0) +
-        "° · отн. " +
-        Math.round(this._relativeBearing || 0) +
-        "° · " +
-        mode;
+      if (this.elBearing) this.elBearing.textContent = "сейф ≤ " + this.unlockM + " м";
 
       const inRange = this.distance <= this.unlockM;
       this.elOpenSafe.hidden = !(inRange || this.chestReady) || this.chestOpened || this.unlocked;
@@ -502,10 +419,11 @@
         else if (t === "dial") this.elStatus.textContent = "НАБЕРИТЕ ШИФР";
         else if (this._spinReady) this.elStatus.textContent = "НАЖМИТЕ «ОТКРЫТЬ»";
         else this.elStatus.textContent = "КРУТИТЕ РУЧКУ СЕЙФА";
-      }       else if (this.distance <= this.revealM) {
+      } else if (this.distance <= this.revealM) {
         const t = 1 - this.distance / this.revealM;
-        this.elStatus.textContent = t > 0.7 ? "КРИСТАЛЛ ГОРИТ" : t > 0.35 ? "КРИСТАЛЛ УСИЛИВАЕТСЯ" : "КРИСТАЛЛ МИГАЕТ";
-      } else this.elStatus.textContent = this.liveCompass ? "ВНЕ РАДИУСА · КОМПАС ОК" : "ВНЕ РАДИУСА СКАНИРОВАНИЯ";
+        this.elStatus.textContent =
+          t > 0.7 ? "КРАСНЫЙ СВЕТ СИЛЬНЫЙ" : t > 0.35 ? "СВЕТ УСИЛИВАЕТСЯ" : "СЛАБОЕ МЕРЦАНИЕ";
+      } else this.elStatus.textContent = "СЛИШКОМ ДАЛЕКО";
     }
 
     _maybeShowChest() {
@@ -519,7 +437,7 @@
       this._spinAccum = 0;
       this._spinAngle = 0;
       this._spinReady = false;
-      if (this.elHandleSpin) this.elHandleSpin.style.transform = "translate(-50%, -50%) rotate(0deg)";
+      if (this.elHandleSpin) this.elHandleSpin.style.transform = "rotate(0deg)";
       if (this.elProgressFg) {
         const circ = 2 * Math.PI * 46;
         this.elProgressFg.style.strokeDashoffset = String(circ);
@@ -562,9 +480,10 @@
 
     _bindHandleSpin() {
       const el = this.elHandleSpin;
+      const pivot = this.elSafe.querySelector("#safe-handle-pivot") || el;
       if (!el) return;
       const angleAt = (ev) => {
-        const rect = el.getBoundingClientRect();
+        const rect = pivot.getBoundingClientRect();
         const cx = rect.left + rect.width / 2;
         const cy = rect.top + rect.height / 2;
         const pt = ev.touches ? ev.touches[0] : ev;
@@ -576,7 +495,7 @@
         this._spinDragging = true;
         this._spinLastAng = angleAt(ev);
         try {
-          el.setPointerCapture(ev.pointerId);
+          pivot.setPointerCapture(ev.pointerId);
         } catch (_) {}
       };
       const onMove = (ev) => {
@@ -589,18 +508,21 @@
         this._spinLastAng = ang;
         this._spinAngle += d;
         this._spinAccum += Math.abs(d);
-        el.style.transform = `translate(-50%, -50%) rotate(${this._spinAngle}deg)`;
+        // только rotate вокруг центра PNG (ступица уже в центре файла)
+        el.style.transform = `rotate(${this._spinAngle}deg)`;
         const need = this._spinTurnsNeeded * 360;
         const t = Math.min(1, this._spinAccum / need);
         const circ = 2 * Math.PI * 46;
-        this.elProgressFg.style.strokeDashoffset = String(circ * (1 - t));
+        if (this.elProgressFg) this.elProgressFg.style.strokeDashoffset = String(circ * (1 - t));
         const turns = Math.min(3, Math.floor(this._spinAccum / 360));
-        this.elTapHint.textContent =
-          t < 1 ? `Крутите ручку · ${turns}/3` : "Готово — откройте сейф";
+        if (this.elTapHint) {
+          this.elTapHint.textContent =
+            t < 1 ? `Крутите ручку · ${turns}/3` : "Готово — откройте сейф";
+        }
         if (t >= 1) {
           this._spinReady = true;
           this._spinDragging = false;
-          this.elUnlockBtn.hidden = false;
+          if (this.elUnlockBtn) this.elUnlockBtn.hidden = false;
           this.elSafeStage.classList.add("glowing");
           this.elStatus.textContent = "НАЖМИТЕ «ОТКРЫТЬ»";
         }
@@ -609,15 +531,12 @@
         this._spinDragging = false;
         this._spinLastAng = null;
       };
-      el.addEventListener("pointerdown", onStart, { passive: false });
-      window.addEventListener(
-        "pointermove",
-        (this._onSpinMove = onMove),
-        { passive: false }
-      );
+      pivot.addEventListener("pointerdown", onStart, { passive: false });
+      window.addEventListener("pointermove", (this._onSpinMove = onMove), { passive: false });
       window.addEventListener("pointerup", (this._onSpinEnd = onEnd));
       window.addEventListener("pointercancel", this._onSpinEnd);
-      el.style.touchAction = "none";
+      pivot.style.touchAction = "none";
+      el.style.transform = "rotate(0deg)";
     }
 
     _revealScroll() {
@@ -837,22 +756,8 @@
       if (this.demo) {
         this.distance = this.demoDist;
         this._bearingToTarget = this.demoAngle;
-        this._relativeBearing = this.hasHeading
-          ? norm360(this.demoAngle - this.heading)
-          : this.demoAngle;
-      } else if (this.userLat != null && this._bearingToTarget != null) {
-        this._relativeBearing = this.hasHeading
-          ? norm360(this._bearingToTarget - this.heading)
-          : this._bearingToTarget;
       }
-      if (this.elDisk) {
-        const h = this.hasHeading ? this.heading : 0;
-        this.elDisk.style.transform = `rotate(${-h}deg)`;
-      }
-      this.sweep = (this.sweep + 2.2) % 360;
-      this._pulsePhase += 0.05;
       this._updateCrystal();
-      this._draw();
       this.raf = requestAnimationFrame(this._tick);
     };
 
@@ -861,228 +766,36 @@
       const glow = this.elCrystalGlow;
       if (!el || !glow) return;
 
+      // кристалл всегда чёткий и видимый; пульсирует только красный свет
+      el.classList.add("active");
       const dist = this.distance;
       const inRange = dist != null && dist <= this.revealM;
+
       if (!inRange) {
-        if (this._crystalOn) {
-          el.classList.remove("active", "hot");
-          el.style.setProperty("--crystal-alpha", "0");
-          el.style.setProperty("--crystal-glow", "0");
-          this._crystalOn = false;
-        }
+        el.style.setProperty("--glow-alpha", "0");
+        el.style.setProperty("--glow-size", "0.6");
+        el.classList.remove("hot", "near");
+        this._crystalOn = false;
         return;
       }
 
       this._crystalOn = true;
-      el.classList.add("active");
-      // 0 у 300 м → 1 у цели
       const t = Math.max(0, Math.min(1, 1 - dist / this.revealM));
-      // период: ~2.8с далеко → ~0.22с вплотную
-      const period = 2.8 - t * 2.55;
+      // период: ~2.6с далеко → ~0.2с вплотную
+      const period = 2.6 - t * 2.4;
       this._crystalPhase += (0.016 * Math.PI * 2) / Math.max(0.18, period);
       const wave = (Math.sin(this._crystalPhase) + 1) / 2;
-      // тускло/редко далеко, ярко/часто близко
-      const base = 0.1 + t * 0.72;
-      const alpha = base * (0.25 + wave * 0.75);
-      const glowAmt = (0.15 + t * 0.95) * (0.2 + wave * 0.8);
-      const scale = 0.92 + t * 0.18 + wave * (0.04 + t * 0.08);
-      el.style.setProperty("--crystal-alpha", String(alpha.toFixed(3)));
-      el.style.setProperty("--crystal-glow", String(glowAmt.toFixed(3)));
-      el.style.setProperty("--crystal-scale", String(scale.toFixed(3)));
+      // тускло/редко далеко, ярко/часто близко — только glow
+      const alpha = (0.08 + t * 0.92) * (0.15 + wave * 0.85);
+      const size = 0.7 + t * 0.9 + wave * (0.05 + t * 0.15);
+      el.style.setProperty("--glow-alpha", String(alpha.toFixed(3)));
+      el.style.setProperty("--glow-size", String(size.toFixed(3)));
       el.classList.toggle("hot", t > 0.72);
-      if (this.chestReady || dist <= this.unlockM) el.classList.add("near");
-      else el.classList.remove("near");
+      el.classList.toggle("near", this.chestReady || dist <= this.unlockM);
     }
 
     _draw() {
-      const ctx = this.ctx;
-      const S = this.size;
-      if (!S) return;
-      const cx = S / 2;
-      const cy = S / 2;
-      const R = S * 0.42;
-      const headingUp = this.hasHeading;
-      // Север↑ на холсте; CSS крутит диск — как компас
-      const mapRot = 0;
-      const bearingForBlip = this._bearingToTarget != null ? this._bearingToTarget : 0;
-
-      ctx.clearRect(0, 0, S, S);
-
-      const plate = ctx.createRadialGradient(cx, cy, R * 0.2, cx, cy, R * 1.25);
-      plate.addColorStop(0, "#0a1a12");
-      plate.addColorStop(0.55, "#06140d");
-      plate.addColorStop(1, "#020805");
-      ctx.fillStyle = plate;
-      ctx.beginPath();
-      ctx.arc(cx, cy, R * 1.18, 0, Math.PI * 2);
-      ctx.fill();
-
-      const face = ctx.createRadialGradient(cx - R * 0.15, cy - R * 0.2, R * 0.05, cx, cy, R);
-      face.addColorStop(0, "#0f3a24");
-      face.addColorStop(0.45, "#0a2818");
-      face.addColorStop(1, "#04140c");
-      ctx.beginPath();
-      ctx.arc(cx, cy, R, 0, Math.PI * 2);
-      ctx.fillStyle = face;
-      ctx.fill();
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, R, 0, Math.PI * 2);
-      ctx.clip();
-
-      for (let i = 0; i < 40; i++) {
-        ctx.fillStyle = `rgba(80,220,140,${0.015 + Math.random() * 0.02})`;
-        ctx.fillRect(cx - R + Math.random() * R * 2, cy - R + Math.random() * R * 2, 1.5, 1.5);
-      }
-
-      const rings = [0.25, 0.5, 0.75, 1];
-      rings.forEach((t, i) => {
-        ctx.beginPath();
-        ctx.arc(cx, cy, R * t, 0, Math.PI * 2);
-        ctx.strokeStyle = i === rings.length - 1 ? "rgba(90,255,160,0.55)" : "rgba(60,200,120,0.28)";
-        ctx.lineWidth = i === rings.length - 1 ? 2 : 1;
-        ctx.stroke();
-      });
-
-      ctx.strokeStyle = "rgba(70,210,130,0.35)";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(cx - R, cy);
-      ctx.lineTo(cx + R, cy);
-      ctx.moveTo(cx, cy - R);
-      ctx.lineTo(cx, cy + R);
-      ctx.stroke();
-
-      // ticks + cardinals (вращаются с компасом в heading-up)
-      for (let a = 0; a < 360; a += 10) {
-        const screenA = norm360(a - mapRot);
-        const rad = toRad(screenA - 90);
-        const major = a % 30 === 0;
-        const r0 = R * (major ? 0.9 : 0.94);
-        const r1 = R * 0.99;
-        ctx.beginPath();
-        ctx.moveTo(cx + Math.cos(rad) * r0, cy + Math.sin(rad) * r0);
-        ctx.lineTo(cx + Math.cos(rad) * r1, cy + Math.sin(rad) * r1);
-        ctx.strokeStyle = major ? "rgba(120,255,170,0.55)" : "rgba(80,200,130,0.3)";
-        ctx.lineWidth = major ? 2 : 1;
-        ctx.stroke();
-        if (a % 90 === 0) {
-          const label = a === 0 ? "N" : a === 90 ? "E" : a === 180 ? "S" : "W";
-          const lx = cx + Math.cos(rad) * R * 0.78;
-          const ly = cy + Math.sin(rad) * R * 0.78;
-          ctx.fillStyle = a === 0 ? "rgba(255,220,120,0.95)" : "rgba(150,255,190,0.75)";
-          ctx.font = `600 ${Math.max(10, S * 0.035)}px ui-monospace, monospace`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText(label, lx, ly);
-        }
-      }
-
-      // маркер «взгляд» рисуется HTML поверх диска (не крутится)
-      void headingUp;
-
-      ctx.fillStyle = "rgba(100,220,150,0.55)";
-      ctx.font = `${Math.max(9, S * 0.028)}px ui-monospace, monospace`;
-      ctx.textAlign = "left";
-      [0.25, 0.5, 0.75, 1].forEach((t) => {
-        const m = Math.round(this.revealM * t);
-        ctx.fillText(m + "m", cx + 4, cy - R * t + 3);
-      });
-
-      const sweepRad = toRad(this.sweep - 90);
-      for (let i = 0; i < 28; i++) {
-        const a0 = sweepRad - toRad(i * 1.1);
-        const a1 = sweepRad - toRad(i * 1.1 + 1.2);
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.arc(cx, cy, R, a0, a1, true);
-        ctx.closePath();
-        ctx.fillStyle = `rgba(80,255,140,${0.18 * (1 - i / 28)})`;
-        ctx.fill();
-      }
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(cx + Math.cos(sweepRad) * R, cy + Math.sin(sweepRad) * R);
-      ctx.strokeStyle = "rgba(180,255,200,0.85)";
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // вы — центр
-      ctx.beginPath();
-      ctx.arc(cx, cy, 4, 0, Math.PI * 2);
-      ctx.fillStyle = "#9dffc0";
-      ctx.fill();
-      ctx.strokeStyle = "rgba(180,255,210,0.8)";
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(cx, cy, 9, 0, Math.PI * 2);
-      ctx.stroke();
-
-      // цель по абсолютному азимуту (диск CSS крутится с компасом)
-      if (this.distance != null && this.distance <= this.revealM) {
-        const distClamped = Math.max(0, this.distance);
-        const t = Math.min(1, distClamped / this.revealM);
-        const br = toRad(bearingForBlip - 90);
-        const bx = cx + Math.cos(br) * R * t;
-        const by = cy + Math.sin(br) * R * t;
-
-        const period = 0.25 + t * 0.95;
-        const pulse = (Math.sin((this._pulsePhase * Math.PI * 2) / period) + 1) / 2;
-        const glowR = 6 + (1 - t) * 10 + pulse * 8;
-
-        ctx.beginPath();
-        ctx.arc(bx, by, glowR, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,40,60,${0.12 + pulse * 0.2})`;
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(bx, by, 5 + pulse * 2, 0, Math.PI * 2);
-        ctx.fillStyle = "#ff2a3c";
-        ctx.shadowColor = "#ff4455";
-        ctx.shadowBlur = 12 + pulse * 10;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-
-        ctx.strokeStyle = `rgba(255,180,180,${0.5 + pulse * 0.4})`;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(bx - 10, by);
-        ctx.lineTo(bx + 10, by);
-        ctx.moveTo(bx, by - 10);
-        ctx.lineTo(bx, by + 10);
-        ctx.stroke();
-
-        const sweepDiff = Math.abs(((this.sweep - bearingForBlip + 540) % 360) - 180);
-        if (sweepDiff < 4) this.blips.push({ x: bx, y: by, life: 1 });
-      }
-
-      this.blips = this.blips.filter((b) => b.life > 0.02);
-      this.blips.forEach((b) => {
-        b.life *= 0.96;
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, 3, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,60,80,${b.life * 0.55})`;
-        ctx.fill();
-      });
-
-      ctx.fillStyle = "rgba(0,0,0,0.08)";
-      for (let y = cy - R; y < cy + R; y += 3) {
-        ctx.fillRect(cx - R, y, R * 2, 1);
-      }
-
-      ctx.restore();
-
-      ctx.beginPath();
-      ctx.arc(cx, cy, R + 2, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(40,90,60,0.9)";
-      ctx.lineWidth = 5;
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(cx, cy, R + 6, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(180,150,90,0.35)";
-      ctx.lineWidth = 2;
-      ctx.stroke();
+      /* radar canvas removed */
     }
 
     close() {
@@ -1098,7 +811,7 @@
         window.removeEventListener("pointerup", this._onSpinEnd);
         window.removeEventListener("pointercancel", this._onSpinEnd);
       }
-      window.removeEventListener("resize", this._onResize);
+      if (this._onResize) window.removeEventListener("resize", this._onResize);
       this.root.remove();
       this.onClose();
     }
