@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
@@ -9,23 +9,23 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Marck+Script&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=25" />
   <link rel="manifest" href="manifest.json" />
 </head>
 <body class="walk-body">
   <div class="phone-shell" id="app"></div>
-  <script src="silhouettes.js"></script>
-  <script src="match.js"></script>
-  <script src="radar.js"></script>
-  <script src="assets.js"></script>
-  <script src="content-db.js"></script>
-  <script src="monuments-extra.js"></script>
-  <script src="demo-quest.js"></script>
-  <script src="shared.js"></script>
-  <script src="walk.js"></script>
+  <script src="silhouettes.js?v=25"></script>
+  <script src="match.js?v=25"></script>
+  <script src="radar.js?v=25"></script>
+  <script src="assets.js?v=25"></script>
+  <script src="content-db.js?v=25"></script>
+  <script src="monuments-extra.js?v=25"></script>
+  <script src="demo-quest.js?v=25"></script>
+  <script src="shared.js?v=25"></script>
+  <script src="walk.js?v=25"></script>
   <script>
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./sw.js").catch(() => {});
+      navigator.serviceWorker.register("./sw.js?v=25").catch(() => {});
     }
   </script>
 </body>

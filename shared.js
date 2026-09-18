@@ -223,7 +223,7 @@ window.KP = (() => {
       durationHint: zone === "garden" ? "~45–75 мин · 5 точек" : "~90–110 мин · 10 точек",
       steps,
       source: "db",
-      contourVersion: 5,
+      contourVersion: 6,
       createdAt: new Date().toISOString(),
     };
   }
@@ -236,9 +236,36 @@ window.KP = (() => {
     });
   }
 
+  function enrichQuestSafes(quest) {
+    if (!quest?.steps?.length || !window.QUEST_DB?.tasks) return quest;
+    let changed = false;
+    quest.steps = quest.steps.map((step) => {
+      const dbTask = step.id ? window.QUEST_DB.tasks.find((t) => t.id === step.id) : null;
+      if (!dbTask) return step;
+      const next = { ...step };
+      if (dbTask.safeType && !next.safeType) {
+        next.safeType = dbTask.safeType;
+        changed = true;
+      }
+      if (dbTask.safeCode != null && (next.safeCode == null || next.safeCode === "")) {
+        next.safeCode = dbTask.safeCode;
+        changed = true;
+      }
+      if (dbTask.safePrompt && !next.safePrompt) {
+        next.safePrompt = dbTask.safePrompt;
+        changed = true;
+      }
+      return next;
+    });
+    if (changed) saveJson(KEYS.active, quest);
+    return quest;
+  }
+
   function ensureDemoQuest() {
     let q = loadActiveQuest();
-    if (q && q.steps && q.steps.length && q.contourVersion === 5) return q;
+    if (q && q.steps && q.steps.length && q.contourVersion === 6) {
+      return enrichQuestSafes(q);
+    }
     const exportObj = window.DEMO_EXPORT || {
       zone: "ttk",
       difficulty: "medium",
@@ -258,8 +285,8 @@ window.KP = (() => {
       },
     };
     q = materializeFromExport(exportObj);
-    q.id = "active-auto-v5";
-    q.contourVersion = 5;
+    q.id = "active-auto-v6";
+    q.contourVersion = 6;
     saveActiveQuest(q);
     return q;
   }

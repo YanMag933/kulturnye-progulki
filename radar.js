@@ -1,6 +1,7 @@
 /**
  * Полноэкранный гео-оверлей: тёмный экран + кристалл (красный свет с 300 м).
- * Сейф открывается в unlock-радиусе. В demo — цикл по всем типам сейфов.
+ * Сейф открывается в unlock-радиусе.
+ * demo = фейковый GPS; выбор типа сейфа — только fitMode («Прогон сейфов»).
  */
 (function () {
   const REVEAL_M = 300;
@@ -53,6 +54,8 @@
       this.hintText = opts.hintText || "Подсказка открыта.";
       this.demo = !!opts.demo;
       this.fitMode = !!opts.fitMode; // прогон сейфов: без автопоказа
+      this.safeOnly = !!opts.safeOnly; // задание без гео: сразу сейф, без кристалла
+      this.skipScroll = opts.skipScroll != null ? !!opts.skipScroll : !!opts.safeOnly;
       this.safeType = opts.safeType || "wheel"; // wheel | year | code | dial
       this.safeCode = String(opts.safeCode || "").trim();
       this.safePrompt = opts.safePrompt || "";
@@ -85,7 +88,7 @@
 
     _buildDom() {
       const root = document.createElement("div");
-      root.className = "radar-overlay";
+      root.className = "radar-overlay radar-root";
       root.innerHTML = `
         <div class="radar-bezel">
           <div class="radar-hud">
@@ -110,8 +113,10 @@
           </div>
           <div class="radar-actions">
             <button type="button" class="btn primary" id="radar-demo-near">Симуляция: подойти ближе</button>
-            <div class="radar-demo-safes" id="radar-demo-safes" hidden>
-              <div class="radar-demo-safe-label" id="radar-demo-safe-label">Сейф: ручка</div>
+            ${
+              this.fitMode
+                ? `<div class="radar-demo-safes" id="radar-demo-safes">
+              <div class="radar-demo-safe-label" id="radar-demo-safe-label">Выберите сейф</div>
               <div class="radar-demo-safe-row">
                 <button type="button" class="btn ghost demo-safe-btn" data-safe="wheel">ручка</button>
                 <button type="button" class="btn ghost demo-safe-btn" data-safe="year">год</button>
@@ -119,7 +124,9 @@
                 <button type="button" class="btn ghost demo-safe-btn" data-safe="dial">шифр</button>
               </div>
               <button type="button" class="btn ghost" id="radar-demo-safe-next">Следующий сейф</button>
-            </div>
+            </div>`
+                : ""
+            }
             <button type="button" class="btn ghost" id="radar-close">Закрыть</button>
           </div>
         </div>
@@ -147,6 +154,7 @@
         </div>`;
       document.body.appendChild(root);
       this.root = root;
+      if (this.safeOnly) root.classList.add("safe-only");
       this.canvas = null;
       this.elDisk = null;
       this.ctx = null;
@@ -221,11 +229,33 @@
         if (this.elDemoNear) this.elDemoNear.hidden = true;
         this._syncDemoSafeUi();
       }
+      if (this.safeOnly) {
+        this.demo = true;
+        this._demoSafePicked = true;
+        this.demoDist = 5;
+        this.distance = 5;
+        if (this.elDemoNear) this.elDemoNear.hidden = true;
+        if (this.elDemoSafes) this.elDemoSafes.hidden = true;
+        const title = this.root.querySelector(".radar-title");
+        if (title) title.textContent = "СЕЙФ";
+        this.elStatus.textContent = "ВВЕДИТЕ КОД";
+        if (this.elDist) this.elDist.textContent = "—";
+        if (this.elBearing) this.elBearing.textContent = this.safePrompt || "разгадка";
+        this._mountSafePanel();
+        this._forceShowSafeAndFocus();
+      }
     }
 
     _syncDemoSafeUi() {
+      // Пикер в DOM только при fitMode; demo/GPS-walk никогда не показывают выбор сейфа.
       if (!this.elDemoSafes) return;
-      this.elDemoSafes.hidden = !this.demo;
+      if (!this.fitMode) {
+        this.elDemoSafes.hidden = true;
+        this.elDemoSafes.style.display = "none";
+        return;
+      }
+      this.elDemoSafes.hidden = false;
+      this.elDemoSafes.style.display = "";
       const cur = DEMO_SAFE_CYCLE[this._demoSafeIdx] || DEMO_SAFE_CYCLE[0];
       if (this.elDemoSafeLabel) {
         this.elDemoSafeLabel.textContent = this._demoSafePicked
@@ -238,7 +268,7 @@
     }
 
     _cycleDemoSafe(dir) {
-      if (!this.demo) return;
+      if (!this.fitMode) return;
       const n = DEMO_SAFE_CYCLE.length;
       this._demoSafeIdx = ((this._demoSafeIdx + (dir || 1)) % n + n) % n;
       const next = DEMO_SAFE_CYCLE[this._demoSafeIdx];
@@ -246,7 +276,7 @@
     }
 
     _setDemoSafeType(type) {
-      if (!this.demo) return;
+      if (!this.fitMode) return;
       const idx = DEMO_SAFE_CYCLE.findIndex((s) => s.type === type);
       if (idx < 0) return;
       this._demoSafeIdx = idx;
@@ -303,6 +333,11 @@
     }
 
     _hideLootPanel() {
+      // standalone-сейф: крестик = выход без засчёта
+      if (this.safeOnly) {
+        this.close();
+        return;
+      }
       // закрыть сейф/свиток и вернуться к выбору
       this.chestReady = false;
       this.chestOpened = false;
@@ -333,7 +368,7 @@
       this._syncDemoSafeUi();
       this._updateCrystal();
       this._refreshHud();
-      if (this.fitMode || this.demo) this.elStatus.textContent = "ВЫБЕРИТЕ СЕЙФ";
+      if (this.fitMode) this.elStatus.textContent = "ВЫБЕРИТЕ СЕЙФ";
     }
 
     _mountSafePanel() {
@@ -367,9 +402,11 @@
       } else if (type === "code") {
         html = `
           <div class="safe-variant safe-code">
-            <img class="safe-img safe-img-body" src="assets/ui/safe-keypad-body.png" alt="Сейф" draggable="false" />
-            <div class="safe-overlay-card">
-              <p class="safe-tap-hint">${prompt || "Введите код"}</p>
+            <div class="safe-code-frame">
+              <img class="safe-code-art" src="assets/ui/safe-keypad-body.png" alt="Сейф с кодовой панелью" draggable="false" />
+            </div>
+            <div class="safe-overlay-card safe-code-card">
+              <p class="safe-tap-hint">${prompt || "Введите код на клавиатуре"}</p>
               <div class="code-display" id="code-display">****</div>
               <div class="code-pad" id="code-pad">
                 ${[1, 2, 3, 4, 5, 6, 7, 8, 9, "C", 0, "OK"]
@@ -417,6 +454,7 @@
           </div>`;
       }
       this.elSafe.innerHTML = html;
+      this.elSafe.classList.toggle("safe-wrap-code", type === "code");
       this.elHandleSpin = this.elSafe.querySelector("#safe-handle-spin");
       this.elProgressFg = this.elSafe.querySelector("#safe-progress-fg");
       this.elUnlockBtn = this.elSafe.querySelector("#safe-unlock-btn");
@@ -444,6 +482,9 @@
         if (this.fitMode) {
           this.demoDist = Math.max(this.revealM + 80, 400);
           this.elStatus.textContent = "ВЫБЕРИТЕ СЕЙФ";
+        } else if (this.safeOnly) {
+          this.demoDist = 5;
+          this.distance = 5;
         } else {
           this.demoDist = Math.max(this.revealM - 40, 220);
         }
@@ -500,6 +541,21 @@
     }
 
     _refreshHud() {
+      if (this.safeOnly) {
+        if (this.elDist) this.elDist.textContent = "—";
+        if (this.elBearing) this.elBearing.textContent = this.safePrompt || "разгадка";
+        if (this.elOpenSafe) this.elOpenSafe.hidden = true;
+        if (this.unlocked) this.elStatus.textContent = "ОТКРЫТО!";
+        else {
+          const t = this.safeType;
+          if (t === "year") this.elStatus.textContent = "ПРОКРУТИТЕ ГОД";
+          else if (t === "code") this.elStatus.textContent = "ВВЕДИТЕ КОД";
+          else if (t === "dial") this.elStatus.textContent = "НАБЕРИТЕ ШИФР";
+          else if (this._spinReady) this.elStatus.textContent = "НАЖМИТЕ «ОТКРЫТЬ»";
+          else this.elStatus.textContent = "КРУТИТЕ РУЧКУ СЕЙФА";
+        }
+        return;
+      }
       if (this.distance == null) {
         this.elDist.textContent = "— м";
         this.elStatus.textContent = this.demo ? "ДЕМО" : "ОЖИДАНИЕ GPS…";
@@ -656,6 +712,11 @@
       this.chestOpened = true;
       if (this.elUnlockBtn) this.elUnlockBtn.hidden = true;
       if (this.elOpenSafe) this.elOpenSafe.hidden = true;
+      if (this.skipScroll) {
+        this.elStatus.textContent = "ОТКРЫТО!";
+        this._setUnlockedAndLeave();
+        return;
+      }
       this.elSafe.classList.add("vanishing");
       this.elStatus.textContent = "СВИТОК!";
       this.root.classList.add("loot-focus");
@@ -949,4 +1010,26 @@
 
   window.KP_Radar = Radar;
   window.KP_geo = { haversineM, bearingDeg, REVEAL_M };
+
+  /** Сейф без гео-радара — для year/plaque/word заданий */
+  window.KP_openSafe = function openSafe(opts) {
+    const radar = new Radar({
+      targetLat: opts.targetLat || 55.75,
+      targetLon: opts.targetLon || 37.62,
+      unlockM: 35,
+      revealM: 300,
+      demo: true,
+      safeOnly: true,
+      skipScroll: true,
+      needsCalibration: false,
+      safeType: opts.safeType || "code",
+      safeCode: opts.safeCode || "",
+      safePrompt: opts.safePrompt || "",
+      hintText: opts.hintText || "Открыто!",
+      onUnlock: opts.onUnlock || (() => {}),
+      onClose: opts.onClose || (() => {}),
+    });
+    radar.start();
+    return radar;
+  };
 })();

@@ -140,6 +140,12 @@
     }
     if (ui === "plaque" || ui === "year" || ui === "count") {
       uiState.done = true;
+      const safe = ui !== "count" ? resolveStepSafe(step) : null;
+      if (safe) {
+        renderStep();
+        setFeedback("Тест: сейф засчитан — " + (safe.safeCode || step.expected || ""), "ok");
+        return;
+      }
       const ans =
         ui === "count" ? String(step.correctNumber) : String(step.expected || "");
       renderStep();
@@ -255,6 +261,38 @@
     const val = (input?.value || "").trim().toLowerCase();
     const okList = [expected, ...alternatives].map((x) => String(x).trim().toLowerCase());
     return okList.includes(val);
+  }
+
+  /** Год/табличка/шифр → сейф; подтягивает safe* из QUEST_DB, если в кэше квеста их нет. */
+  function resolveStepSafe(step) {
+    const dbTask =
+      step.id && window.QUEST_DB?.tasks
+        ? window.QUEST_DB.tasks.find((t) => t.id === step.id)
+        : null;
+    const safeType = step.safeType || dbTask?.safeType || "";
+    const safeCode = String(
+      step.safeCode || dbTask?.safeCode || step.expected || dbTask?.expected || ""
+    ).trim();
+    const safePrompt =
+      step.safePrompt || dbTask?.safePrompt || step.prompt || dbTask?.prompt || "";
+    if (safeType) {
+      return { safeType, safeCode, safePrompt };
+    }
+    if (step.ui === "year") {
+      const digits = safeCode.replace(/\D/g, "").slice(0, 4);
+      if (digits) return { safeType: "year", safeCode: digits, safePrompt: safePrompt || "Год" };
+    }
+    if (step.ui === "plaque") {
+      const digits = safeCode.replace(/\D/g, "");
+      if (digits.length >= 3 && digits.length <= 4) {
+        return {
+          safeType: "year",
+          safeCode: digits.slice(0, 4),
+          safePrompt: safePrompt || "Год с таблички",
+        };
+      }
+    }
+    return null;
   }
 
   function taskChrome(step, bodyHtml, footerHtml, opts = {}) {
@@ -661,7 +699,7 @@
           <div class="lock-icon">${uiState.unlocked ? "открыто" : "закрыто"}</div>
           <p>${uiState.unlocked ? step.unlockedText : step.lockedTeaser}</p>
           <div class="geo-hint-box">
-            <p class="muted"><b>Подсказка.</b> Кристалл мигает красным светом с ${reveal}&nbsp;м (ближе — ярче и чаще). Сейф ≤ ${unlock}&nbsp;м — кнопка «Открыть сейф». В демо можно переключать типы сейфов.</p>
+            <p class="muted"><b>Подсказка.</b> Кристалл мигает красным светом с ${reveal}&nbsp;м (ближе — ярче и чаще). Сейф ≤ ${unlock}&nbsp;м — кнопка «Открыть сейф».</p>
           </div>
           ${
             uiState.unlocked
@@ -735,6 +773,53 @@
     }
 
     if (ui === "plaque" || ui === "year" || ui === "count") {
+      const safe = ui !== "count" ? resolveStepSafe(step) : null;
+      // Год / табличка / буквенный шифр — сейф без гео
+      if (safe) {
+        taskChrome(
+          step,
+          `<div class="panel">
+            <p>${step.prompt || "Разгадка"}</p>
+            ${
+              uiState.done
+                ? `<div class="fact-box">${step.fact || ""}</div>`
+                : `<p class="muted">${safe.safePrompt || "Откройте сейф и введите ответ"}</p>
+                   <button type="button" class="btn primary" id="open-safe">Открыть сейф</button>
+                   <div id="fact"></div>`
+            }
+          </div>`,
+          footer(!!uiState.done)
+        );
+        if (!uiState.done) {
+          const openSafe = () => {
+            if (!window.KP_openSafe) {
+              setFeedback("Модуль сейфа не загружен", "bad");
+              return;
+            }
+            if (uiState.radar) return;
+            uiState.radar = window.KP_openSafe({
+              safeType: safe.safeType,
+              safeCode: safe.safeCode || "",
+              safePrompt: safe.safePrompt || step.prompt || "",
+              hintText: step.fact || "Открыто!",
+              onUnlock: () => {
+                uiState.done = true;
+                setFeedback("Сейф открыт", "ok");
+                bindNext(true);
+              },
+              onClose: () => {
+                uiState.radar = null;
+                if (uiState.done) renderStep();
+              },
+            });
+          };
+          document.getElementById("open-safe")?.addEventListener("click", openSafe);
+          // сразу открываем сейф — без текстового поля
+          openSafe();
+        }
+        bindNext(!!uiState.done);
+        return;
+      }
       taskChrome(
         step,
         `<div class="panel">
