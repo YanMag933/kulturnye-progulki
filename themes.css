@@ -611,12 +611,9 @@ html[data-theme="marble"] .theme-swatch::after {
   object-fit: cover;
   display: block;
 }
-.route-map-caption {
-  margin: 0 0 8px;
-  font-size: 13px;
-  color: var(--theme-muted);
-  font-family: var(--font-ui);
-  line-height: 1.4;
+.route-map .leaflet-control-attribution,
+.route-map .leaflet-control-container .leaflet-bottom {
+  display: none !important;
 }
 
 html[data-theme="crystal"] .radar-crystal-glow {

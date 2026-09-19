@@ -71,21 +71,31 @@
   function mountLeafletMap() {
     const el = document.getElementById("route-map-el");
     if (!el || typeof L === "undefined") return false;
-    const pts = quest.steps.filter((s) => s.lat && s.lon).map((s) => [s.lat, s.lon]);
-    if (!pts.length) return false;
+    const stepsWithGeo = quest.steps.filter((s) => s.lat && s.lon);
+    if (!stepsWithGeo.length) return false;
     try {
       if (mapInstance) {
         mapInstance.remove();
         mapInstance = null;
       }
-      mapInstance = L.map(el, { zoomControl: false, attributionControl: true });
+      mapInstance = L.map(el, { zoomControl: false, attributionControl: false });
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
-        attribution: "&copy; OpenStreetMap",
+        attribution: "",
       }).addTo(mapInstance);
-      const line = L.polyline(pts, { color: "#c9a24a", weight: 4, opacity: 0.95 }).addTo(mapInstance);
-      quest.steps.forEach((s, i) => {
-        if (!s.lat || !s.lon) return;
+
+      // Линия без замыкания: если финиш ≈ старту, не тянем последний сегмент обратно к первой точке
+      const linePts = stepsWithGeo.map((s) => [s.lat, s.lon]);
+      const first = linePts[0];
+      const last = linePts[linePts.length - 1];
+      const sameEnds =
+        linePts.length > 2 &&
+        Math.abs(first[0] - last[0]) < 0.00015 &&
+        Math.abs(first[1] - last[1]) < 0.00015;
+      const openLine = sameEnds ? linePts.slice(0, -1) : linePts;
+      const line = L.polyline(openLine, { color: "#c9a24a", weight: 4, opacity: 0.95 }).addTo(mapInstance);
+
+      stepsWithGeo.forEach((s, i) => {
         L.circleMarker([s.lat, s.lon], {
           radius: 9,
           color: "#1a1208",
@@ -93,7 +103,7 @@
           fillColor: "#c9a24a",
           fillOpacity: 1,
         })
-          .bindTooltip(`${i + 1}. ${s.placeName}`, { direction: "top" })
+          .bindTooltip(`${s.slot || i + 1}. ${s.placeName}`, { direction: "top", sticky: true })
           .addTo(mapInstance);
       });
       mapInstance.fitBounds(line.getBounds().pad(0.22));
@@ -420,16 +430,22 @@
     return null;
   }
 
+  function panelInputHint(step) {
+    if (step.safePrompt) return step.safePrompt;
+    if (step.ui === "contour") return "Совместите контур в камере";
+    if (step.ui === "geo") return "Откройте сейф у точки";
+    if (step.expected) return "Введите ответ на табло";
+    return "Введите ответ на табло";
+  }
+
   function photoSlotHtml(step, opts = {}) {
-    const atmosphere = opts.hintText || step.atmosphere || step.photoHint || "";
-    const showHint = opts.showHint !== false && atmosphere;
+    const inputHint = opts.hintText || panelInputHint(step);
     return `<div class="photo-slot" aria-label="Место под фото с точки">
       <span class="photo-slot-label">ваше фото</span>
-      ${
-        showHint
-          ? `<div class="photo-slot-hint"><span class="photo-slot-hint-kicker">Место</span><p>${atmosphere}</p></div>`
-          : `<div class="photo-slot-empty">сюда встанет кадр с места</div>`
-      }
+      <div class="photo-slot-hint">
+        <span class="photo-slot-hint-kicker">На табло</span>
+        <p>${inputHint}</p>
+      </div>
     </div>`;
   }
 
@@ -459,13 +475,11 @@
   }
 
   function inputSimHtml(step) {
-    const prompt = step.safePrompt || step.prompt || "Введите ответ";
     const isYear = step.safeType === "year" || (step.expected || "").match(/^\d{4}$/);
     const isCode = step.safeType === "code" || (step.expected || "").match(/^\d{4,}$/);
     const inputMode = isYear || isCode ? "numeric" : "text";
-    const placeholder = isYear ? "например 1880" : isCode ? "цифровой код" : "одно слово";
+    const placeholder = isYear ? "4 цифры" : isCode ? "код" : "слово";
     return `<div class="input-sim panel">
-      <p class="input-sim-label">${prompt}</p>
       <input class="field input-sim-field" id="answer" inputmode="${inputMode}" autocomplete="off" placeholder="${placeholder}" />
       <div class="input-sim-keys" id="sim-keys" ${isYear || isCode ? "" : "hidden"}>
         ${[1, 2, 3, 4, 5, 6, 7, 8, 9, "⌫", 0, "OK"]
@@ -526,7 +540,9 @@
 
   function taskChrome(step, bodyHtml, footerHtml, opts = {}) {
     const hidePlace = opts.hidePlace || (step.hidePlaceUntilGuess && !uiState.guessed);
-    const cardText = step.brief || step.hint || "";
+    const brief = step.brief || step.hint || "";
+    const atmosphere = step.atmosphere || "";
+    const cardBody = [brief, atmosphere].filter(Boolean).join(" ");
     shell(
       `<div class="walk-screen">
         <div class="chip-row">
@@ -538,7 +554,7 @@
         <p class="addr">${hidePlace ? "Сначала совместите контур" : step.address || ""}</p>
         <div class="panel">
           <h2>${step.title}</h2>
-          <p>${cardText}</p>
+          <p>${cardBody}</p>
         </div>
         ${bodyHtml}
       </div>`,
