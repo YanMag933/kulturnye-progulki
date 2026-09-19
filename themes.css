@@ -652,11 +652,22 @@ html[data-theme="crystal"] .radar-crystal-glow {
   transform: translateX(-50%);
   z-index: 2;
   font-family: var(--font-display);
-  font-size: 13px;
-  letter-spacing: 0.18em;
+  font-size: 14px;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.72);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
   pointer-events: none;
+}
+.silhouette-stage-lg {
+  aspect-ratio: 3 / 5;
+  min-height: 280px;
+  background: #050505;
+  border: 1.5px solid var(--theme-line);
+}
+.silhouette-stage-lg .sticker-outline {
+  width: 88%;
+  max-height: 96%;
 }
 html[data-theme="marble"] .photo-slot {
   background: #121212;

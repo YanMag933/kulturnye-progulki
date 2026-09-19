@@ -1,5 +1,5 @@
-п»ї/* Service worker вЂ” offline PWA cache */
-const CACHE = "kultprogulki-v32";
+/* Service worker — offline PWA cache */
+const CACHE = "kultprogulki-v33";
 const ASSETS = [
   "./",
   "./index.html",
@@ -65,7 +65,7 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   const path = url.pathname;
-  // HTML/JS/CSS вЂ” СЃРЅР°С‡Р°Р»Р° СЃРµС‚СЊ, С‡С‚РѕР±С‹ РїСЂР°РІРєРё UI РЅРµ Р·Р°Р»РёРїР°Р»Рё РІ РєСЌС€Рµ
+  // HTML/JS/CSS — сначала сеть, чтобы правки UI не залипали в кэше
   const networkFirst =
     req.mode === "navigate" ||
     path.endsWith(".html") ||

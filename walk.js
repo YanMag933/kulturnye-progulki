@@ -11,7 +11,8 @@
   }
 
   let quest = KP.loadActiveQuest() || KP.ensureDemoQuest();
-  if (STORY_ID && quest.storyId !== STORY_ID && window.STORY_ROUTES?.[STORY_ID]) {
+  // story=… всегда пересобирает сюжет (новые тексты / контуры), не держит старый кэш
+  if (STORY_ID && window.STORY_ROUTES?.[STORY_ID]) {
     quest = KP.materializeStoryRoute(STORY_ID);
     KP.saveActiveQuest(quest);
   }
@@ -420,13 +421,13 @@
   }
 
   function photoSlotHtml(step, opts = {}) {
-    const hint = opts.hintText || step.photoHint || step.hintL1 || step.hint || "";
-    const showHint = opts.showHint !== false;
+    const atmosphere = opts.hintText || step.atmosphere || step.photoHint || "";
+    const showHint = opts.showHint !== false && atmosphere;
     return `<div class="photo-slot" aria-label="Место под фото с точки">
       <span class="photo-slot-label">ваше фото</span>
       ${
         showHint
-          ? `<div class="photo-slot-hint"><span class="photo-slot-hint-kicker">Подсказка точки</span><p>${hint}</p></div>`
+          ? `<div class="photo-slot-hint"><span class="photo-slot-hint-kicker">Место</span><p>${atmosphere}</p></div>`
           : `<div class="photo-slot-empty">сюда встанет кадр с места</div>`
       }
     </div>`;
@@ -525,6 +526,7 @@
 
   function taskChrome(step, bodyHtml, footerHtml, opts = {}) {
     const hidePlace = opts.hidePlace || (step.hidePlaceUntilGuess && !uiState.guessed);
+    const cardText = step.brief || step.hint || "";
     shell(
       `<div class="walk-screen">
         <div class="chip-row">
@@ -533,10 +535,10 @@
           ${step.uniqueFeature ? '<span class="chip feature">фишка</span>' : ""}
         </div>
         <h2 class="place">${hidePlace ? "???" : step.placeName}</h2>
-        <p class="addr">${hidePlace ? "Сначала угадайте по контуру" : step.address || ""}</p>
+        <p class="addr">${hidePlace ? "Сначала совместите контур" : step.address || ""}</p>
         <div class="panel">
           <h2>${step.title}</h2>
-          <p>${step.hint}</p>
+          <p>${cardText}</p>
         </div>
         ${bodyHtml}
       </div>`,
@@ -562,7 +564,7 @@
     const key = step.silhouetteKey || "pushkin";
     const silGuess = (window.KP_SILHOUETTE_HTML && window.KP_SILHOUETTE_HTML(key, "guess")) || "";
     const silAr = (window.KP_SILHOUETTE_HTML && window.KP_SILHOUETTE_HTML(key, "ar")) || "";
-    const phase = uiState.phase || "guess"; // guess | camera | done
+    const phase = uiState.phase || (step.skipGuess ? "ready" : "guess");
 
     if (phase === "guess") {
       taskChrome(
@@ -596,15 +598,17 @@
     if (phase === "ready") {
       taskChrome(
         step,
-        `<div class="panel">
-          <div class="silhouette-stage">${silGuess}</div>
+        `<div class="panel contour-panel">
+          <div class="silhouette-stage silhouette-stage-lg">${silGuess || `<img class="sticker-outline guess" src="assets/contours/pushkin-sticker-preview.png" alt="Контур Пушкина" />`}</div>
           <p class="muted">${step.contourHint || "Откройте камеру и совместите контур с памятником."}</p>
+          ${hintPillHtml()}
           <button type="button" class="btn primary" id="open-cam">Открыть камеру</button>
           <button type="button" class="btn ghost" id="fallback">Без камеры — вопрос</button>
           <div id="extra"></div>
         </div>`,
         footer(!!uiState.done)
       );
+      bindHintPill(step);
       document.getElementById("open-cam").onclick = async () => {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({
@@ -624,10 +628,10 @@
           <input class="field" id="answer" placeholder="ответ" />
           <button type="button" class="btn primary" id="check">Проверить</button>`;
         document.getElementById("check").onclick = () => {
-          if (checkText(step.fallbackAnswer, [])) {
+          if (checkText(step.fallbackAnswer, ["да", "yes"])) {
             uiState.done = true;
             uiState.phase = "done";
-            setFeedback("Fallback принят", "ok");
+            setFeedback("Принято", "ok");
             document.getElementById("extra").innerHTML += `<div class="fact-box">${step.fact}</div>`;
             bindNext(true);
           } else setFeedback("Попробуйте ещё", "bad");
@@ -931,7 +935,7 @@
          ${hintPillHtml()}
          <div class="panel geo-lock">
           <div class="lock-icon">${uiState.unlocked ? "открыто" : "закрыто"}</div>
-          <p>${uiState.unlocked ? step.unlockedText : step.lockedTeaser}</p>
+          <p>${uiState.unlocked ? step.unlockedText : step.brief || step.lockedTeaser}</p>
           <div class="geo-hint-box">
             <p class="muted"><b>Кристалл.</b> Красный свет с ${reveal}&nbsp;м · сейф ≤ ${unlock}&nbsp;м.</p>
           </div>
