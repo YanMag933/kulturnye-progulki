@@ -1,12 +1,17 @@
 ﻿<!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="slate">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#12100e" />
+  <meta name="theme-color" content="#0e0e10" />
   <title>Прогон сейфов — Культурные прогулки</title>
-  <link rel="stylesheet" href="styles.css?v=29" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=30" />
+  <link rel="stylesheet" href="themes.css?v=30" />
   <link rel="manifest" href="manifest.json" />
+  <script src="theme.js?v=30"></script>
 </head>
 <body class="walk-body">
   <div class="phone-shell" id="app">
@@ -17,7 +22,7 @@
       <p><a href="index.html">← Меню</a></p>
     </div>
   </div>
-  <script src="radar.js?v=29"></script>
+  <script src="radar.js?v=30"></script>
   <script>
     (function () {
       if (!window.KP_Radar) return;
@@ -25,7 +30,7 @@
         targetLat: 55.76,
         targetLon: 37.62,
         unlockM: 35,
-        revealM: 300,
+        revealM: 150,
         demo: true,
         fitMode: true,
         safeType: "wheel",
@@ -41,9 +46,8 @@
       radar.start();
     })();
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./sw.js?v=29").catch(() => {});
+      navigator.serviceWorker.register("./sw.js?v=30").catch(() => {});
     }
   </script>
 </body>
 </html>
-

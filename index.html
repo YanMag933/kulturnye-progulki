@@ -1,18 +1,20 @@
 ﻿<!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="slate">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#12100e" />
+  <meta name="theme-color" content="#0e0e10" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Культурные прогулки</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=29" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=30" />
+  <link rel="stylesheet" href="themes.css?v=30" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <script src="theme.js?v=30"></script>
 </head>
 <body class="home-body">
   <div class="phone-shell home-shell">
@@ -25,16 +27,26 @@
         <p class="home-lead">Один маршрут — одна судьба. Начни с прогулки по следам Пушкина: кристалл, сейфы, главы города.</p>
       </header>
 
+      <section class="theme-picker" aria-label="Дизайн">
+        <p class="theme-picker-label">Дизайн</p>
+        <div class="theme-picker-row">
+          <button type="button" class="theme-swatch" data-theme-pick="slate" data-label="Сланец" aria-label="Сланец"></button>
+          <button type="button" class="theme-swatch" data-theme-pick="crystal" data-label="Кристалл" aria-label="Кристалл"></button>
+          <button type="button" class="theme-swatch" data-theme-pick="marble" data-label="Мрамор" aria-label="Мрамор"></button>
+          <button type="button" class="theme-swatch" data-theme-pick="basalt" data-label="Базальт" aria-label="Базальт"></button>
+        </div>
+      </section>
+
       <nav class="home-actions" aria-label="Главное меню">
-        <a class="home-cta walk" href="walk.html?v=29">
+        <a class="home-cta walk" href="walk.html?v=30">
           <span class="home-cta-label">Сюжет</span>
           <span class="home-cta-title">Гулять</span>
         </a>
-        <a class="home-cta test" href="walk.html?test=1&v=29">
+        <a class="home-cta test" href="walk.html?test=1&v=30">
           <span class="home-cta-label">Просмотр</span>
           <span class="home-cta-title">Тестовая прогулка</span>
         </a>
-        <a class="home-cta safes" href="safes-fit.html?v=29">
+        <a class="home-cta safes" href="safes-fit.html?v=30">
           <span class="home-cta-label">Ассеты</span>
           <span class="home-cta-title">Прогон сейфов</span>
         </a>
@@ -55,10 +67,10 @@
       </footer>
     </main>
   </div>
-  <script src="content-db.js?v=29"></script>
-  <script src="monuments-extra.js?v=29"></script>
-  <script src="demo-quest.js?v=29"></script>
-  <script src="shared.js?v=29"></script>
+  <script src="content-db.js?v=30"></script>
+  <script src="monuments-extra.js?v=30"></script>
+  <script src="demo-quest.js?v=30"></script>
+  <script src="shared.js?v=30"></script>
   <script>
     const active = KP.loadActiveQuest();
     const dbCount = (window.QUEST_DB && QUEST_DB.tasks.length) || 0;
@@ -93,19 +105,15 @@
           const keys = await caches.keys();
           await Promise.all(keys.map((k) => caches.delete(k)));
         }
-      } catch (_) {
-        /* всё равно перезагрузим */
-      }
-      // жёсткий сброс: новая сессия без кэша
+      } catch (_) {}
       const url = new URL(location.href);
       url.searchParams.set("v", String(Date.now()));
       location.replace(url.pathname + "?" + url.searchParams.toString());
     };
 
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./sw.js?v=29").catch(() => {});
+      navigator.serviceWorker.register("./sw.js?v=30").catch(() => {});
     }
   </script>
 </body>
 </html>
-

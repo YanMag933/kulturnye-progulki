@@ -12,8 +12,8 @@
   --danger: #c87a62;
   --ok: #6faf82;
   --phone-w: 390px;
-  --font-display: "Cormorant Garamond", "Times New Roman", serif;
-  --font-ui: "Manrope", "Segoe UI", sans-serif;
+  --font-display: "Fraunces", "Cormorant Garamond", Georgia, serif;
+  --font-ui: "Outfit", "Manrope", system-ui, sans-serif;
   --radius-lg: 18px;
   --radius-md: 14px;
   font-family: var(--font-ui);

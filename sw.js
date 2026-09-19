@@ -1,5 +1,5 @@
 ﻿/* Service worker — offline PWA cache */
-const CACHE = "kultprogulki-v29";
+const CACHE = "kultprogulki-v30";
 const ASSETS = [
   "./",
   "./index.html",
@@ -7,6 +7,8 @@ const ASSETS = [
   "./walk.html",
   "./safes-fit.html",
   "./styles.css",
+  "./themes.css",
+  "./theme.js",
   "./create-styles.css",
   "./shared.js",
   "./assets.js",
@@ -30,6 +32,10 @@ const ASSETS = [
   "./assets/ui/crystal.png",
   "./assets/ui/scroll-rolled.png",
   "./assets/ui/scroll-unrolled.png",
+  "./assets/ui/themes/slate.jpg",
+  "./assets/ui/themes/crystal.jpg",
+  "./assets/ui/themes/marble.jpg",
+  "./assets/ui/themes/basalt.jpg",
 ];
 
 self.addEventListener("install", (event) => {
