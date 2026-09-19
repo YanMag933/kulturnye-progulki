@@ -1,5 +1,5 @@
 ﻿/* Service worker — offline PWA cache */
-const CACHE = "kultprogulki-v30";
+const CACHE = "kultprogulki-v31";
 const ASSETS = [
   "./",
   "./index.html",
@@ -18,6 +18,7 @@ const ASSETS = [
   "./content-db.js",
   "./monuments-extra.js",
   "./demo-quest.js",
+  "./story-pushkin.js",
   "./walk.js",
   "./create.js",
   "./mechanics-data.js",
@@ -36,6 +37,7 @@ const ASSETS = [
   "./assets/ui/themes/crystal.jpg",
   "./assets/ui/themes/marble.jpg",
   "./assets/ui/themes/basalt.jpg",
+  "./assets/maps/pushkin-route.jpg",
 ];
 
 self.addEventListener("install", (event) => {
@@ -89,4 +91,3 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
-

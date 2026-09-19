@@ -33,6 +33,7 @@ window.KP = (() => {
       stepIndex: -1,
       answers: [],
       startedAt: Date.now(),
+      mapReady: false,
     });
     const saved = loadJson(KEYS.savedQuests, []);
     const without = saved.filter((q) => q.id !== quest.id);
@@ -300,6 +301,56 @@ window.KP = (() => {
     return q;
   }
 
+  function materializeStoryRoute(storyId) {
+    const story = window.STORY_ROUTES && window.STORY_ROUTES[storyId];
+    if (!story) throw new Error("Неизвестный сюжетный маршрут: " + storyId);
+    const steps = (story.chapters || []).map((ch, i) => ({
+      slot: ch.slot || i + 1,
+      taskId: `story_${storyId}_${ch.slot || i + 1}`,
+      mechanicId: ch.mechanicId || "year_key",
+      mechanicName: ch.mechanicName || ch.chapterTitle || "Глава",
+      placeId: `story_${storyId}_${ch.slot || i + 1}`,
+      placeName: ch.placeName,
+      address: ch.address || "",
+      lat: ch.lat,
+      lon: ch.lon,
+      title: ch.title,
+      hint: ch.hint,
+      hintL1: ch.hintL1,
+      hintL2: ch.hintL2,
+      hintL3: ch.hintL3,
+      storyBeat: ch.storyBeat,
+      chapterTitle: ch.chapterTitle,
+      ui: ch.ui || "safe",
+      fact: ch.fact || "",
+      uniqueFeature: ch.ui === "geo",
+      options: ch.options,
+      correctIndex: ch.correctIndex,
+      radiusM: ch.radiusM || 40,
+      revealM: ch.revealM || 150,
+      lockedTeaser: ch.hintL1 || ch.hint,
+      unlockedText: ch.unlockedText || "",
+      safeType: ch.safeType,
+      safeCode: ch.safeCode,
+      safePrompt: ch.safePrompt,
+      photoTile: ch.photoTile,
+    }));
+    return {
+      id: story.id || `story-${storyId}-${Date.now()}`,
+      title: story.title,
+      subtitle: story.subtitle || "",
+      zone: story.zone || "garden",
+      zoneLabel: story.zoneLabel || "Сюжет",
+      difficulty: story.difficulty || "story",
+      createdAt: new Date().toISOString(),
+      storyId,
+      isStory: true,
+      mapBounds: story.mapBounds || null,
+      contourVersion: 7,
+      steps,
+    };
+  }
+
   function assetSvg(key) {
     return (window.KP_ASSETS && window.KP_ASSETS[key]) || "";
   }
@@ -314,6 +365,7 @@ window.KP = (() => {
     saveProgress,
     loadDraft,
     materializeFromExport,
+    materializeStoryRoute,
     buildQuestFromMechanics,
     ensureDemoQuest,
     clearUsedTasks,

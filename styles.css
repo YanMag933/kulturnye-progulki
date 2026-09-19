@@ -258,9 +258,10 @@ body {
   font-family: var(--font-display);
   font-size: 28px;
   font-weight: 600;
-  color: #f6f0e6;
+  color: inherit;
   line-height: 1.1;
 }
+.home-cta.story .home-cta-label { color: #e0c070; }
 .home-foot {
   margin-top: auto;
   padding-top: 28px;

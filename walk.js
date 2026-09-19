@@ -1,16 +1,30 @@
 (() => {
-  const TEST_MODE = new URLSearchParams(location.search).has("test");
+  const params = new URLSearchParams(location.search);
+  const TEST_MODE = params.has("test");
+  const STORY_ID = params.get("story");
   const TEST_PROGRESS_KEY = "kultprogulki.progress.test";
   const app = document.getElementById("app");
-  let quest = KP.ensureDemoQuest();
+
+  if (STORY_ID && window.KP.materializeStoryRoute && window.STORY_ROUTES?.[STORY_ID]) {
+    const storyQuest = KP.materializeStoryRoute(STORY_ID);
+    KP.saveActiveQuest(storyQuest);
+  }
+
+  let quest = KP.loadActiveQuest() || KP.ensureDemoQuest();
+  if (STORY_ID && quest.storyId !== STORY_ID && window.STORY_ROUTES?.[STORY_ID]) {
+    quest = KP.materializeStoryRoute(STORY_ID);
+    KP.saveActiveQuest(quest);
+  }
+
   let progress = TEST_MODE
     ? JSON.parse(localStorage.getItem(TEST_PROGRESS_KEY) || "null")
     : KP.loadProgress();
   if (!progress || progress.questId !== quest.id) {
-    progress = { questId: quest.id, stepIndex: -1, answers: [], startedAt: Date.now() };
+    progress = { questId: quest.id, stepIndex: -1, answers: [], startedAt: Date.now(), mapReady: false };
     save();
   }
   let uiState = {};
+  let mapInstance = null;
 
   function save() {
     if (TEST_MODE) localStorage.setItem(TEST_PROGRESS_KEY, JSON.stringify(progress));
@@ -21,9 +35,103 @@
     progress.stepIndex = 0;
     progress.answers = [];
     progress.startedAt = Date.now();
+    progress.mapReady = true;
     uiState = {};
+    if (mapInstance) {
+      try {
+        mapInstance.remove();
+      } catch (_) {}
+      mapInstance = null;
+    }
     save();
     render();
+  }
+
+  function confirmRouteMap() {
+    progress.mapReady = true;
+    progress.stepIndex = -1;
+    if (mapInstance) {
+      try {
+        mapInstance.remove();
+      } catch (_) {}
+      mapInstance = null;
+    }
+    save();
+    render();
+  }
+
+  function buildRouteSvg() {
+    return `<img class="route-map-fallback" src="assets/maps/pushkin-route.jpg" alt="Карта маршрута «Пушкин в Москве»" />`;
+  }
+
+  function mountLeafletMap() {
+    const el = document.getElementById("route-map-el");
+    if (!el || typeof L === "undefined") return false;
+    const pts = quest.steps.filter((s) => s.lat && s.lon).map((s) => [s.lat, s.lon]);
+    if (!pts.length) return false;
+    try {
+      if (mapInstance) {
+        mapInstance.remove();
+        mapInstance = null;
+      }
+      mapInstance = L.map(el, { zoomControl: false, attributionControl: true });
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap",
+      }).addTo(mapInstance);
+      const line = L.polyline(pts, { color: "#c9a24a", weight: 4, opacity: 0.95 }).addTo(mapInstance);
+      quest.steps.forEach((s, i) => {
+        if (!s.lat || !s.lon) return;
+        L.circleMarker([s.lat, s.lon], {
+          radius: 9,
+          color: "#1a1208",
+          weight: 2,
+          fillColor: "#c9a24a",
+          fillOpacity: 1,
+        })
+          .bindTooltip(`${i + 1}. ${s.placeName}`, { direction: "top" })
+          .addTo(mapInstance);
+      });
+      mapInstance.fitBounds(line.getBounds().pad(0.22));
+      setTimeout(() => mapInstance && mapInstance.invalidateSize(), 80);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function renderRouteMap() {
+    shell(
+      `<div class="start-hero">
+        <p class="eyebrow">Сюжет · карта</p>
+        <h1>${quest.title}</h1>
+        <p class="route-map-caption">${quest.subtitle || "Сначала посмотрите весь маршрут — задания откроются после карты."}</p>
+        <div class="route-map" id="route-map-wrap">
+          <div id="route-map-el"></div>
+          <div id="route-map-svg-host" hidden>${buildRouteSvg()}</div>
+        </div>
+        <ol class="steps-mini route-legend">
+          ${quest.steps
+            .map(
+              (s) =>
+                `<li><b>${s.slot}.</b> ${s.chapterTitle || s.mechanicName}<br/><span class="muted">${s.placeName}</span></li>`
+            )
+            .join("")}
+        </ol>
+        <button type="button" class="btn primary" id="start-after-map">К заданиям</button>
+        <a class="btn ghost" href="index.html" style="display:block;text-align:center;margin-top:8px">В меню</a>
+      </div>`
+    );
+    const ok = mountLeafletMap();
+    if (!ok) {
+      const host = document.getElementById("route-map-svg-host");
+      const el = document.getElementById("route-map-el");
+      if (host && el) {
+        el.replaceWith(host.firstElementChild || host);
+        host.remove();
+      }
+    }
+    document.getElementById("start-after-map").onclick = confirmRouteMap;
   }
 
   function prevStep() {
@@ -470,57 +578,81 @@
   }
 
   function renderStart() {
+    if (quest.isStory && !progress.mapReady) {
+      renderRouteMap();
+      return;
+    }
+    const storyMode = !!quest.isStory;
     shell(
       `<div class="start-hero">
-        <p class="eyebrow">${TEST_MODE ? "Режим проверки" : "Режим игрока"}</p>
+        <p class="eyebrow">${TEST_MODE ? "Режим проверки" : storyMode ? "Сюжет" : "Режим игрока"}</p>
         <h1>${quest.title}</h1>
         <p class="muted">${
           TEST_MODE
             ? "Далее подставляет верный ответ или отмечает вариант — можно пройти все шаги без ввода."
             : quest.subtitle
         }</p>
-        <div class="map-fake">Кластер точек · ${quest.zoneLabel}</div>
+        <div class="map-fake">${storyMode ? "Маршрут готов · " : "Кластер точек · "}${quest.zoneLabel}</div>
         <div class="steps-mini">
           ${quest.steps
             .map(
               (s) =>
-                `<div><b>${s.slot}.</b> ${s.mechanicName}${s.uniqueFeature ? " · фишка" : ""}<br/><span class="muted">${s.placeName}</span></div>`
+                `<div><b>${s.slot}.</b> ${s.chapterTitle || s.mechanicName}${s.uniqueFeature ? " · фишка" : ""}<br/><span class="muted">${s.placeName}</span></div>`
             )
             .join("")}
         </div>
         <button type="button" class="btn primary" id="start">${TEST_MODE ? "Смотреть задания" : "Начать прогулку"}</button>
-        <button type="button" class="btn ghost" id="rebuild">Новая сборка из базы (без повторов)</button>
-        <button type="button" class="btn ghost" id="import">Импорт JSON</button>
-        <input type="file" id="file" accept="application/json,.json" hidden />
+        ${
+          storyMode
+            ? `<button type="button" class="btn ghost" id="show-map">Снова карта маршрута</button>
+               <a class="btn ghost" href="index.html" style="display:block;text-align:center;margin-top:8px">В меню</a>`
+            : `<button type="button" class="btn ghost" id="rebuild">Новая сборка из базы (без повторов)</button>
+               <button type="button" class="btn ghost" id="import">Импорт JSON</button>
+               <input type="file" id="file" accept="application/json,.json" hidden />`
+        }
       </div>`
     );
     document.getElementById("start").onclick = startWalk;
-    document.getElementById("rebuild").onclick = () => {
-      const mechanics = quest.steps.map((s) => ({ id: s.mechanicId, name: s.mechanicName }));
-      quest = KP.buildQuestFromMechanics(mechanics, {
-        zone: quest.zone,
-        difficulty: quest.difficulty,
-      });
-      KP.saveActiveQuest(quest);
-      progress = KP.loadProgress();
-      uiState = {};
-      render();
-    };
-    document.getElementById("import").onclick = () => document.getElementById("file").click();
-    document.getElementById("file").onchange = async (e) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-      try {
-        const data = JSON.parse(await file.text());
-        quest = KP.materializeFromExport(data);
+    const showMapBtn = document.getElementById("show-map");
+    if (showMapBtn) {
+      showMapBtn.onclick = () => {
+        progress.mapReady = false;
+        save();
+        render();
+      };
+    }
+    const rebuild = document.getElementById("rebuild");
+    if (rebuild) {
+      rebuild.onclick = () => {
+        const mechanics = quest.steps.map((s) => ({ id: s.mechanicId, name: s.mechanicName }));
+        quest = KP.buildQuestFromMechanics(mechanics, {
+          zone: quest.zone,
+          difficulty: quest.difficulty,
+        });
         KP.saveActiveQuest(quest);
         progress = KP.loadProgress();
         uiState = {};
         render();
-      } catch (err) {
-        alert("Не удалось прочитать JSON: " + err.message);
-      }
-    };
+      };
+    }
+    const importBtn = document.getElementById("import");
+    if (importBtn) {
+      importBtn.onclick = () => document.getElementById("file").click();
+      document.getElementById("file").onchange = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+          const data = JSON.parse(await file.text());
+          quest = KP.materializeFromExport(data);
+          KP.saveActiveQuest(quest);
+          progress = KP.loadProgress();
+          uiState = {};
+          render();
+        } catch (err) {
+          alert("Не удалось прочитать JSON: " + err.message);
+        }
+      };
+    }
   }
 
   function renderDone() {
