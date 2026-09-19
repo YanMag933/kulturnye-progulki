@@ -1,5 +1,5 @@
 ﻿/* Service worker — offline PWA cache */
-const CACHE = "kultprogulki-v28";
+const CACHE = "kultprogulki-v29";
 const ASSETS = [
   "./",
   "./index.html",
@@ -83,3 +83,4 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
+
