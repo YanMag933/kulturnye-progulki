@@ -49,7 +49,10 @@
 
   function confirmRouteMap() {
     progress.mapReady = true;
-    progress.stepIndex = -1;
+    progress.stepIndex = 0;
+    progress.answers = [];
+    progress.startedAt = Date.now();
+    uiState = {};
     if (mapInstance) {
       try {
         mapInstance.remove();
@@ -178,6 +181,7 @@
     const ui = step.ui || "generic";
     if (ui === "geo") return !!uiState.unlocked;
     if (ui === "contour") return !!uiState.done || uiState.phase === "done";
+    if (ui === "safe" || ui === "input") return !!uiState.done;
     return !!uiState.done;
   }
 
@@ -206,18 +210,23 @@
       renderStep();
       return;
     }
-    if (ui === "detail" || ui === "quiz" || ui === "finale") {
+    if (ui === "detail" || ui === "quiz" || ui === "finale" || ui === "input" || ui === "safe") {
       uiState.done = true;
+      const ans = String(step.safeCode || step.expected || "");
       renderStep();
       requestAnimationFrame(() => {
-        const opts = app.querySelectorAll(".opt");
-        opts.forEach((b, i) => {
-          b.classList.toggle("correct", i === step.correctIndex);
-          b.classList.remove("wrong");
-        });
+        const input = document.getElementById("answer");
+        if (input && ans) input.value = ans.replace(/-/g, "");
         const fact = document.getElementById("fact");
         if (fact) fact.innerHTML = `<div class="fact-box">${step.fact || ""}</div>`;
-        setFeedback("Тест: верный вариант отмечен", "ok");
+        const opts = app.querySelectorAll(".opt");
+        if (opts.length && step.correctIndex != null) {
+          opts.forEach((b, i) => {
+            b.classList.toggle("correct", i === step.correctIndex);
+            b.classList.remove("wrong");
+          });
+        }
+        setFeedback("Тест: ответ подставлен" + (ans ? " — " + ans : ""), "ok");
       });
       return;
     }
@@ -313,7 +322,7 @@
         </div>
         ${TEST_MODE ? `<p class="test-banner">ТЕСТОВАЯ ПРОГУЛКА · Далее подставляет ответ</p>` : ""}
         <h1 class="walk-title">${quest.title}${TEST_MODE ? " · тест" : ""}</h1>
-        <p class="walk-meta">${quest.zoneLabel} · ${quest.difficultyLabel} · ${quest.durationHint}</p>
+        <p class="walk-meta">${[quest.zoneLabel, quest.difficultyLabel, quest.durationHint].filter(Boolean).join(" · ")}</p>
         ${dots}
       </div>
       ${inner}
@@ -365,9 +374,16 @@
   }
 
   function checkText(expected, alternatives = []) {
+    const norm = (s) =>
+      String(s || "")
+        .trim()
+        .toLowerCase()
+        .replace(/ё/g, "е")
+        .replace(/\s+/g, "")
+        .replace(/-/g, "");
     const input = document.getElementById("answer");
-    const val = (input?.value || "").trim().toLowerCase();
-    const okList = [expected, ...alternatives].map((x) => String(x).trim().toLowerCase());
+    const val = norm(input?.value);
+    const okList = [expected, ...alternatives].map(norm);
     return okList.includes(val);
   }
 
@@ -401,6 +417,110 @@
       }
     }
     return null;
+  }
+
+  function photoSlotHtml(step, opts = {}) {
+    const hint = opts.hintText || step.photoHint || step.hintL1 || step.hint || "";
+    const showHint = opts.showHint !== false;
+    return `<div class="photo-slot" aria-label="Место под фото с точки">
+      <span class="photo-slot-label">ваше фото</span>
+      ${
+        showHint
+          ? `<div class="photo-slot-hint"><span class="photo-slot-hint-kicker">Подсказка точки</span><p>${hint}</p></div>`
+          : `<div class="photo-slot-empty">сюда встанет кадр с места</div>`
+      }
+    </div>`;
+  }
+
+  function hintPillHtml() {
+    return `<button type="button" class="hint-pill" id="hint-pill" aria-expanded="false">Подсказка</button>
+      <div class="hint-panel" id="hint-panel" hidden></div>`;
+  }
+
+  function bindHintPill(step) {
+    const pill = document.getElementById("hint-pill");
+    const panel = document.getElementById("hint-panel");
+    if (!pill || !panel) return;
+    const levels = [step.hintL1, step.hintL2, step.hintL3].filter(Boolean);
+    let level = 0;
+    pill.onclick = () => {
+      if (!levels.length) {
+        panel.hidden = false;
+        panel.textContent = step.hint || "Смотрите на место.";
+        pill.setAttribute("aria-expanded", "true");
+        return;
+      }
+      panel.hidden = false;
+      panel.innerHTML = `<p><b>L${level + 1}</b> · ${levels[level]}</p>`;
+      pill.setAttribute("aria-expanded", "true");
+      level = Math.min(level + 1, levels.length - 1);
+    };
+  }
+
+  function inputSimHtml(step) {
+    const prompt = step.safePrompt || step.prompt || "Введите ответ";
+    const isYear = step.safeType === "year" || (step.expected || "").match(/^\d{4}$/);
+    const isCode = step.safeType === "code" || (step.expected || "").match(/^\d{4,}$/);
+    const inputMode = isYear || isCode ? "numeric" : "text";
+    const placeholder = isYear ? "например 1880" : isCode ? "цифровой код" : "одно слово";
+    return `<div class="input-sim panel">
+      <p class="input-sim-label">${prompt}</p>
+      <input class="field input-sim-field" id="answer" inputmode="${inputMode}" autocomplete="off" placeholder="${placeholder}" />
+      <div class="input-sim-keys" id="sim-keys" ${isYear || isCode ? "" : "hidden"}>
+        ${[1, 2, 3, 4, 5, 6, 7, 8, 9, "⌫", 0, "OK"]
+          .map((k) => `<button type="button" class="sim-key" data-k="${k}">${k}</button>`)
+          .join("")}
+      </div>
+      <button type="button" class="btn primary" id="check">Проверить</button>
+      <div id="fact"></div>
+    </div>`;
+  }
+
+  function bindInputSim(step) {
+    const input = document.getElementById("answer");
+    const keys = document.getElementById("sim-keys");
+    if (keys && !keys.hidden) {
+      keys.querySelectorAll(".sim-key").forEach((btn) => {
+        btn.onclick = () => {
+          if (!input) return;
+          const k = btn.dataset.k;
+          if (k === "⌫") input.value = input.value.slice(0, -1);
+          else if (k === "OK") document.getElementById("check")?.click();
+          else input.value += k;
+          input.focus();
+        };
+      });
+    }
+    document.getElementById("check").onclick = () => {
+      const expected = step.safeCode || step.expected || "";
+      const alts = step.alternatives || [];
+      const ok = checkText(expected, alts) || (expected && checkText(String(expected).replace(/-/g, ""), alts));
+      if (ok) {
+        uiState.done = true;
+        setFeedback("Засчитано", "ok");
+        const fact = document.getElementById("fact");
+        if (fact) fact.innerHTML = `<div class="fact-box">${step.fact || ""}</div>`;
+        bindNext(true);
+      } else setFeedback("Пока мимо — смотрите подсказку на фото-слоте", "bad");
+    };
+    bindNext(!!uiState.done);
+  }
+
+  function renderSafeInput(step) {
+    taskChrome(
+      step,
+      `${photoSlotHtml(step)}
+       ${hintPillHtml()}
+       ${
+         uiState.done
+           ? `<div class="panel fact-box">${step.fact || ""}</div>`
+           : inputSimHtml(step)
+       }`,
+      footer(!!uiState.done)
+    );
+    bindHintPill(step);
+    if (!uiState.done) bindInputSim(step);
+    else bindNext(true);
   }
 
   function taskChrome(step, bodyHtml, footerHtml, opts = {}) {
@@ -671,34 +791,13 @@
   }
 
   function renderDetail(step) {
-    const crop = KP.assetSvg(step.cropAsset || "crop_lion_mascaron");
-    taskChrome(
-      step,
-      `<div class="panel">
-        <div class="crop-photo">${crop}</div>
-        <p class="muted">${step.cropCaption || "Кроп с реального декора. Найдите тот же фрагмент на месте."}</p>
-        <div class="options">
-          ${(step.options || []).map((o, i) => `<button type="button" class="opt" data-i="${i}">${o}</button>`).join("")}
-        </div>
-        <div id="fact"></div>
-      </div>`,
-      footer(!!uiState.done)
-    );
-    app.querySelectorAll(".opt").forEach((btn) => {
-      btn.onclick = () => {
-        const i = Number(btn.dataset.i);
-        const ok = i === step.correctIndex;
-        app.querySelectorAll(".opt").forEach((b) => b.classList.remove("correct", "wrong"));
-        btn.classList.add(ok ? "correct" : "wrong");
-        if (ok) {
-          uiState.done = true;
-          setFeedback("Верно — вы нашли деталь на фасаде", "ok");
-          document.getElementById("fact").innerHTML = `<div class="fact-box">${step.fact}</div>`;
-          bindNext(true);
-        } else setFeedback("Не тот элемент — сравните кроп с фасадом", "bad");
-      };
+    // Больше не multiple-choice — симуляция ввода + фото-слот
+    renderSafeInput({
+      ...step,
+      safePrompt: step.safePrompt || "Что нашли? (одно слово)",
+      expected: step.expected || (step.options && step.options[step.correctIndex]) || "",
+      alternatives: step.alternatives || [],
     });
-    bindNext(!!uiState.done);
   }
 
   function renderPuzzle(step) {
@@ -817,7 +916,8 @@
     const ui = step.ui || "generic";
 
     if (ui === "contour") return renderContour(step);
-    if (ui === "detail") return renderDetail(step);
+    if (ui === "detail" || ui === "input") return renderDetail(step);
+    if (ui === "safe") return renderSafeInput(step);
     if (ui === "puzzle") return renderPuzzle(step);
     if (ui === "circle") return renderCircle(step);
     if (ui === "mosaic") return renderMosaic(step);
@@ -827,11 +927,13 @@
       const unlock = step.radiusM || 35;
       taskChrome(
         step,
-        `<div class="panel geo-lock">
+        `${photoSlotHtml(step)}
+         ${hintPillHtml()}
+         <div class="panel geo-lock">
           <div class="lock-icon">${uiState.unlocked ? "открыто" : "закрыто"}</div>
           <p>${uiState.unlocked ? step.unlockedText : step.lockedTeaser}</p>
           <div class="geo-hint-box">
-            <p class="muted"><b>Подсказка.</b> Кристалл мигает красным светом с ${reveal}&nbsp;м (ближе — ярче и чаще). Сейф ≤ ${unlock}&nbsp;м — кнопка «Открыть сейф».</p>
+            <p class="muted"><b>Кристалл.</b> Красный свет с ${reveal}&nbsp;м · сейф ≤ ${unlock}&nbsp;м.</p>
           </div>
           ${
             uiState.unlocked
@@ -842,6 +944,7 @@
         </div>`,
         footer(!!uiState.unlocked)
       );
+      bindHintPill(step);
       const openRadar = (demo) => {
         if (!window.KP_Radar) {
           setFeedback("Модуль радара не загружен", "bad");

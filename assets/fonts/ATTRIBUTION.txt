@@ -1,0 +1,15 @@
+# Local Reels / SMM fonts (SIL Open Font License)
+
+Sources (Google Fonts / OFL):
+- Montserrat — https://github.com/google/fonts/tree/main/ofl/montserrat
+- Bebas Neue — https://github.com/google/fonts/tree/main/ofl/bebasneue
+- Anton — https://github.com/google/fonts/tree/main/ofl/anton
+- Poppins — https://github.com/google/fonts/tree/main/ofl/poppins
+- Playfair Display — https://github.com/google/fonts/tree/main/ofl/playfairdisplay
+- Oswald — https://github.com/google/fonts/tree/main/ofl/oswald
+
+Theme mapping:
+- slate → Bebas Neue + Montserrat
+- crystal → Anton + Montserrat
+- marble → Playfair Display + Poppins
+- basalt → Oswald + Poppins

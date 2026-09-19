@@ -156,14 +156,12 @@
             <div class="safe-photo-wrap" id="radar-safe"></div>
           </div>
 
-          <button type="button" class="scroll-fly" id="scroll-fly" hidden aria-label="Открыть свиток">
-            <img class="scroll-rolled-img" src="assets/ui/scroll-rolled.png" alt="" draggable="false" />
-            <span class="scroll-label">Подсказка</span>
+          <button type="button" class="scroll-fly" id="scroll-fly" hidden aria-label="Открыть подсказку">
+            <span class="hint-pill scroll-hint-pill">Подсказка</span>
           </button>
 
           <div class="scroll-sheet" id="scroll-sheet" hidden>
-            <img class="scroll-bg" src="assets/ui/scroll-unrolled.png" alt="" draggable="false" />
-            <div class="scroll-text">
+            <div class="scroll-card">
               <p class="scroll-title">Подсказка</p>
               <p class="scroll-body" id="scroll-hint-text"></p>
               <button type="button" class="btn primary" id="scroll-done">Продолжить</button>

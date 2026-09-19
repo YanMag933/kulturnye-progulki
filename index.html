@@ -6,15 +6,12 @@
   <meta name="theme-color" content="#0e0e10" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Культурные прогулки</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;600;700&family=Outfit:wght@400;500;600;700&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=31" />
-  <link rel="stylesheet" href="themes.css?v=31" />
+  <link rel="stylesheet" href="styles.css?v=32" />
+  <link rel="stylesheet" href="themes.css?v=32" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <script src="theme.js?v=31"></script>
+  <script src="theme.js?v=32"></script>
 </head>
 <body class="home-body">
   <div class="phone-shell home-shell">
@@ -38,11 +35,11 @@
       </section>
 
       <nav class="home-actions" aria-label="Главное меню">
-        <a class="home-cta story" href="walk.html?story=pushkin&v=31">
+        <a class="home-cta story" href="walk.html?story=pushkin&v=32">
           <span class="home-cta-label">История</span>
           <span class="home-cta-title">Пушкин в Москве</span>
         </a>
-        <a class="home-cta walk" href="walk.html?v=31">
+        <a class="home-cta walk" href="walk.html?v=32">
           <span class="home-cta-label">Сюжет</span>
           <span class="home-cta-title">Гулять</span>
         </a>
@@ -50,7 +47,7 @@
           <span class="home-cta-label">Просмотр</span>
           <span class="home-cta-title">Тестовая прогулка</span>
         </a>
-        <a class="home-cta safes" href="safes-fit.html?v=31">
+        <a class="home-cta safes" href="safes-fit.html?v=32">
           <span class="home-cta-label">Ассеты</span>
           <span class="home-cta-title">Прогон сейфов</span>
         </a>
@@ -71,11 +68,11 @@
       </footer>
     </main>
   </div>
-  <script src="content-db.js?v=31"></script>
-  <script src="monuments-extra.js?v=31"></script>
-  <script src="demo-quest.js?v=31"></script>
-  <script src="story-pushkin.js?v=31"></script>
-  <script src="shared.js?v=31"></script>
+  <script src="content-db.js?v=32"></script>
+  <script src="monuments-extra.js?v=32"></script>
+  <script src="demo-quest.js?v=32"></script>
+  <script src="story-pushkin.js?v=32"></script>
+  <script src="shared.js?v=32"></script>
   <script>
     const active = KP.loadActiveQuest();
     const dbCount = (window.QUEST_DB && QUEST_DB.tasks.length) || 0;
@@ -117,7 +114,7 @@
     };
 
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./sw.js?v=31").catch(() => {});
+      navigator.serviceWorker.register("./sw.js?v=32").catch(() => {});
     }
   </script>
 </body>

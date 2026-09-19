@@ -11,6 +11,7 @@
   window.KP_SILHOUETTES = {
     griboedov: files("griboedov"),
     pushkin: files("pushkin"),
+    pushkin_side: files("pushkin-side"),
     seated: files("seated"),
     mayakovsky: files("mayakovsky"),
     dolgoruky: files("dolgoruky"),

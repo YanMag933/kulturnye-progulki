@@ -1,5 +1,5 @@
 ﻿/* Service worker — offline PWA cache */
-const CACHE = "kultprogulki-v31";
+const CACHE = "kultprogulki-v32";
 const ASSETS = [
   "./",
   "./index.html",
@@ -38,6 +38,16 @@ const ASSETS = [
   "./assets/ui/themes/marble.jpg",
   "./assets/ui/themes/basalt.jpg",
   "./assets/maps/pushkin-route.jpg",
+  "./assets/fonts/Montserrat-Variable.ttf",
+  "./assets/fonts/BebasNeue-Regular.ttf",
+  "./assets/fonts/Anton-Regular.ttf",
+  "./assets/fonts/Poppins-Bold.ttf",
+  "./assets/fonts/Poppins-Regular.ttf",
+  "./assets/fonts/PlayfairDisplay-Variable.ttf",
+  "./assets/fonts/Oswald-Variable.ttf",
+  "./assets/contours/pushkin-side-sticker.png",
+  "./assets/contours/pushkin-side-sticker-preview.png",
+  "./assets/contours/pushkin-side-sticker-mask.png",
 ];
 
 self.addEventListener("install", (event) => {
