@@ -138,10 +138,11 @@ window.KP = (() => {
   /**
    * Pick one task for mechanic, preferring unused + matching zone/difficulty.
    */
-  function pickTask(mechanicId, zone, difficulty, usedPlaces, usedTaskIds) {
+  function pickTask(mechanicId, zone, difficulty, usedPlaces, usedTaskIds, usedSafeTypes) {
     const db = window.QUEST_DB;
     const all = db.tasks.filter((t) => t.mechanicId === mechanicId);
     if (!all.length) return null;
+    const usedSafes = usedSafeTypes || new Set();
 
     const scored = all.map((t) => {
       const place = db.places[t.placeId];
@@ -151,6 +152,11 @@ window.KP = (() => {
       if (!t.difficulty || t.difficulty.includes(difficulty)) score += 3;
       if (!usedTaskIds.has(t.id)) score += 10;
       if (!usedPlaces.has(t.placeId)) score += 4;
+      // Раскидывать типы сейфов по маршруту: один тип — на одно задание, без повтора пока есть выбор.
+      if (t.safeType) {
+        if (!usedSafes.has(t.safeType)) score += 6;
+        else score -= 4;
+      }
       return { t, score };
     });
 
@@ -168,12 +174,13 @@ window.KP = (() => {
     const zoneMeta = window.QUEST_DB.zones[zone] || { label: zone, tasks: mechanicSlots.length };
     const usedTaskIds = getUsedTaskIds();
     const usedPlaces = new Set();
+    const usedSafeTypes = new Set();
     const pickedIds = [];
 
     const steps = mechanicSlots.map((slot, i) => {
       const mechanicId = typeof slot === "string" ? slot : slot.id;
       const mechanicName = typeof slot === "string" ? slot : slot.name;
-      let task = pickTask(mechanicId, zone, difficulty, usedPlaces, usedTaskIds);
+      let task = pickTask(mechanicId, zone, difficulty, usedPlaces, usedTaskIds, usedSafeTypes);
       if (!task) {
         return {
           slot: i + 1,
@@ -192,12 +199,14 @@ window.KP = (() => {
           (t) =>
             t.mechanicId === mechanicId &&
             !usedPlaces.has(t.placeId) &&
-            (!t.difficulty || t.difficulty.includes(difficulty))
+            (!t.difficulty || t.difficulty.includes(difficulty)) &&
+            (!t.safeType || !usedSafeTypes.has(t.safeType))
         );
         if (alt) task = alt;
       }
       usedPlaces.add(task.placeId);
       usedTaskIds.add(task.id);
+      if (task.safeType) usedSafeTypes.add(task.safeType);
       pickedIds.push(task.id);
       const hydrated = hydrateTask(task);
       return {

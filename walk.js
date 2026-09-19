@@ -691,7 +691,7 @@
     if (ui === "mosaic") return renderMosaic(step);
 
     if (ui === "geo") {
-      const reveal = step.revealM || 300;
+      const reveal = step.revealM || 150;
       const unlock = step.radiusM || 35;
       taskChrome(
         step,
@@ -716,16 +716,23 @@
           return;
         }
         if (uiState.radar) return;
+        // Ровно один fixed safeType на задание (из content-db); без пикера/цикла.
+        const safe = resolveStepSafe(step) || {
+          safeType: step.safeType || "wheel",
+          safeCode: step.safeCode || "",
+          safePrompt: step.safePrompt || "",
+        };
         uiState.radar = new window.KP_Radar({
           targetLat: step.lat,
           targetLon: step.lon,
           unlockM: unlock,
           revealM: reveal,
           demo,
+          fitMode: false,
           hintText: step.unlockedText || step.fact || "Подсказка открыта.",
-          safeType: step.safeType || "wheel",
-          safeCode: step.safeCode || "",
-          safePrompt: step.safePrompt || "",
+          safeType: safe.safeType,
+          safeCode: safe.safeCode || "",
+          safePrompt: safe.safePrompt || "",
           onUnlock: () => {
             uiState.unlocked = true;
             setFeedback("Сейф открыт. Подсказка получена.", "ok");

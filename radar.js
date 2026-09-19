@@ -1,10 +1,28 @@
 /**
- * Полноэкранный гео-оверлей: тёмный экран + кристалл (красный свет с 300 м).
+ * Полноэкранный гео-оверлей: тёмный экран + кристалл.
+ * Красный свет с 150 м · 4 уровня · макс ≤ 20 м.
  * Сейф открывается в unlock-радиусе.
  * demo = фейковый GPS; выбор типа сейфа — только fitMode («Прогон сейфов»).
  */
 (function () {
-  const REVEAL_M = 300;
+  const REVEAL_M = 150;
+  /** Пороги: дальше = слабее. Уровень 4 (макс) — с 20 м. */
+  const GLOW_LEVELS = [
+    { maxM: 150, minM: 90, level: 1, period: 2.4, alphaBase: 0.1, alphaPeak: 0.28, size: 0.75 },
+    { maxM: 90, minM: 50, level: 2, period: 1.35, alphaBase: 0.22, alphaPeak: 0.5, size: 0.95 },
+    { maxM: 50, minM: 20, level: 3, period: 0.7, alphaBase: 0.4, alphaPeak: 0.78, size: 1.15 },
+    { maxM: 20, minM: 0, level: 4, period: 0.22, alphaBase: 0.65, alphaPeak: 1.0, size: 1.4 },
+  ];
+
+  function glowLevelForDist(distM) {
+    if (distM == null || distM > REVEAL_M) return null;
+    for (let i = 0; i < GLOW_LEVELS.length; i++) {
+      const g = GLOW_LEVELS[i];
+      if (distM <= g.maxM && distM > g.minM) return g;
+      if (g.minM === 0 && distM <= g.maxM) return g;
+    }
+    return GLOW_LEVELS[GLOW_LEVELS.length - 1];
+  }
 
   const DEMO_SAFE_CYCLE = [
     { type: "wheel", code: "", prompt: "Крутите ручку · 3 оборота", label: "ручка" },
@@ -74,7 +92,7 @@
       this.orientHandler = null;
       this.raf = 0;
       this.demoAngle = 40;
-      this.demoDist = Math.max(this.revealM + 40, 340);
+      this.demoDist = Math.max(this.revealM + 40, 200);
       this._pulsePhase = 0;
       this.chestReady = false;
       this.chestOpened = false;
@@ -109,7 +127,7 @@
             </div>
           </div>
           <div class="radar-legend">
-            <span>красный свет · с 300 м тускло · ближе ярче и чаще</span>
+            <span>красный свет · с 150 м · 4 уровня · макс ≤ 20 м</span>
           </div>
           <div class="radar-actions">
             <button type="button" class="btn primary" id="radar-demo-near">Симуляция: подойти ближе</button>
@@ -400,19 +418,18 @@
             </div>
           </div>`;
       } else if (type === "code") {
+        // Только интерактивная панель — без декоративного safe-keypad-body.png
         html = `
-          <div class="safe-variant safe-code">
-            <div class="safe-code-frame">
-              <img class="safe-code-art" src="assets/ui/safe-keypad-body.png" alt="Сейф с кодовой панелью" draggable="false" />
-            </div>
+          <div class="safe-variant safe-code safe-code-panel-only">
             <div class="safe-overlay-card safe-code-card">
-              <p class="safe-tap-hint">${prompt || "Введите код на клавиатуре"}</p>
+              <p class="safe-tap-hint">${prompt || "Введите код сейфа"}</p>
               <div class="code-display" id="code-display">****</div>
               <div class="code-pad" id="code-pad">
                 ${[1, 2, 3, 4, 5, 6, 7, 8, 9, "C", 0, "OK"]
                   .map((k) => `<button type="button" class="code-key" data-k="${k}">${k}</button>`)
                   .join("")}
               </div>
+              <button type="button" class="btn ghost safe-code-dismiss" id="safe-code-close">Закрыть</button>
             </div>
           </div>`;
       } else if (type === "dial") {
@@ -465,6 +482,13 @@
         this.elProgressFg.style.strokeDashoffset = String(circ);
       }
       if (this.elUnlockBtn) this.elUnlockBtn.onclick = () => this._tryUnlockSafe();
+      const codeClose = this.elSafe.querySelector("#safe-code-close");
+      if (codeClose) {
+        codeClose.onclick = () => {
+          if (this.safeOnly) this.close();
+          else this._hideLootPanel();
+        };
+      }
       if (type === "wheel") this._bindHandleSpin();
       if (type === "year") this._bindYearDrums();
       if (type === "code") this._bindCodePad();
@@ -954,28 +978,30 @@
       }
 
       const dist = this.distance;
-      const inRange = dist != null && dist <= this.revealM;
+      const band = glowLevelForDist(dist);
 
-      if (!inRange) {
+      if (!band) {
         el.style.setProperty("--glow-alpha", "0");
         el.style.setProperty("--glow-size", "0.6");
-        el.classList.remove("hot", "near");
+        el.classList.remove("hot", "near", "glow-1", "glow-2", "glow-3", "glow-4");
         this._crystalOn = false;
+        this._glowLevel = 0;
         return;
       }
 
       this._crystalOn = true;
-      const t = Math.max(0, Math.min(1, 1 - dist / this.revealM));
-      // период: ~2.6с далеко → ~0.2с вплотную
-      const period = 2.6 - t * 2.4;
-      this._crystalPhase += (0.016 * Math.PI * 2) / Math.max(0.18, period);
+      this._glowLevel = band.level;
+      el.classList.remove("glow-1", "glow-2", "glow-3", "glow-4");
+      el.classList.add("glow-" + band.level);
+
+      this._crystalPhase += (0.016 * Math.PI * 2) / Math.max(0.15, band.period);
       const wave = (Math.sin(this._crystalPhase) + 1) / 2;
-      const alpha = (0.08 + t * 0.92) * (0.15 + wave * 0.85);
-      const size = 0.7 + t * 0.9 + wave * (0.05 + t * 0.15);
+      const alpha = band.alphaBase + (band.alphaPeak - band.alphaBase) * wave;
+      const size = band.size + wave * (0.04 + band.level * 0.02);
       el.style.setProperty("--glow-alpha", String(alpha.toFixed(3)));
       el.style.setProperty("--glow-size", String(size.toFixed(3)));
-      el.classList.toggle("hot", t > 0.72);
-      el.classList.toggle("near", dist <= this.unlockM);
+      el.classList.toggle("hot", band.level >= 3);
+      el.classList.toggle("near", dist <= this.unlockM || band.level >= 4);
     }
 
     _freezeCrystalGlow() {
@@ -1009,7 +1035,7 @@
   }
 
   window.KP_Radar = Radar;
-  window.KP_geo = { haversineM, bearingDeg, REVEAL_M };
+  window.KP_geo = { haversineM, bearingDeg, REVEAL_M, GLOW_LEVELS, glowLevelForDist };
 
   /** Сейф без гео-радара — для year/plaque/word заданий */
   window.KP_openSafe = function openSafe(opts) {
@@ -1017,7 +1043,7 @@
       targetLat: opts.targetLat || 55.75,
       targetLon: opts.targetLon || 37.62,
       unlockM: 35,
-      revealM: 300,
+      revealM: 150,
       demo: true,
       safeOnly: true,
       skipScroll: true,
