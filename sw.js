@@ -1,5 +1,5 @@
-/* Service worker — offline PWA cache */
-const CACHE = "kultprogulki-v35";
+/* Service worker - offline PWA cache */
+const CACHE = "kultprogulki-v36";
 const ASSETS = [
   "./",
   "./index.html",
@@ -37,11 +37,11 @@ const ASSETS = [
   "./assets/ui/themes/crystal.jpg",
   "./assets/ui/themes/marble.jpg",
   "./assets/ui/themes/basalt.jpg",
-  "./assets/maps/pushkin-route.jpg',
-  './assets/maps/walker-3d.svg",
+  "./assets/maps/pushkin-route.jpg",
+  "./assets/maps/walker-3d.svg",
   "./assets/fonts/Montserrat-Variable.ttf",
-  "./assets/fonts/BebasNeue-Regular.ttf",
-  "./assets/fonts/Anton-Regular.ttf",
+  "./assets/fonts/Manrope-Variable.ttf",
+  "./assets/fonts/Rubik-Variable.ttf",
   "./assets/fonts/Poppins-Bold.ttf",
   "./assets/fonts/Poppins-Regular.ttf",
   "./assets/fonts/PlayfairDisplay-Variable.ttf",
@@ -66,7 +66,7 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   const path = url.pathname;
-  // HTML/JS/CSS — сначала сеть, чтобы правки UI не залипали в кэше
+  // HTML/JS/CSS В— Г±Г­Г Г·Г Г«Г  Г±ГҐГІГј, Г·ГІГ®ГЎГ» ГЇГ°Г ГўГЄГЁ UI Г­ГҐ Г§Г Г«ГЁГЇГ Г«ГЁ Гў ГЄГЅГёГҐ
   const networkFirst =
     req.mode === "navigate" ||
     path.endsWith(".html") ||

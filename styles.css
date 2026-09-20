@@ -1217,7 +1217,7 @@ body {
 }
 .scroll-title {
   margin: 0 0 10px;
-  font-family: var(--font-display, "Bebas Neue", sans-serif);
+  font-family: var(--font-display, "Rubik", "Montserrat", sans-serif);
   font-size: 22px;
   letter-spacing: 0.14em;
   text-transform: uppercase;

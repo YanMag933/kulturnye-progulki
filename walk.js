@@ -11,7 +11,7 @@
   }
 
   let quest = KP.loadActiveQuest() || KP.ensureDemoQuest();
-  // story=вЂ¦ РІСЃРµРіРґР° РїРµСЂРµСЃРѕР±РёСЂР°РµС‚ СЃСЋР¶РµС‚ (РЅРѕРІС‹Рµ С‚РµРєСЃС‚С‹ / РєРѕРЅС‚СѓСЂС‹), РЅРµ РґРµСЂР¶РёС‚ СЃС‚Р°СЂС‹Р№ РєСЌС€
+  // story=… всегда пересобирает сюжет (новые тексты / контуры), не держит старый кэш
   if (STORY_ID && window.STORY_ROUTES?.[STORY_ID]) {
     quest = KP.materializeStoryRoute(STORY_ID);
     KP.saveActiveQuest(quest);
@@ -65,7 +65,7 @@
   }
 
   function buildRouteSvg() {
-    return `<img class="route-map-fallback" src="assets/maps/pushkin-route.jpg" alt="РљР°СЂС‚Р° РјР°СЂС€СЂСѓС‚Р° В«РџСѓС€РєРёРЅ РІ РњРѕСЃРєРІРµВ»" />`;
+    return `<img class="route-map-fallback" src="assets/maps/pushkin-route.jpg" alt="Карта маршрута «Пушкин в Москве»" />`;
   }
 
   function walkerIcon(slot) {
@@ -96,9 +96,7 @@
     const coords = latLngs.map(([lat, lon]) => `${lon},${lat}`).join(";");
     const url = `https://router.project-osrm.org/route/v1/foot/${coords}?overview=full&geometries=geojson&steps=false`;
     try {
-      const res = await fetch(url, { signal: (typeof AbortSignal !== "undefined" && AbortSignal.timeout
-            ? AbortSignal.timeout(8000)
-            : undefined) });
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
       if (!res.ok) throw new Error("osrm");
       const data = await res.json();
       const geom = data?.routes?.[0]?.geometry?.coordinates;
@@ -127,25 +125,24 @@
 
       const openLine = openRoutePoints(stepsWithGeo);
       const roadLine = await fetchRoadGeometry(openLine);
-      const line = L.polyline(roadLine, {
-        color: "#e6c36a",
-        weight: 3.5,
-        opacity: 0.95,
-        dashArray: "2 10",
-        lineCap: "round",
-        lineJoin: "round",
-        className: "route-dash",
-      }).addTo(mapInstance);
-      // РјСЏРіРєР°СЏ В«С‚РµРЅСЊВ» РїРѕРґ РїСѓРЅРєС‚РёСЂРѕРј
+      // мягкая «тень» под пунктиром
       L.polyline(roadLine, {
         color: "#8b6914",
-        weight: 6,
-        opacity: 0.22,
+        weight: 7,
+        opacity: 0.28,
         lineCap: "round",
         lineJoin: "round",
         interactive: false,
       }).addTo(mapInstance);
-      line.bringToFront();
+      const line = L.polyline(roadLine, {
+        color: "#e6c36a",
+        weight: 4,
+        opacity: 0.98,
+        dashArray: "8 12",
+        lineCap: "round",
+        lineJoin: "round",
+        className: "route-dash",
+      }).addTo(mapInstance);
 
       stepsWithGeo.forEach((s, i) => {
         L.marker([s.lat, s.lon], {
@@ -172,9 +169,9 @@
   async function renderRouteMap() {
     shell(
       `<div class="start-hero">
-        <p class="eyebrow">РЎСЋР¶РµС‚ В· РєР°СЂС‚Р°</p>
+        <p class="eyebrow">Сюжет · карта</p>
         <h1>${quest.title}</h1>
-        <p class="route-map-caption">${quest.subtitle || "РЎРЅР°С‡Р°Р»Р° РїРѕСЃРјРѕС‚СЂРёС‚Рµ РІРµСЃСЊ РјР°СЂС€СЂСѓС‚ вЂ” Р·Р°РґР°РЅРёСЏ РѕС‚РєСЂРѕСЋС‚СЃСЏ РїРѕСЃР»Рµ РєР°СЂС‚С‹."}</p>
+        <p class="route-map-caption">${quest.subtitle || "Сначала посмотрите весь маршрут — задания откроются после карты."}</p>
         <div class="route-map" id="route-map-wrap">
           <div id="route-map-el"></div>
           <div id="route-map-svg-host" hidden>${buildRouteSvg()}</div>
@@ -187,8 +184,8 @@
             )
             .join("")}
         </ol>
-        <button type="button" class="btn primary" id="start-after-map">Рљ Р·Р°РґР°РЅРёСЏРј</button>
-        <a class="btn ghost" href="index.html" style="display:block;text-align:center;margin-top:8px">Р’ РјРµРЅСЋ</a>
+        <button type="button" class="btn primary" id="start-after-map">К заданиям</button>
+        <a class="btn ghost" href="index.html" style="display:block;text-align:center;margin-top:8px">В меню</a>
       </div>`
     );
     const ok = await mountLeafletMap();
@@ -251,7 +248,7 @@
     return !!uiState.done;
   }
 
-  /** Р’ С‚РµСЃС‚РѕРІРѕРј СЂРµР¶РёРјРµ: Р·Р°РїРѕР»РЅСЏРµС‚ РїСЂР°РІРёР»СЊРЅС‹Р№ РѕС‚РІРµС‚ / РѕС‚РјРµС‡Р°РµС‚ РѕРїС†РёРё. */
+  /** В тестовом режиме: заполняет правильный ответ / отмечает опции. */
   function autoSolveCurrent() {
     const step = currentStep();
     if (!step) return;
@@ -266,13 +263,13 @@
       uiState.guessed = true;
       uiState.done = true;
       uiState.phase = "done";
-      setFeedback("РўРµСЃС‚: РІРµСЂРЅС‹Р№ РѕС‚РІРµС‚ РїРѕРєР°Р·Р°РЅ", "ok");
+      setFeedback("Тест: верный ответ показан", "ok");
       renderContour(step);
       return;
     }
     if (ui === "geo") {
       uiState.unlocked = true;
-      setFeedback("РўРµСЃС‚: СЃРµР№С„ РѕС‚РєСЂС‹С‚", "ok");
+      setFeedback("Тест: сейф открыт", "ok");
       renderStep();
       return;
     }
@@ -292,7 +289,7 @@
             b.classList.remove("wrong");
           });
         }
-        setFeedback("РўРµСЃС‚: РѕС‚РІРµС‚ РїРѕРґСЃС‚Р°РІР»РµРЅ" + (ans ? " вЂ” " + ans : ""), "ok");
+        setFeedback("Тест: ответ подставлен" + (ans ? " — " + ans : ""), "ok");
       });
       return;
     }
@@ -300,14 +297,14 @@
       const tiles = step.puzzleTiles || [];
       uiState.order = tiles.map((_, i) => i);
       uiState.done = true;
-      setFeedback("РўРµСЃС‚: РїР°РЅРЅРѕ СЃРѕР±СЂР°РЅРѕ", "ok");
+      setFeedback("Тест: панно собрано", "ok");
       renderPuzzle(step);
       return;
     }
     if (ui === "circle") {
       uiState.doneCp = (step.checkpoints || []).map((_, i) => i);
       uiState.done = true;
-      setFeedback("РўРµСЃС‚: РѕР±С…РѕРґ РѕС‚РјРµС‡РµРЅ", "ok");
+      setFeedback("Тест: обход отмечен", "ok");
       renderCircle(step);
       return;
     }
@@ -317,7 +314,7 @@
         uiState.sel[i] = p.target;
       });
       uiState.done = true;
-      setFeedback("РўРµСЃС‚: РїР°СЂС‹ Р·Р°РїРѕР»РЅРµРЅС‹", "ok");
+      setFeedback("Тест: пары заполнены", "ok");
       renderMosaic(step);
       return;
     }
@@ -326,7 +323,7 @@
       const safe = ui !== "count" ? resolveStepSafe(step) : null;
       if (safe) {
         renderStep();
-        setFeedback("РўРµСЃС‚: СЃРµР№С„ Р·Р°СЃС‡РёС‚Р°РЅ вЂ” " + (safe.safeCode || step.expected || ""), "ok");
+        setFeedback("Тест: сейф засчитан — " + (safe.safeCode || step.expected || ""), "ok");
         return;
       }
       const ans =
@@ -337,7 +334,7 @@
         if (input) input.value = ans;
         const fact = document.getElementById("fact");
         if (fact) fact.innerHTML = `<div class="fact-box">${step.fact || ""}</div>`;
-        setFeedback("РўРµСЃС‚: РѕС‚РІРµС‚ РїРѕРґСЃС‚Р°РІР»РµРЅ вЂ” " + ans, "ok");
+        setFeedback("Тест: ответ подставлен — " + ans, "ok");
       });
       return;
     }
@@ -353,12 +350,12 @@
         });
         const fact = document.getElementById("fact");
         if (fact) fact.innerHTML = `<div class="fact-box">${step.fact || ""}</div>`;
-        setFeedback("РўРµСЃС‚: РјРёС„/С„Р°РєС‚ РѕС‚РјРµС‡РµРЅС‹", "ok");
+        setFeedback("Тест: миф/факт отмечены", "ok");
       });
       return;
     }
     uiState.done = true;
-    setFeedback("РўРµСЃС‚: Р·Р°СЃС‡РёС‚Р°РЅРѕ", "ok");
+    setFeedback("Тест: засчитано", "ok");
     renderStep();
   }
 
@@ -383,12 +380,12 @@
       <div class="phone-notch"></div>
       <div class="walk-top">
         <div class="walk-nav">
-          <a href="index.html">в†ђ РњРµРЅСЋ</a>
-          <a href="create.html">РЎРѕР·РґР°С‚СЊ</a>
+          <a href="index.html">← Меню</a>
+          <a href="create.html">Создать</a>
         </div>
-        ${TEST_MODE ? `<p class="test-banner">РўР•РЎРўРћР’РђРЇ РџР РћР“РЈР›РљРђ В· Р”Р°Р»РµРµ РїРѕРґСЃС‚Р°РІР»СЏРµС‚ РѕС‚РІРµС‚</p>` : ""}
-        <h1 class="walk-title">${quest.title}${TEST_MODE ? " В· С‚РµСЃС‚" : ""}</h1>
-        <p class="walk-meta">${[quest.zoneLabel, quest.difficultyLabel, quest.durationHint].filter(Boolean).join(" В· ")}</p>
+        ${TEST_MODE ? `<p class="test-banner">ТЕСТОВАЯ ПРОГУЛКА · Далее подставляет ответ</p>` : ""}
+        <h1 class="walk-title">${quest.title}${TEST_MODE ? " · тест" : ""}</h1>
+        <p class="walk-meta">${[quest.zoneLabel, quest.difficultyLabel, quest.durationHint].filter(Boolean).join(" · ")}</p>
         ${dots}
       </div>
       ${inner}
@@ -399,14 +396,14 @@
   function footer(canNext, feedback) {
     const nextEnabled = TEST_MODE || canNext;
     const backBtn = TEST_MODE
-      ? `<button type="button" class="btn ghost" id="prev">РќР°Р·Р°Рґ</button>`
+      ? `<button type="button" class="btn ghost" id="prev">Назад</button>`
       : "";
     return `<div class="walk-footer">
       <div class="feedback ${feedback?.cls || ""}" id="feedback">${feedback?.text || ""}</div>
       <div class="walk-footer-row">
         ${backBtn}
         <button type="button" class="btn primary" id="next" ${nextEnabled ? "" : "disabled"}>
-          ${progress.stepIndex >= quest.steps.length - 1 ? "Р—Р°РІРµСЂС€РёС‚СЊ" : "Р”Р°Р»РµРµ"}
+          ${progress.stepIndex >= quest.steps.length - 1 ? "Завершить" : "Далее"}
         </button>
       </div>
     </div>`;
@@ -444,7 +441,7 @@
       String(s || "")
         .trim()
         .toLowerCase()
-        .replace(/С‘/g, "Рµ")
+        .replace(/ё/g, "е")
         .replace(/\s+/g, "")
         .replace(/-/g, "");
     const input = document.getElementById("answer");
@@ -453,7 +450,7 @@
     return okList.includes(val);
   }
 
-  /** Р“РѕРґ/С‚Р°Р±Р»РёС‡РєР°/С€РёС„СЂ в†’ СЃРµР№С„; РїРѕРґС‚СЏРіРёРІР°РµС‚ safe* РёР· QUEST_DB, РµСЃР»Рё РІ РєСЌС€Рµ РєРІРµСЃС‚Р° РёС… РЅРµС‚. */
+  /** Год/табличка/шифр → сейф; подтягивает safe* из QUEST_DB, если в кэше квеста их нет. */
   function resolveStepSafe(step) {
     const dbTask =
       step.id && window.QUEST_DB?.tasks
@@ -470,7 +467,7 @@
     }
     if (step.ui === "year") {
       const digits = safeCode.replace(/\D/g, "").slice(0, 4);
-      if (digits) return { safeType: "year", safeCode: digits, safePrompt: safePrompt || "Р“РѕРґ" };
+      if (digits) return { safeType: "year", safeCode: digits, safePrompt: safePrompt || "Год" };
     }
     if (step.ui === "plaque") {
       const digits = safeCode.replace(/\D/g, "");
@@ -478,7 +475,7 @@
         return {
           safeType: "year",
           safeCode: digits.slice(0, 4),
-          safePrompt: safePrompt || "Р“РѕРґ СЃ С‚Р°Р±Р»РёС‡РєРё",
+          safePrompt: safePrompt || "Год с таблички",
         };
       }
     }
@@ -487,25 +484,25 @@
 
   function panelInputHint(step) {
     if (step.safePrompt) return step.safePrompt;
-    if (step.ui === "contour") return "РЎРѕРІРјРµСЃС‚РёС‚Рµ РєРѕРЅС‚СѓСЂ РІ РєР°РјРµСЂРµ";
-    if (step.ui === "geo") return "РћС‚РєСЂРѕР№С‚Рµ СЃРµР№С„ Сѓ С‚РѕС‡РєРё";
-    if (step.expected) return "Р’РІРµРґРёС‚Рµ РѕС‚РІРµС‚ РЅР° С‚Р°Р±Р»Рѕ";
-    return "Р’РІРµРґРёС‚Рµ РѕС‚РІРµС‚ РЅР° С‚Р°Р±Р»Рѕ";
+    if (step.ui === "contour") return "Совместите контур в камере";
+    if (step.ui === "geo") return "Откройте сейф у точки";
+    if (step.expected) return "Введите ответ на табло";
+    return "Введите ответ на табло";
   }
 
   function photoSlotHtml(step, opts = {}) {
     const inputHint = opts.hintText || panelInputHint(step);
-    return `<div class="photo-slot" aria-label="РњРµСЃС‚Рѕ РїРѕРґ С„РѕС‚Рѕ СЃ С‚РѕС‡РєРё">
-      <span class="photo-slot-label">РІР°С€Рµ С„РѕС‚Рѕ</span>
+    return `<div class="photo-slot" aria-label="Место под фото с точки">
+      <span class="photo-slot-label">ваше фото</span>
       <div class="photo-slot-hint">
-        <span class="photo-slot-hint-kicker">РќР° С‚Р°Р±Р»Рѕ</span>
+        <span class="photo-slot-hint-kicker">На табло</span>
         <p>${inputHint}</p>
       </div>
     </div>`;
   }
 
   function hintPillHtml() {
-    return `<button type="button" class="hint-pill" id="hint-pill" aria-expanded="false">РџРѕРґСЃРєР°Р·РєР°</button>
+    return `<button type="button" class="hint-pill" id="hint-pill" aria-expanded="false">Подсказка</button>
       <div class="hint-panel" id="hint-panel" hidden></div>`;
   }
 
@@ -518,12 +515,12 @@
     pill.onclick = () => {
       if (!levels.length) {
         panel.hidden = false;
-        panel.textContent = step.hint || "РЎРјРѕС‚СЂРёС‚Рµ РЅР° РјРµСЃС‚Рѕ.";
+        panel.textContent = step.hint || "Смотрите на место.";
         pill.setAttribute("aria-expanded", "true");
         return;
       }
       panel.hidden = false;
-      panel.innerHTML = `<p><b>L${level + 1}</b> В· ${levels[level]}</p>`;
+      panel.innerHTML = `<p><b>L${level + 1}</b> · ${levels[level]}</p>`;
       pill.setAttribute("aria-expanded", "true");
       level = Math.min(level + 1, levels.length - 1);
     };
@@ -533,15 +530,15 @@
     const isYear = step.safeType === "year" || (step.expected || "").match(/^\d{4}$/);
     const isCode = step.safeType === "code" || (step.expected || "").match(/^\d{4,}$/);
     const inputMode = isYear || isCode ? "numeric" : "text";
-    const placeholder = isYear ? "4 С†РёС„СЂС‹" : isCode ? "РєРѕРґ" : "СЃР»РѕРІРѕ";
+    const placeholder = isYear ? "4 цифры" : isCode ? "код" : "слово";
     return `<div class="input-sim panel">
       <input class="field input-sim-field" id="answer" inputmode="${inputMode}" autocomplete="off" placeholder="${placeholder}" />
       <div class="input-sim-keys" id="sim-keys" ${isYear || isCode ? "" : "hidden"}>
-        ${[1, 2, 3, 4, 5, 6, 7, 8, 9, "вЊ«", 0, "OK"]
+        ${[1, 2, 3, 4, 5, 6, 7, 8, 9, "⌫", 0, "OK"]
           .map((k) => `<button type="button" class="sim-key" data-k="${k}">${k}</button>`)
           .join("")}
       </div>
-      <button type="button" class="btn primary" id="check">РџСЂРѕРІРµСЂРёС‚СЊ</button>
+      <button type="button" class="btn primary" id="check">Проверить</button>
       <div id="fact"></div>
     </div>`;
   }
@@ -554,7 +551,7 @@
         btn.onclick = () => {
           if (!input) return;
           const k = btn.dataset.k;
-          if (k === "вЊ«") input.value = input.value.slice(0, -1);
+          if (k === "⌫") input.value = input.value.slice(0, -1);
           else if (k === "OK") document.getElementById("check")?.click();
           else input.value += k;
           input.focus();
@@ -567,11 +564,11 @@
       const ok = checkText(expected, alts) || (expected && checkText(String(expected).replace(/-/g, ""), alts));
       if (ok) {
         uiState.done = true;
-        setFeedback("Р—Р°СЃС‡РёС‚Р°РЅРѕ", "ok");
+        setFeedback("Засчитано", "ok");
         const fact = document.getElementById("fact");
         if (fact) fact.innerHTML = `<div class="fact-box">${step.fact || ""}</div>`;
         bindNext(true);
-      } else setFeedback("РџРѕРєР° РјРёРјРѕ вЂ” СЃРјРѕС‚СЂРёС‚Рµ РїРѕРґСЃРєР°Р·РєСѓ РЅР° С„РѕС‚Рѕ-СЃР»РѕС‚Рµ", "bad");
+      } else setFeedback("Пока мимо — смотрите подсказку на фото-слоте", "bad");
     };
     bindNext(!!uiState.done);
   }
@@ -601,12 +598,12 @@
     shell(
       `<div class="walk-screen">
         <div class="chip-row">
-          <span class="chip">РЁР°Рі ${step.slot} / ${quest.steps.length}</span>
+          <span class="chip">Шаг ${step.slot} / ${quest.steps.length}</span>
           <span class="chip">${step.mechanicName}</span>
-          ${step.uniqueFeature ? '<span class="chip feature">С„РёС€РєР°</span>' : ""}
+          ${step.uniqueFeature ? '<span class="chip feature">фишка</span>' : ""}
         </div>
         <h2 class="place">${hidePlace ? "???" : step.placeName}</h2>
-        <p class="addr">${hidePlace ? "РЎРЅР°С‡Р°Р»Р° СЃРѕРІРјРµСЃС‚РёС‚Рµ РєРѕРЅС‚СѓСЂ" : step.address || ""}</p>
+        <p class="addr">${hidePlace ? "Сначала совместите контур" : step.address || ""}</p>
         <div class="panel">
           <h2>${step.title}</h2>
           <p>${cardBody}</p>
@@ -642,7 +639,7 @@
         step,
         `<div class="panel">
           <div class="silhouette-stage">${silGuess}</div>
-          <p class="muted">${step.guessPrompt || "РљС‚Рѕ СЌС‚Рѕ РїРѕ РІРЅРµС€РЅРµРјСѓ РєРѕРЅС‚СѓСЂСѓ?"}</p>
+          <p class="muted">${step.guessPrompt || "Кто это по внешнему контуру?"}</p>
           <div class="options">
             ${(step.guessOptions || []).map((o, i) => `<button type="button" class="opt" data-i="${i}">${o}</button>`).join("")}
           </div>
@@ -657,9 +654,9 @@
           if (ok) {
             uiState.guessed = true;
             uiState.phase = "ready";
-            setFeedback("Р’РµСЂРЅРѕ. РўРµРїРµСЂСЊ СЃРѕРІРјРµСЃС‚РёС‚Рµ РєРѕРЅС‚СѓСЂ РІ РєР°РјРµСЂРµ.", "ok");
+            setFeedback("Верно. Теперь совместите контур в камере.", "ok");
             setTimeout(() => renderContour(step), 350);
-          } else setFeedback("РќРµ С‚РѕС‚ РїР°РјСЏС‚РЅРёРє вЂ” СЃРјРѕС‚СЂРёС‚Рµ С‚РѕР»СЊРєРѕ РІРЅРµС€РЅРёР№ СЃРёР»СѓСЌС‚", "bad");
+          } else setFeedback("Не тот памятник — смотрите только внешний силуэт", "bad");
         };
       });
       bindNext(false);
@@ -670,11 +667,11 @@
       taskChrome(
         step,
         `<div class="panel contour-panel">
-          <div class="silhouette-stage silhouette-stage-lg">${silGuess || `<img class="sticker-outline guess" src="assets/contours/pushkin-sticker-preview.png" alt="РљРѕРЅС‚СѓСЂ РџСѓС€РєРёРЅР°" />`}</div>
-          <p class="muted">${step.contourHint || "РћС‚РєСЂРѕР№С‚Рµ РєР°РјРµСЂСѓ Рё СЃРѕРІРјРµСЃС‚РёС‚Рµ РєРѕРЅС‚СѓСЂ СЃ РїР°РјСЏС‚РЅРёРєРѕРј."}</p>
+          <div class="silhouette-stage silhouette-stage-lg">${silGuess || `<img class="sticker-outline guess" src="assets/contours/pushkin-sticker-preview.png" alt="Контур Пушкина" />`}</div>
+          <p class="muted">${step.contourHint || "Откройте камеру и совместите контур с памятником."}</p>
           ${hintPillHtml()}
-          <button type="button" class="btn primary" id="open-cam">РћС‚РєСЂС‹С‚СЊ РєР°РјРµСЂСѓ</button>
-          <button type="button" class="btn ghost" id="fallback">Р‘РµР· РєР°РјРµСЂС‹ вЂ” РІРѕРїСЂРѕСЃ</button>
+          <button type="button" class="btn primary" id="open-cam">Открыть камеру</button>
+          <button type="button" class="btn ghost" id="fallback">Без камеры — вопрос</button>
           <div id="extra"></div>
         </div>`,
         footer(!!uiState.done)
@@ -690,22 +687,22 @@
           uiState.phase = "camera";
           renderContour(step);
         } catch (err) {
-          setFeedback("РљР°РјРµСЂР° РЅРµРґРѕСЃС‚СѓРїРЅР°: " + (err.message || "СЂР°Р·СЂРµС€РёС‚Рµ РґРѕСЃС‚СѓРї"), "bad");
+          setFeedback("Камера недоступна: " + (err.message || "разрешите доступ"), "bad");
         }
       };
       document.getElementById("fallback").onclick = () => {
         document.getElementById("extra").innerHTML = `
-          <p>${step.fallbackQuestion || "РћРїРёС€РёС‚Рµ РїРѕР·Сѓ РїР°РјСЏС‚РЅРёРєР°"}</p>
-          <input class="field" id="answer" placeholder="РѕС‚РІРµС‚" />
-          <button type="button" class="btn primary" id="check">РџСЂРѕРІРµСЂРёС‚СЊ</button>`;
+          <p>${step.fallbackQuestion || "Опишите позу памятника"}</p>
+          <input class="field" id="answer" placeholder="ответ" />
+          <button type="button" class="btn primary" id="check">Проверить</button>`;
         document.getElementById("check").onclick = () => {
-          if (checkText(step.fallbackAnswer, ["РґР°", "yes"])) {
+          if (checkText(step.fallbackAnswer, ["да", "yes"])) {
             uiState.done = true;
             uiState.phase = "done";
-            setFeedback("РџСЂРёРЅСЏС‚Рѕ", "ok");
+            setFeedback("Принято", "ok");
             document.getElementById("extra").innerHTML += `<div class="fact-box">${step.fact}</div>`;
             bindNext(true);
-          } else setFeedback("РџРѕРїСЂРѕР±СѓР№С‚Рµ РµС‰С‘", "bad");
+          } else setFeedback("Попробуйте ещё", "bad");
         };
       };
       bindNext(!!uiState.done);
@@ -719,11 +716,11 @@
           <div class="ar-stage">
             <video id="ar-video" playsinline autoplay muted></video>
             <div class="ar-overlay">${silAr}</div>
-            <div class="stage-label">СЃРѕРІРјРµСЃС‚РёС‚Рµ РєРѕРЅС‚СѓСЂ</div>
+            <div class="stage-label">совместите контур</div>
           </div>
-          <p class="muted">РЎРѕРІРјРµСЃС‚РёС‚Рµ РєСЂР°СЃРЅС‹Р№ РєРѕРЅС‚СѓСЂ СЃ РїР°РјСЏС‚РЅРёРєРѕРј. РЎРІРµСЂРєР° СЃС‚СЂРѕРіР°СЏ: РїРѕРіСЂРµС€РЅРѕСЃС‚СЊ РЅРµ Р±РѕР»СЊС€Рµ 10вЂ“15%.</p>
-          <button type="button" class="btn primary" id="capture">РЎС„РѕС‚РѕРіСЂР°С„РёСЂРѕРІР°С‚СЊ Рё СЃРІРµСЂРёС‚СЊ</button>
-          <button type="button" class="btn ghost" id="close-cam">Р—Р°РєСЂС‹С‚СЊ РєР°РјРµСЂСѓ</button>
+          <p class="muted">Совместите красный контур с памятником. Сверка строгая: погрешность не больше 10–15%.</p>
+          <button type="button" class="btn primary" id="capture">Сфотографировать и сверить</button>
+          <button type="button" class="btn ghost" id="close-cam">Закрыть камеру</button>
           <div id="extra"></div>
         </div>`,
         footer(!!uiState.done)
@@ -746,12 +743,12 @@
           stopCamera();
           uiState.done = true;
           uiState.phase = "done";
-          setFeedback(`РЎРѕРІРїР°Р»Рѕ (${pct}%, РїРѕРіСЂРµС€РЅРѕСЃС‚СЊ ~${errPct}%). Р—Р°СЃС‡РёС‚Р°РЅРѕ.`, "ok");
+          setFeedback(`Совпало (${pct}%, погрешность ~${errPct}%). Засчитано.`, "ok");
           document.getElementById("extra").innerHTML = `<div class="fact-box">${step.fact}</div>`;
           bindNext(true);
         } else {
           setFeedback(
-            `РќРµ СЃРѕРІРїР°Р»Рѕ (~${pct}%, РѕС€РёР±РєР° ~${errPct}%). РќСѓР¶РЅРѕ в‰¤15%. РЎРѕРІРјРµСЃС‚РёС‚Рµ РєРѕРЅС‚СѓСЂ С‚РѕС‡РЅРµРµ СЃ РїР°РјСЏС‚РЅРёРєРѕРј вЂ” СЃС‚РѕР»/СЃС‚РµРЅР° РЅРµ Р·Р°СЃС‡РёС‚С‹РІР°СЋС‚СЃСЏ.`,
+            `Не совпало (~${pct}%, ошибка ~${errPct}%). Нужно ≤15%. Совместите контур точнее с памятником — стол/стена не засчитываются.`,
             "bad"
           );
         }
@@ -780,29 +777,29 @@
     const storyMode = !!quest.isStory;
     shell(
       `<div class="start-hero">
-        <p class="eyebrow">${TEST_MODE ? "Р РµР¶РёРј РїСЂРѕРІРµСЂРєРё" : storyMode ? "РЎСЋР¶РµС‚" : "Р РµР¶РёРј РёРіСЂРѕРєР°"}</p>
+        <p class="eyebrow">${TEST_MODE ? "Режим проверки" : storyMode ? "Сюжет" : "Режим игрока"}</p>
         <h1>${quest.title}</h1>
         <p class="muted">${
           TEST_MODE
-            ? "Р”Р°Р»РµРµ РїРѕРґСЃС‚Р°РІР»СЏРµС‚ РІРµСЂРЅС‹Р№ РѕС‚РІРµС‚ РёР»Рё РѕС‚РјРµС‡Р°РµС‚ РІР°СЂРёР°РЅС‚ вЂ” РјРѕР¶РЅРѕ РїСЂРѕР№С‚Рё РІСЃРµ С€Р°РіРё Р±РµР· РІРІРѕРґР°."
+            ? "Далее подставляет верный ответ или отмечает вариант — можно пройти все шаги без ввода."
             : quest.subtitle
         }</p>
-        <div class="map-fake">${storyMode ? "РњР°СЂС€СЂСѓС‚ РіРѕС‚РѕРІ В· " : "РљР»Р°СЃС‚РµСЂ С‚РѕС‡РµРє В· "}${quest.zoneLabel}</div>
+        <div class="map-fake">${storyMode ? "Маршрут готов · " : "Кластер точек · "}${quest.zoneLabel}</div>
         <div class="steps-mini">
           ${quest.steps
             .map(
               (s) =>
-                `<div><b>${s.slot}.</b> ${s.chapterTitle || s.mechanicName}${s.uniqueFeature ? " В· С„РёС€РєР°" : ""}<br/><span class="muted">${s.placeName}</span></div>`
+                `<div><b>${s.slot}.</b> ${s.chapterTitle || s.mechanicName}${s.uniqueFeature ? " · фишка" : ""}<br/><span class="muted">${s.placeName}</span></div>`
             )
             .join("")}
         </div>
-        <button type="button" class="btn primary" id="start">${TEST_MODE ? "РЎРјРѕС‚СЂРµС‚СЊ Р·Р°РґР°РЅРёСЏ" : "РќР°С‡Р°С‚СЊ РїСЂРѕРіСѓР»РєСѓ"}</button>
+        <button type="button" class="btn primary" id="start">${TEST_MODE ? "Смотреть задания" : "Начать прогулку"}</button>
         ${
           storyMode
-            ? `<button type="button" class="btn ghost" id="show-map">РЎРЅРѕРІР° РєР°СЂС‚Р° РјР°СЂС€СЂСѓС‚Р°</button>
-               <a class="btn ghost" href="index.html" style="display:block;text-align:center;margin-top:8px">Р’ РјРµРЅСЋ</a>`
-            : `<button type="button" class="btn ghost" id="rebuild">РќРѕРІР°СЏ СЃР±РѕСЂРєР° РёР· Р±Р°Р·С‹ (Р±РµР· РїРѕРІС‚РѕСЂРѕРІ)</button>
-               <button type="button" class="btn ghost" id="import">РРјРїРѕСЂС‚ JSON</button>
+            ? `<button type="button" class="btn ghost" id="show-map">Снова карта маршрута</button>
+               <a class="btn ghost" href="index.html" style="display:block;text-align:center;margin-top:8px">В меню</a>`
+            : `<button type="button" class="btn ghost" id="rebuild">Новая сборка из базы (без повторов)</button>
+               <button type="button" class="btn ghost" id="import">Импорт JSON</button>
                <input type="file" id="file" accept="application/json,.json" hidden />`
         }
       </div>`
@@ -844,7 +841,7 @@
           uiState = {};
           render();
         } catch (err) {
-          alert("РќРµ СѓРґР°Р»РѕСЃСЊ РїСЂРѕС‡РёС‚Р°С‚СЊ JSON: " + err.message);
+          alert("Не удалось прочитать JSON: " + err.message);
         }
       };
     }
@@ -853,12 +850,12 @@
   function renderDone() {
     shell(
       `<div class="start-hero">
-        <p class="eyebrow">Р¤РёРЅРёС€</p>
-        <h1>РџСЂРѕРіСѓР»РєР° РїСЂРѕР№РґРµРЅР°</h1>
-        <p class="muted">${quest.steps.length} Р·Р°РґР°РЅРёР№ В· ${quest.zoneLabel}</p>
+        <p class="eyebrow">Финиш</p>
+        <h1>Прогулка пройдена</h1>
+        <p class="muted">${quest.steps.length} заданий · ${quest.zoneLabel}</p>
         <div class="panel fact-box">${quest.steps.at(-1)?.fact || ""}</div>
-        <button type="button" class="btn primary" id="again">Р•С‰С‘ СЂР°Р·</button>
-        <button type="button" class="btn ghost" id="menu">РњРµРЅСЋ</button>
+        <button type="button" class="btn primary" id="again">Ещё раз</button>
+        <button type="button" class="btn ghost" id="menu">Меню</button>
       </div>`
     );
     document.getElementById("again").onclick = startWalk;
@@ -866,10 +863,10 @@
   }
 
   function renderDetail(step) {
-    // Р‘РѕР»СЊС€Рµ РЅРµ multiple-choice вЂ” СЃРёРјСѓР»СЏС†РёСЏ РІРІРѕРґР° + С„РѕС‚Рѕ-СЃР»РѕС‚
+    // Больше не multiple-choice — симуляция ввода + фото-слот
     renderSafeInput({
       ...step,
-      safePrompt: step.safePrompt || "Р§С‚Рѕ РЅР°С€Р»Рё? (РѕРґРЅРѕ СЃР»РѕРІРѕ)",
+      safePrompt: step.safePrompt || "Что нашли? (одно слово)",
       expected: step.expected || (step.options && step.options[step.correctIndex]) || "",
       alternatives: step.alternatives || [],
     });
@@ -881,7 +878,7 @@
     taskChrome(
       step,
       `<div class="panel">
-        <p class="muted">РќР°Р¶РёРјР°Р№С‚Рµ С„СЂР°РіРјРµРЅС‚С‹, РїРѕРєР° РЅРµ СЃРѕР±РµСЂС‘С‚Рµ РІСЃРµ. РЎРјРѕС‚СЂРёС‚Рµ РЅР° СЂРµР°Р»СЊРЅРѕРµ РїР°РЅРЅРѕ СЂСЏРґРѕРј.</p>
+        <p class="muted">Нажимайте фрагменты, пока не соберёте все. Смотрите на реальное панно рядом.</p>
         <div class="puzzle-grid">
           ${tiles
             .map(
@@ -900,7 +897,7 @@
         if (!uiState.order.includes(i)) uiState.order.push(i);
         if (uiState.order.length >= tiles.length) {
           uiState.done = true;
-          setFeedback("РџР°РЅРЅРѕ СЃРѕР±СЂР°РЅРѕ", "ok");
+          setFeedback("Панно собрано", "ok");
         }
         renderPuzzle(step);
       };
@@ -917,12 +914,12 @@
     taskChrome(
       step,
       `<div class="panel">
-        <p class="muted">РћР±РѕР№РґРёС‚Рµ РѕР±СЉРµРєС‚ Рё РѕС‚РјРµС‚СЊС‚Рµ СЂР°РєСѓСЂСЃС‹.</p>
+        <p class="muted">Обойдите объект и отметьте ракурсы.</p>
         <div class="options">
           ${cps
             .map(
               (c, i) =>
-                `<button type="button" class="opt ${uiState.doneCp.includes(i) ? "correct" : ""}" data-i="${i}">${uiState.doneCp.includes(i) ? "вњ“ " : ""}${c}</button>`
+                `<button type="button" class="opt ${uiState.doneCp.includes(i) ? "correct" : ""}" data-i="${i}">${uiState.doneCp.includes(i) ? "✓ " : ""}${c}</button>`
             )
             .join("")}
         </div>
@@ -936,7 +933,7 @@
         if (!uiState.doneCp.includes(i)) uiState.doneCp.push(i);
         if (uiState.doneCp.length >= cps.length) {
           uiState.done = true;
-          setFeedback("РћР±С…РѕРґ Р·Р°РІРµСЂС€С‘РЅ", "ok");
+          setFeedback("Обход завершён", "ok");
         }
         renderCircle(step);
       };
@@ -957,13 +954,13 @@
             (p, i) => `<div class="myth-item">
             <div style="flex:1"><b>${p.fact}</b></div>
             <select data-i="${i}" class="field" style="width:auto;margin:0">
-              <option value="">вЂ”</option>
+              <option value="">—</option>
               ${targets.map((t) => `<option value="${t}" ${uiState.sel[i] === t ? "selected" : ""}>${t}</option>`).join("")}
             </select>
           </div>`
           )
           .join("")}
-        <button type="button" class="btn primary" id="check">РџСЂРѕРІРµСЂРёС‚СЊ</button>
+        <button type="button" class="btn primary" id="check">Проверить</button>
         <div id="fact"></div>
       </div>`,
       footer(!!uiState.done)
@@ -977,10 +974,10 @@
       const ok = pairs.every((p, i) => uiState.sel[i] === p.target);
       if (ok) {
         uiState.done = true;
-        setFeedback("Р’СЃРµ РїР°СЂС‹ РІРµСЂРЅС‹", "ok");
+        setFeedback("Все пары верны", "ok");
         document.getElementById("fact").innerHTML = `<div class="fact-box">${step.fact}</div>`;
         bindNext(true);
-      } else setFeedback("Р•СЃС‚СЊ РѕС€РёР±РєР°", "bad");
+      } else setFeedback("Есть ошибка", "bad");
     };
     bindNext(!!uiState.done);
   }
@@ -1005,16 +1002,16 @@
         `${photoSlotHtml(step)}
          ${hintPillHtml()}
          <div class="panel geo-lock">
-          <div class="lock-icon">${uiState.unlocked ? "РѕС‚РєСЂС‹С‚Рѕ" : "Р·Р°РєСЂС‹С‚Рѕ"}</div>
+          <div class="lock-icon">${uiState.unlocked ? "открыто" : "закрыто"}</div>
           <p>${uiState.unlocked ? step.unlockedText : step.brief || step.lockedTeaser}</p>
           <div class="geo-hint-box">
-            <p class="muted"><b>РљСЂРёСЃС‚Р°Р»Р».</b> РљСЂР°СЃРЅС‹Р№ СЃРІРµС‚ СЃ ${reveal}&nbsp;Рј В· СЃРµР№С„ в‰¤ ${unlock}&nbsp;Рј.</p>
+            <p class="muted"><b>Кристалл.</b> Красный свет с ${reveal}&nbsp;м · сейф ≤ ${unlock}&nbsp;м.</p>
           </div>
           ${
             uiState.unlocked
               ? `<div class="fact-box">${step.fact}</div>`
-              : `<button type="button" class="btn primary" id="open-radar">Р’РєР»СЋС‡РёС‚СЊ РєСЂРёСЃС‚Р°Р»Р»</button>
-                 <button type="button" class="btn ghost" id="geo-demo">Р”РµРјРѕ Р±РµР· GPS</button>`
+              : `<button type="button" class="btn primary" id="open-radar">Включить кристалл</button>
+                 <button type="button" class="btn ghost" id="geo-demo">Демо без GPS</button>`
           }
         </div>`,
         footer(!!uiState.unlocked)
@@ -1022,11 +1019,11 @@
       bindHintPill(step);
       const openRadar = (demo) => {
         if (!window.KP_Radar) {
-          setFeedback("РњРѕРґСѓР»СЊ СЂР°РґР°СЂР° РЅРµ Р·Р°РіСЂСѓР¶РµРЅ", "bad");
+          setFeedback("Модуль радара не загружен", "bad");
           return;
         }
         if (uiState.radar) return;
-        // Р РѕРІРЅРѕ РѕРґРёРЅ fixed safeType РЅР° Р·Р°РґР°РЅРёРµ (РёР· content-db); Р±РµР· РїРёРєРµСЂР°/С†РёРєР»Р°.
+        // Ровно один fixed safeType на задание (из content-db); без пикера/цикла.
         const safe = resolveStepSafe(step) || {
           safeType: step.safeType || "wheel",
           safeCode: step.safeCode || "",
@@ -1039,13 +1036,13 @@
           revealM: reveal,
           demo,
           fitMode: false,
-          hintText: step.unlockedText || step.fact || "РџРѕРґСЃРєР°Р·РєР° РѕС‚РєСЂС‹С‚Р°.",
+          hintText: step.unlockedText || step.fact || "Подсказка открыта.",
           safeType: safe.safeType,
           safeCode: safe.safeCode || "",
           safePrompt: safe.safePrompt || "",
           onUnlock: () => {
             uiState.unlocked = true;
-            setFeedback("РЎРµР№С„ РѕС‚РєСЂС‹С‚. РџРѕРґСЃРєР°Р·РєР° РїРѕР»СѓС‡РµРЅР°.", "ok");
+            setFeedback("Сейф открыт. Подсказка получена.", "ok");
             bindNext(true);
           },
           onClose: () => {
@@ -1079,10 +1076,10 @@
           btn.classList.add(ok ? "correct" : "wrong");
           if (ok) {
             uiState.done = true;
-            setFeedback("Р’РµСЂРЅРѕ", "ok");
+            setFeedback("Верно", "ok");
             document.getElementById("fact").innerHTML = `<div class="fact-box">${step.fact}</div>`;
             bindNext(true);
-          } else setFeedback("РќРµ С‚Рѕ", "bad");
+          } else setFeedback("Не то", "bad");
         };
       });
       bindNext(!!uiState.done);
@@ -1091,17 +1088,17 @@
 
     if (ui === "plaque" || ui === "year" || ui === "count") {
       const safe = ui !== "count" ? resolveStepSafe(step) : null;
-      // Р“РѕРґ / С‚Р°Р±Р»РёС‡РєР° / Р±СѓРєРІРµРЅРЅС‹Р№ С€РёС„СЂ вЂ” СЃРµР№С„ Р±РµР· РіРµРѕ
+      // Год / табличка / буквенный шифр — сейф без гео
       if (safe) {
         taskChrome(
           step,
           `<div class="panel">
-            <p>${step.prompt || "Р Р°Р·РіР°РґРєР°"}</p>
+            <p>${step.prompt || "Разгадка"}</p>
             ${
               uiState.done
                 ? `<div class="fact-box">${step.fact || ""}</div>`
-                : `<p class="muted">${safe.safePrompt || "РћС‚РєСЂРѕР№С‚Рµ СЃРµР№С„ Рё РІРІРµРґРёС‚Рµ РѕС‚РІРµС‚"}</p>
-                   <button type="button" class="btn primary" id="open-safe">РћС‚РєСЂС‹С‚СЊ СЃРµР№С„</button>
+                : `<p class="muted">${safe.safePrompt || "Откройте сейф и введите ответ"}</p>
+                   <button type="button" class="btn primary" id="open-safe">Открыть сейф</button>
                    <div id="fact"></div>`
             }
           </div>`,
@@ -1110,7 +1107,7 @@
         if (!uiState.done) {
           const openSafe = () => {
             if (!window.KP_openSafe) {
-              setFeedback("РњРѕРґСѓР»СЊ СЃРµР№С„Р° РЅРµ Р·Р°РіСЂСѓР¶РµРЅ", "bad");
+              setFeedback("Модуль сейфа не загружен", "bad");
               return;
             }
             if (uiState.radar) return;
@@ -1118,10 +1115,10 @@
               safeType: safe.safeType,
               safeCode: safe.safeCode || "",
               safePrompt: safe.safePrompt || step.prompt || "",
-              hintText: step.fact || "РћС‚РєСЂС‹С‚Рѕ!",
+              hintText: step.fact || "Открыто!",
               onUnlock: () => {
                 uiState.done = true;
-                setFeedback("РЎРµР№С„ РѕС‚РєСЂС‹С‚", "ok");
+                setFeedback("Сейф открыт", "ok");
                 bindNext(true);
               },
               onClose: () => {
@@ -1131,7 +1128,7 @@
             });
           };
           document.getElementById("open-safe")?.addEventListener("click", openSafe);
-          // СЃСЂР°Р·Сѓ РѕС‚РєСЂС‹РІР°РµРј СЃРµР№С„ вЂ” Р±РµР· С‚РµРєСЃС‚РѕРІРѕРіРѕ РїРѕР»СЏ
+          // сразу открываем сейф — без текстового поля
           openSafe();
         }
         bindNext(!!uiState.done);
@@ -1140,9 +1137,9 @@
       taskChrome(
         step,
         `<div class="panel">
-          <p>${step.prompt || "РћС‚РІРµС‚"}</p>
+          <p>${step.prompt || "Ответ"}</p>
           <input class="field" id="answer" />
-          <button type="button" class="btn primary" id="check">РџСЂРѕРІРµСЂРёС‚СЊ</button>
+          <button type="button" class="btn primary" id="check">Проверить</button>
           <div id="fact"></div>
         </div>`,
         footer(!!uiState.done)
@@ -1155,10 +1152,10 @@
         } else ok = checkText(step.expected, step.alternatives || []);
         if (ok) {
           uiState.done = true;
-          setFeedback("Р—Р°СЃС‡РёС‚Р°РЅРѕ", "ok");
+          setFeedback("Засчитано", "ok");
           document.getElementById("fact").innerHTML = `<div class="fact-box">${step.fact}</div>`;
           bindNext(true);
-        } else setFeedback("РџРѕРєР° РјРёРјРѕ", "bad");
+        } else setFeedback("Пока мимо", "bad");
       };
       bindNext(!!uiState.done);
       return;
@@ -1173,12 +1170,12 @@
             .map(
               (s, i) => `<div class="myth-item">
               <div style="flex:1">${s.text}</div>
-              <button type="button" class="btn ghost" style="width:auto;padding:6px 10px" data-i="${i}" data-v="true">Р¤Р°РєС‚</button>
-              <button type="button" class="btn ghost" style="width:auto;padding:6px 10px" data-i="${i}" data-v="false">РњРёС„</button>
+              <button type="button" class="btn ghost" style="width:auto;padding:6px 10px" data-i="${i}" data-v="true">Факт</button>
+              <button type="button" class="btn ghost" style="width:auto;padding:6px 10px" data-i="${i}" data-v="false">Миф</button>
             </div>`
             )
             .join("")}
-          <button type="button" class="btn primary" id="check">РџСЂРѕРІРµСЂРёС‚СЊ</button>
+          <button type="button" class="btn primary" id="check">Проверить</button>
           <div id="fact"></div>
         </div>`,
         footer(!!uiState.done)
@@ -1193,10 +1190,10 @@
         const ok = step.statements.every((s, i) => uiState.marks[i] === s.truth);
         if (ok) {
           uiState.done = true;
-          setFeedback("Р’РµСЂРЅРѕ", "ok");
+          setFeedback("Верно", "ok");
           document.getElementById("fact").innerHTML = `<div class="fact-box">${step.fact}</div>`;
           bindNext(true);
-        } else setFeedback("Р•СЃС‚СЊ РѕС€РёР±РєР°", "bad");
+        } else setFeedback("Есть ошибка", "bad");
       };
       bindNext(!!uiState.done);
       return;
@@ -1204,14 +1201,14 @@
 
     taskChrome(
       step,
-      `<div class="panel"><p>Р”РµРјРѕ: ${step.mechanicName}</p>
-       <button type="button" class="btn primary" id="ok">Р—Р°СЃС‡РёС‚Р°С‚СЊ</button>
+      `<div class="panel"><p>Демо: ${step.mechanicName}</p>
+       <button type="button" class="btn primary" id="ok">Засчитать</button>
        <div class="fact-box">${step.fact || ""}</div></div>`,
       footer(!!uiState.done)
     );
     document.getElementById("ok").onclick = () => {
       uiState.done = true;
-      setFeedback("Р—Р°СЃС‡РёС‚Р°РЅРѕ", "ok");
+      setFeedback("Засчитано", "ok");
       bindNext(true);
     };
     bindNext(!!uiState.done);

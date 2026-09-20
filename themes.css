@@ -41,12 +41,24 @@
   font-weight: 200 700;
   font-display: swap;
 }
+@font-face {
+  font-family: "Manrope";
+  src: url("assets/fonts/Manrope-Variable.ttf") format("truetype");
+  font-weight: 200 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Rubik";
+  src: url("assets/fonts/Rubik-Variable.ttf") format("truetype");
+  font-weight: 300 900;
+  font-display: swap;
+}
 
-/* —— 4 темы: трендовые Reels-шрифты + контраст —— */
+/* —— 4 темы: кириллические шрифты (Rubik / Manrope / Montserrat) —— */
 
 :root {
-  --font-display: "Bebas Neue", "Montserrat", sans-serif;
-  --font-ui: "Montserrat", system-ui, sans-serif;
+  --font-display: "Rubik", "Montserrat", "Segoe UI", sans-serif;
+  --font-ui: "Manrope", "Montserrat", system-ui, sans-serif;
   --theme-bg-image: url("assets/ui/themes/slate.jpg");
   --theme-scrim: rgba(6, 6, 8, 0.72);
   --theme-panel: #1c1c20;
@@ -61,8 +73,8 @@
 }
 
 html[data-theme="slate"] {
-  --font-display: "Bebas Neue", "Montserrat", sans-serif;
-  --font-ui: "Montserrat", system-ui, sans-serif;
+  --font-display: "Rubik", "Montserrat", "Segoe UI", sans-serif;
+  --font-ui: "Manrope", "Montserrat", system-ui, sans-serif;
   --theme-bg-image: url("assets/ui/themes/slate.jpg");
   --theme-scrim: rgba(6, 6, 8, 0.72);
   --theme-panel: #1a1a1e;
@@ -77,8 +89,8 @@ html[data-theme="slate"] {
 }
 
 html[data-theme="crystal"] {
-  --font-display: "Anton", "Oswald", sans-serif;
-  --font-ui: "Montserrat", system-ui, sans-serif;
+  --font-display: "Rubik", "Montserrat", "Segoe UI", sans-serif;
+  --font-ui: "Manrope", "Montserrat", system-ui, sans-serif;
   --theme-bg-image: url("assets/ui/themes/crystal.jpg");
   --theme-scrim: rgba(2, 8, 22, 0.72);
   --theme-panel: #0a1628;
@@ -93,8 +105,8 @@ html[data-theme="crystal"] {
 }
 
 html[data-theme="marble"] {
-  --font-display: "Playfair Display", Georgia, serif;
-  --font-ui: "Poppins", "Montserrat", sans-serif;
+  --font-display: "Rubik", "Montserrat", "Segoe UI", sans-serif;
+  --font-ui: "Manrope", "Poppins", "Montserrat", sans-serif;
   --theme-bg-image: url("assets/ui/themes/marble.jpg");
   --theme-scrim: rgba(255, 255, 255, 0.58);
   --theme-panel: #ffffff;
@@ -109,8 +121,8 @@ html[data-theme="marble"] {
 }
 
 html[data-theme="basalt"] {
-  --font-display: "Oswald", "Bebas Neue", sans-serif;
-  --font-ui: "Poppins", "Montserrat", sans-serif;
+  --font-display: "Rubik", "Montserrat", "Segoe UI", sans-serif;
+  --font-ui: "Manrope", "Poppins", "Montserrat", sans-serif;
   --theme-bg-image: url("assets/ui/themes/basalt.jpg");
   --theme-scrim: rgba(8, 8, 8, 0.7);
   --theme-panel: #1c1814;
@@ -618,11 +630,11 @@ html[data-theme="marble"] .theme-swatch::after {
 
 .route-map .route-dash {
   stroke-linecap: round;
-  stroke-dasharray: 2 11;
+  stroke-dasharray: 8 12;
   animation: route-dash-flow 1.8s linear infinite;
 }
 @keyframes route-dash-flow {
-  to { stroke-dashoffset: -26; }
+  to { stroke-dashoffset: -20; }
 }
 
 .map-walker-wrap {
