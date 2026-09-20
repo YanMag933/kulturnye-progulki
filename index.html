@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru" data-theme="slate">
 <head>
   <meta charset="UTF-8" />
@@ -6,12 +6,12 @@
   <meta name="theme-color" content="#0e0e10" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Культурные прогулки</title>
-  <link rel="stylesheet" href="styles.css?v=34" />
-  <link rel="stylesheet" href="themes.css?v=34" />
+  <link rel="stylesheet" href="styles.css?v=35" />
+  <link rel="stylesheet" href="themes.css?v=35" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <script src="theme.js?v=34"></script>
+  <script src="theme.js?v=35"></script>
 </head>
 <body class="home-body">
   <div class="phone-shell home-shell">
@@ -39,7 +39,7 @@
           <span class="home-cta-label">История</span>
           <span class="home-cta-title">Прогулка с Пушкиным</span>
         </a>
-        <a class="home-cta walk" href="walk.html?v=34">
+        <a class="home-cta walk" href="walk.html?v=35">
           <span class="home-cta-label">Сборка</span>
           <span class="home-cta-title">Случайный маршрут</span>
         </a>
@@ -47,7 +47,7 @@
           <span class="home-cta-label">Просмотр</span>
           <span class="home-cta-title">Тестовая прогулка</span>
         </a>
-        <a class="home-cta safes" href="safes-fit.html?v=34">
+        <a class="home-cta safes" href="safes-fit.html?v=35">
           <span class="home-cta-label">Ассеты</span>
           <span class="home-cta-title">Прогон сейфов</span>
         </a>
@@ -68,11 +68,11 @@
       </footer>
     </main>
   </div>
-  <script src="content-db.js?v=34"></script>
-  <script src="monuments-extra.js?v=34"></script>
-  <script src="demo-quest.js?v=34"></script>
-  <script src="story-pushkin.js?v=34"></script>
-  <script src="shared.js?v=34"></script>
+  <script src="content-db.js?v=35"></script>
+  <script src="monuments-extra.js?v=35"></script>
+  <script src="demo-quest.js?v=35"></script>
+  <script src="story-pushkin.js?v=35"></script>
+  <script src="shared.js?v=35"></script>
   <script>
     const active = KP.loadActiveQuest();
     const dbCount = (window.QUEST_DB && QUEST_DB.tasks.length) || 0;
@@ -114,7 +114,7 @@
     };
 
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./sw.js?v=34").catch(() => {});
+      navigator.serviceWorker.register("./sw.js?v=35").catch(() => {});
     }
   </script>
 </body>

@@ -616,6 +616,61 @@ html[data-theme="marble"] .theme-swatch::after {
   display: none !important;
 }
 
+.route-map .route-dash {
+  stroke-linecap: round;
+  stroke-dasharray: 2 11;
+  animation: route-dash-flow 1.8s linear infinite;
+}
+@keyframes route-dash-flow {
+  to { stroke-dashoffset: -26; }
+}
+
+.map-walker-wrap {
+  background: transparent !important;
+  border: 0 !important;
+}
+.map-walker {
+  position: relative;
+  width: 36px;
+  height: 52px;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+  transform: translateZ(0);
+}
+.map-walker-img {
+  width: 36px;
+  height: 52px;
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+}
+.map-walker-num {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #1a1208;
+  color: #f0d48a;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+  font-family: var(--font-ui, sans-serif);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.15) inset;
+}
+.map-walker-tip {
+  font-family: var(--font-ui, sans-serif) !important;
+  font-size: 12px !important;
+  border: 0 !important;
+  background: rgba(12, 12, 14, 0.92) !important;
+  color: #f5f0e6 !important;
+  border-radius: 10px !important;
+  padding: 6px 10px !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
 html[data-theme="crystal"] .radar-crystal-glow {
   background: radial-gradient(
     circle,

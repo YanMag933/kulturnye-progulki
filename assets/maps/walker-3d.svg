@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 96" width="64" height="96">
+  <defs>
+    <linearGradient id="coat" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0d48a"/>
+      <stop offset="45%" stop-color="#c9a24a"/>
+      <stop offset="100%" stop-color="#7a5a1e"/>
+    </linearGradient>
+    <linearGradient id="skin" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f6d7b0"/>
+      <stop offset="100%" stop-color="#c9956a"/>
+    </linearGradient>
+    <linearGradient id="hat" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3a342c"/>
+      <stop offset="100%" stop-color="#15120e"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-10%" width="140%" height="130%">
+      <feDropShadow dx="0" dy="3" stdDeviation="2.2" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+  <!-- ground shadow -->
+  <ellipse cx="32" cy="90" rx="16" ry="4.5" fill="#000" opacity="0.35"/>
+  <g filter="url(#soft)">
+    <!-- legs (isometric) -->
+    <path d="M24 62 L20 86 L28 86 L30 64 Z" fill="#2a241c"/>
+    <path d="M36 62 L34 86 L42 86 L40 64 Z" fill="#1a1612"/>
+    <!-- body coat -->
+    <path d="M22 34 L18 62 L46 62 L42 34 Z" fill="url(#coat)"/>
+    <path d="M32 34 L32 62 L46 62 L42 34 Z" fill="#8b6914" opacity="0.55"/>
+    <!-- arms -->
+    <path d="M18 38 L10 54 L16 56 L24 42 Z" fill="#b8923a"/>
+    <path d="M42 38 L50 54 L44 56 L38 42 Z" fill="#7a5a1e"/>
+    <!-- collar -->
+    <path d="M26 34 L32 40 L38 34 Z" fill="#efe6d2"/>
+    <!-- head -->
+    <ellipse cx="32" cy="24" rx="11" ry="12" fill="url(#skin)"/>
+    <ellipse cx="36" cy="22" rx="4" ry="5" fill="#000" opacity="0.08"/>
+    <!-- hair / sideburns suggestion -->
+    <path d="M22 22 Q22 12 32 10 Q42 12 42 22 L40 18 Q32 14 24 18 Z" fill="#2a2218"/>
+    <!-- top hat (Pushkin vibe, small) -->
+    <rect x="24" y="4" width="16" height="10" rx="1" fill="url(#hat)"/>
+    <ellipse cx="32" cy="14" rx="14" ry="3.5" fill="#1a1612"/>
+    <ellipse cx="32" cy="4" rx="8" ry="2.2" fill="#4a4034"/>
+  </g>
+</svg>

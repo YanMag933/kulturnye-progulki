@@ -68,7 +68,46 @@
     return `<img class="route-map-fallback" src="assets/maps/pushkin-route.jpg" alt="Карта маршрута «Пушкин в Москве»" />`;
   }
 
-  function mountLeafletMap() {
+  function walkerIcon(slot) {
+    return L.divIcon({
+      className: "map-walker-wrap",
+      html: `<div class="map-walker" aria-hidden="true">
+        <img class="map-walker-img" src="assets/maps/walker-3d.svg" alt="" draggable="false" />
+        <span class="map-walker-num">${slot}</span>
+      </div>`,
+      iconSize: [36, 52],
+      iconAnchor: [18, 48],
+      tooltipAnchor: [0, -44],
+    });
+  }
+
+  function openRoutePoints(stepsWithGeo) {
+    const linePts = stepsWithGeo.map((s) => [s.lat, s.lon]);
+    if (linePts.length < 2) return linePts;
+    const first = linePts[0];
+    const last = linePts[linePts.length - 1];
+    const sameEnds =
+      Math.abs(first[0] - last[0]) < 0.00015 && Math.abs(first[1] - last[1]) < 0.00015;
+    return sameEnds ? linePts.slice(0, -1) : linePts;
+  }
+
+  async function fetchRoadGeometry(latLngs) {
+    if (!latLngs || latLngs.length < 2) return latLngs || [];
+    const coords = latLngs.map(([lat, lon]) => `${lon},${lat}`).join(";");
+    const url = `https://router.project-osrm.org/route/v1/foot/${coords}?overview=full&geometries=geojson&steps=false`;
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) throw new Error("osrm");
+      const data = await res.json();
+      const geom = data?.routes?.[0]?.geometry?.coordinates;
+      if (!geom || !geom.length) throw new Error("empty");
+      return geom.map(([lon, lat]) => [lat, lon]);
+    } catch (_) {
+      return latLngs;
+    }
+  }
+
+  async function mountLeafletMap() {
     const el = document.getElementById("route-map-el");
     if (!el || typeof L === "undefined") return false;
     const stepsWithGeo = quest.steps.filter((s) => s.lat && s.lon);
@@ -84,26 +123,40 @@
         attribution: "",
       }).addTo(mapInstance);
 
-      // Линия без замыкания: если финиш ≈ старту, не тянем последний сегмент обратно к первой точке
-      const linePts = stepsWithGeo.map((s) => [s.lat, s.lon]);
-      const first = linePts[0];
-      const last = linePts[linePts.length - 1];
-      const sameEnds =
-        linePts.length > 2 &&
-        Math.abs(first[0] - last[0]) < 0.00015 &&
-        Math.abs(first[1] - last[1]) < 0.00015;
-      const openLine = sameEnds ? linePts.slice(0, -1) : linePts;
-      const line = L.polyline(openLine, { color: "#c9a24a", weight: 4, opacity: 0.95 }).addTo(mapInstance);
+      const openLine = openRoutePoints(stepsWithGeo);
+      const roadLine = await fetchRoadGeometry(openLine);
+      const line = L.polyline(roadLine, {
+        color: "#e6c36a",
+        weight: 3.5,
+        opacity: 0.95,
+        dashArray: "2 10",
+        lineCap: "round",
+        lineJoin: "round",
+        className: "route-dash",
+      }).addTo(mapInstance);
+      // мягкая «тень» под пунктиром
+      L.polyline(roadLine, {
+        color: "#8b6914",
+        weight: 6,
+        opacity: 0.22,
+        lineCap: "round",
+        lineJoin: "round",
+        interactive: false,
+      }).addTo(mapInstance);
+      line.bringToFront();
 
       stepsWithGeo.forEach((s, i) => {
-        L.circleMarker([s.lat, s.lon], {
-          radius: 9,
-          color: "#1a1208",
-          weight: 2,
-          fillColor: "#c9a24a",
-          fillOpacity: 1,
+        L.marker([s.lat, s.lon], {
+          icon: walkerIcon(s.slot || i + 1),
+          keyboard: false,
+          riseOnHover: true,
         })
-          .bindTooltip(`${s.slot || i + 1}. ${s.placeName}`, { direction: "top", sticky: true })
+          .bindTooltip(`${s.slot || i + 1}. ${s.placeName}`, {
+            direction: "top",
+            sticky: true,
+            opacity: 0.95,
+            className: "map-walker-tip",
+          })
           .addTo(mapInstance);
       });
       mapInstance.fitBounds(line.getBounds().pad(0.22));
@@ -114,7 +167,7 @@
     }
   }
 
-  function renderRouteMap() {
+  async function renderRouteMap() {
     shell(
       `<div class="start-hero">
         <p class="eyebrow">Сюжет · карта</p>
@@ -136,7 +189,7 @@
         <a class="btn ghost" href="index.html" style="display:block;text-align:center;margin-top:8px">В меню</a>
       </div>`
     );
-    const ok = mountLeafletMap();
+    const ok = await mountLeafletMap();
     if (!ok) {
       const host = document.getElementById("route-map-svg-host");
       const el = document.getElementById("route-map-el");
