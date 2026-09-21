@@ -450,7 +450,7 @@
           <a href="index.html">← Меню</a>
           <a href="create.html">Создать</a>
         </div>
-        ${TEST_MODE ? `<p class="test-banner">ТЕСТОВАЯ ПРОГУЛКА · Далее подставляет ответ</p>` : ""}
+        ${TEST_MODE ? `<p class="test-banner">ТЕСТ · Пушкин · «Далее» подставляет ответ</p>` : ""}
         <h1 class="walk-title">${quest.title}${TEST_MODE ? " · тест" : ""}</h1>
         <p class="walk-meta">${[quest.zoneLabel, quest.difficultyLabel, quest.durationHint].filter(Boolean).join(" · ")}</p>
         ${dots}
@@ -857,7 +857,7 @@
         <h1>${quest.title}</h1>
         <p class="muted">${
           TEST_MODE
-            ? "Далее подставляет верный ответ или отмечает вариант — можно пройти все шаги без ввода."
+            ? "Все 9 глав сюжета. «Далее» само подставляет ответ — можно листать без камеры, GPS и ввода."
             : quest.subtitle
         }</p>
         <div class="map-fake">${storyMode ? "Маршрут готов · " : "Кластер точек · "}${quest.zoneLabel}</div>
