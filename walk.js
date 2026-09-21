@@ -134,6 +134,40 @@
     }
   }
 
+  function routeBearing(a, b) {
+    const lat1 = (a[0] * Math.PI) / 180;
+    const lat2 = (b[0] * Math.PI) / 180;
+    const dLon = ((b[1] - a[1]) * Math.PI) / 180;
+    const y = Math.sin(dLon) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+    return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
+  }
+
+  function addRouteArrows(map, latLngs) {
+    if (!latLngs || latLngs.length < 2) return;
+    const total = latLngs.length;
+    const count = Math.min(14, Math.max(6, Math.floor(total / 18)));
+    const step = Math.max(1, Math.floor(total / (count + 1)));
+    for (let i = step; i < total - 1; i += step) {
+      const a = latLngs[i];
+      const b = latLngs[Math.min(i + Math.max(2, Math.floor(step / 3)), total - 1)];
+      const deg = routeBearing(a, b);
+      L.marker(a, {
+        interactive: false,
+        keyboard: false,
+        zIndexOffset: 200,
+        icon: L.divIcon({
+          className: "route-arrow-wrap",
+          html: `<div class="route-arrow" style="transform:rotate(${deg}deg)" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 11h10l-3.5-3.5 1.4-1.4L18.8 12l-6.9 5.9-1.4-1.4L14 13H4z" fill="#1e6bff"/></svg>
+          </div>`,
+          iconSize: [18, 18],
+          iconAnchor: [9, 9],
+        }),
+      }).addTo(map);
+    }
+  }
+
   async function mountLeafletMap() {
     const el = document.getElementById("route-map-el");
     if (!el || typeof L === "undefined") return false;
@@ -152,17 +186,16 @@
 
       const openLine = openRoutePoints(stepsWithGeo);
       const roadLine = await fetchRoadGeometry(openLine);
-      // мягкая «тень» под пунктиром
       L.polyline(roadLine, {
-        color: "#8b6914",
+        color: "#0b3d91",
         weight: 7,
-        opacity: 0.28,
+        opacity: 0.22,
         lineCap: "round",
         lineJoin: "round",
         interactive: false,
       }).addTo(mapInstance);
       const line = L.polyline(roadLine, {
-        color: "#e6c36a",
+        color: "#1e6bff",
         weight: 4,
         opacity: 0.98,
         dashArray: "8 12",
@@ -170,6 +203,7 @@
         lineJoin: "round",
         className: "route-dash",
       }).addTo(mapInstance);
+      addRouteArrows(mapInstance, roadLine);
 
       const markerPos = markerPositions(stepsWithGeo);
       stepsWithGeo.forEach((s, i) => {

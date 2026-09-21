@@ -629,12 +629,31 @@ html[data-theme="marble"] .theme-swatch::after {
 }
 
 .route-map .route-dash {
+  stroke: #1e6bff;
   stroke-linecap: round;
   stroke-dasharray: 8 12;
   animation: route-dash-flow 1.8s linear infinite;
 }
 @keyframes route-dash-flow {
   to { stroke-dashoffset: -20; }
+}
+
+.route-arrow-wrap {
+  background: transparent !important;
+  border: 0 !important;
+}
+.route-arrow {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 1px 2px rgba(0, 40, 120, 0.55));
+  transform-origin: 50% 50%;
+}
+.route-arrow svg {
+  display: block;
+  overflow: visible;
 }
 
 .map-walker-wrap {
