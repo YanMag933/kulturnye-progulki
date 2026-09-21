@@ -18,7 +18,7 @@
     });
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
-      const colors = { slate: "#0e0e10", crystal: "#050814", marble: "#e8e6e2", basalt: "#101010" };
+      const colors = { slate: "#0c0c0e", crystal: "#050a14", marble: "#f4f1eb", basalt: "#0e0c0a" };
       meta.setAttribute("content", colors[t] || "#0e0e10");
     }
   }

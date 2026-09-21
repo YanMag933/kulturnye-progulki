@@ -36,9 +36,8 @@ body {
   justify-content: center;
   padding: 16px;
   background:
-    radial-gradient(ellipse 90% 55% at 50% -5%, rgba(70, 52, 28, 0.55) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 40% at 100% 80%, rgba(40, 55, 45, 0.2) 0%, transparent 45%),
-    #0a0908;
+    radial-gradient(ellipse 70% 40% at 50% 0%, rgba(40, 40, 48, 0.35) 0%, transparent 55%),
+    #070708;
 }
 
 /* Paper / parchment grain — must be visible on phone screens */

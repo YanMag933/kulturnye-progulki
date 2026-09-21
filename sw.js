@@ -1,5 +1,5 @@
 /* Service worker - offline PWA cache */
-const CACHE = "kultprogulki-v39";
+const CACHE = "kultprogulki-v40";
 const ASSETS = [
   "./",
   "./index.html",
