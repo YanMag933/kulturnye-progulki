@@ -1,44 +1,62 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 96" width="64" height="96">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 72" width="48" height="72">
   <defs>
-    <linearGradient id="coat" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f0d48a"/>
-      <stop offset="45%" stop-color="#c9a24a"/>
-      <stop offset="100%" stop-color="#7a5a1e"/>
+    <linearGradient id="coat" x1="0%" y1="0%" x2="80%" y2="100%">
+      <stop offset="0%" stop-color="#d4b06a"/>
+      <stop offset="40%" stop-color="#a67c2d"/>
+      <stop offset="100%" stop-color="#5c4018"/>
     </linearGradient>
-    <linearGradient id="skin" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#f6d7b0"/>
-      <stop offset="100%" stop-color="#c9956a"/>
+    <linearGradient id="skin" x1="30%" y1="0%" x2="70%" y2="100%">
+      <stop offset="0%" stop-color="#f3d0a8"/>
+      <stop offset="100%" stop-color="#c48a5a"/>
     </linearGradient>
     <linearGradient id="hat" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#3a342c"/>
-      <stop offset="100%" stop-color="#15120e"/>
+      <stop offset="0%" stop-color="#3a3228"/>
+      <stop offset="100%" stop-color="#12100c"/>
     </linearGradient>
-    <filter id="soft" x="-20%" y="-10%" width="140%" height="130%">
-      <feDropShadow dx="0" dy="3" stdDeviation="2.2" flood-color="#000" flood-opacity="0.45"/>
+    <filter id="soft" x="-25%" y="-10%" width="150%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="1.4" flood-color="#000" flood-opacity="0.4"/>
     </filter>
   </defs>
-  <!-- ground shadow -->
-  <ellipse cx="32" cy="90" rx="16" ry="4.5" fill="#000" opacity="0.35"/>
+  <ellipse cx="24" cy="68" rx="11" ry="3" fill="#000" opacity="0.32"/>
   <g filter="url(#soft)">
-    <!-- legs (isometric) -->
-    <path d="M24 62 L20 86 L28 86 L30 64 Z" fill="#2a241c"/>
-    <path d="M36 62 L34 86 L42 86 L40 64 Z" fill="#1a1612"/>
-    <!-- body coat -->
-    <path d="M22 34 L18 62 L46 62 L42 34 Z" fill="url(#coat)"/>
-    <path d="M32 34 L32 62 L46 62 L42 34 Z" fill="#8b6914" opacity="0.55"/>
-    <!-- arms -->
-    <path d="M18 38 L10 54 L16 56 L24 42 Z" fill="#b8923a"/>
-    <path d="M42 38 L50 54 L44 56 L38 42 Z" fill="#7a5a1e"/>
-    <!-- collar -->
-    <path d="M26 34 L32 40 L38 34 Z" fill="#efe6d2"/>
+    <!-- legs -->
+    <path d="M17 46 L14 64 L20 64 L21 48 Z" fill="#2a2218"/>
+    <path d="M27 46 L26 64 L32 64 L30 48 Z" fill="#1a1410"/>
+    <!-- frock coat -->
+    <path d="M15 26 L12 48 L36 48 L33 26 Z" fill="url(#coat)"/>
+    <path d="M24 26 L24 48 L36 48 L33 26 Z" fill="#6b4a16" opacity="0.5"/>
+    <path d="M24 28 L24 46" stroke="#efe6d2" stroke-width="0.7" opacity="0.55"/>
+    <!-- buttons -->
+    <circle cx="22" cy="32" r="0.9" fill="#efe6d2" opacity="0.85"/>
+    <circle cx="22" cy="37" r="0.9" fill="#efe6d2" opacity="0.85"/>
+    <circle cx="22" cy="42" r="0.9" fill="#efe6d2" opacity="0.7"/>
+    <!-- arms: one at chest (Pushkin pose) -->
+    <path d="M14 28 L8 40 L13 42 L18 31 Z" fill="#9a7328"/>
+    <path d="M30 28 L38 36 L34 40 L28 32 Z" fill="#7a5a1e"/>
+    <ellipse cx="34" cy="39" rx="2.2" ry="2" fill="url(#skin)"/>
+    <!-- hand tucked -->
+    <ellipse cx="20" cy="36" rx="2.4" ry="2" fill="url(#skin)"/>
+    <!-- collar / cravat -->
+    <path d="M20 26 L24 31 L28 26 Z" fill="#f5efe2"/>
+    <path d="M22.5 28 L24 32 L25.5 28" fill="#d8cfc0"/>
     <!-- head -->
-    <ellipse cx="32" cy="24" rx="11" ry="12" fill="url(#skin)"/>
-    <ellipse cx="36" cy="22" rx="4" ry="5" fill="#000" opacity="0.08"/>
-    <!-- hair / sideburns suggestion -->
-    <path d="M22 22 Q22 12 32 10 Q42 12 42 22 L40 18 Q32 14 24 18 Z" fill="#2a2218"/>
-    <!-- top hat (Pushkin vibe, small) -->
-    <rect x="24" y="4" width="16" height="10" rx="1" fill="url(#hat)"/>
-    <ellipse cx="32" cy="14" rx="14" ry="3.5" fill="#1a1612"/>
-    <ellipse cx="32" cy="4" rx="8" ry="2.2" fill="#4a4034"/>
+    <ellipse cx="24" cy="18" rx="8" ry="9" fill="url(#skin)"/>
+    <!-- cheek shade -->
+    <ellipse cx="27.5" cy="19" rx="2.5" ry="3" fill="#000" opacity="0.07"/>
+    <!-- curly hair + sideburns -->
+    <path d="M16 18 Q15 9 24 7.5 Q33 9 32 18 Q30 12 24 11 Q18 12 16 18 Z" fill="#1e1812"/>
+    <path d="M16.2 20 Q15.5 26 17.5 28 Q16.8 22 17.2 19 Z" fill="#1e1812"/>
+    <path d="M31.8 20 Q32.5 26 30.5 28 Q31.2 22 30.8 19 Z" fill="#1e1812"/>
+    <path d="M18 12 Q20 8 23 9" fill="none" stroke="#2a2218" stroke-width="1.2"/>
+    <path d="M26 9 Q29 8 31 12" fill="none" stroke="#2a2218" stroke-width="1.2"/>
+    <!-- brows / nose hint -->
+    <path d="M20.5 17.5 L22.5 17" stroke="#6a4a32" stroke-width="0.7" stroke-linecap="round"/>
+    <path d="M25.5 17 L27.5 17.5" stroke="#6a4a32" stroke-width="0.7" stroke-linecap="round"/>
+    <path d="M24 18.5 L24.5 21 L23.5 21" fill="none" stroke="#a87850" stroke-width="0.6"/>
+    <!-- top hat -->
+    <rect x="18" y="2.5" width="12" height="7.5" rx="0.8" fill="url(#hat)"/>
+    <ellipse cx="24" cy="10" rx="11" ry="2.6" fill="#14110e"/>
+    <ellipse cx="24" cy="2.5" rx="6.2" ry="1.7" fill="#3a3228"/>
+    <rect x="18.5" y="7.5" width="11" height="1.2" fill="#c9a24a" opacity="0.55"/>
   </g>
 </svg>

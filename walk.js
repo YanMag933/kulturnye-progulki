@@ -75,10 +75,37 @@
         <img class="map-walker-img" src="assets/maps/walker-3d.svg" alt="" draggable="false" />
         <span class="map-walker-num">${slot}</span>
       </div>`,
-      iconSize: [36, 52],
-      iconAnchor: [18, 48],
-      tooltipAnchor: [0, -44],
+      iconSize: [26, 38],
+      iconAnchor: [13, 36],
+      tooltipAnchor: [0, -32],
     });
+  }
+
+  /** Развести маркеры с одинаковыми координатами (1/2/9 на площади и т.п.) */
+  function markerPositions(stepsWithGeo) {
+    const groups = new Map();
+    stepsWithGeo.forEach((s, i) => {
+      const key = `${Number(s.lat).toFixed(5)},${Number(s.lon).toFixed(5)}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push({ s, i });
+    });
+    const pos = new Array(stepsWithGeo.length);
+    groups.forEach((arr) => {
+      if (arr.length === 1) {
+        pos[arr[0].i] = [arr[0].s.lat, arr[0].s.lon];
+        return;
+      }
+      const n = arr.length;
+      arr.forEach((item, k) => {
+        const angle = (Math.PI * 2 * k) / n - Math.PI / 2;
+        const ring = 0.00032 + (n > 2 ? 0.00006 : 0);
+        pos[item.i] = [
+          item.s.lat + Math.cos(angle) * ring,
+          item.s.lon + Math.sin(angle) * ring * 1.55,
+        ];
+      });
+    });
+    return pos;
   }
 
   function openRoutePoints(stepsWithGeo) {
@@ -144,8 +171,9 @@
         className: "route-dash",
       }).addTo(mapInstance);
 
+      const markerPos = markerPositions(stepsWithGeo);
       stepsWithGeo.forEach((s, i) => {
-        L.marker([s.lat, s.lon], {
+        L.marker(markerPos[i], {
           icon: walkerIcon(s.slot || i + 1),
           keyboard: false,
           riseOnHover: true,
@@ -527,13 +555,22 @@
   }
 
   function inputSimHtml(step) {
-    const isYear = step.safeType === "year" || (step.expected || "").match(/^\d{4}$/);
-    const isCode = step.safeType === "code" || (step.expected || "").match(/^\d{4,}$/);
-    const inputMode = isYear || isCode ? "numeric" : "text";
-    const placeholder = isYear ? "4 цифры" : isCode ? "код" : "слово";
+    const expected = String(step.expected || step.safeCode || "");
+    const wantsDigits =
+      step.safeType === "year" ||
+      step.safeType === "code" ||
+      step.safeType === "dial" ||
+      /^\d[\d-]*$/.test(expected);
+    const wantsWord = step.ui === "input" || (!wantsDigits && /[а-яёa-z]/i.test(expected));
+    const inputMode = wantsWord ? "text" : "numeric";
+    const placeholder = wantsWord
+      ? step.safePrompt || "слово"
+      : step.safeType === "year"
+        ? "4 цифры"
+        : step.safePrompt || "код";
     return `<div class="input-sim panel">
-      <input class="field input-sim-field" id="answer" inputmode="${inputMode}" autocomplete="off" placeholder="${placeholder}" />
-      <div class="input-sim-keys" id="sim-keys" ${isYear || isCode ? "" : "hidden"}>
+      <input class="field input-sim-field" id="answer" type="text" inputmode="${inputMode}" lang="ru" autocomplete="off" enterkeyhint="done" placeholder="${placeholder}" ${wantsWord ? "" : 'pattern="[0-9\\-]*"'} />
+      <div class="input-sim-keys" id="sim-keys" ${wantsWord ? "hidden" : ""}>
         ${[1, 2, 3, 4, 5, 6, 7, 8, 9, "⌫", 0, "OK"]
           .map((k) => `<button type="button" class="sim-key" data-k="${k}">${k}</button>`)
           .join("")}

@@ -1176,14 +1176,17 @@ body {
 }
 .scroll-hint-pill {
   margin: 0;
-  padding: 12px 28px;
+  padding: 14px 32px;
   font-size: 18px;
-  background: rgba(12, 12, 14, 0.88);
-  color: #ffe08a;
-  border-color: #ffe08a;
+  letter-spacing: 0.14em;
+  color: #1a1208 !important;
+  border: 1.5px solid #ffe08a !important;
+  background: linear-gradient(180deg, #ffe9a8 0%, #e6c36a 55%, #c9a24a 100%) !important;
   box-shadow:
-    0 0 0 1px rgba(255, 224, 138, 0.25),
-    0 12px 28px rgba(0, 0, 0, 0.45);
+    0 2px 0 rgba(255, 255, 255, 0.45) inset,
+    0 0 0 1px rgba(255, 224, 138, 0.35),
+    0 14px 32px rgba(0, 0, 0, 0.55);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
 .scroll-sheet {

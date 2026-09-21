@@ -643,31 +643,31 @@ html[data-theme="marble"] .theme-swatch::after {
 }
 .map-walker {
   position: relative;
-  width: 36px;
-  height: 52px;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+  width: 26px;
+  height: 38px;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.45));
   transform: translateZ(0);
 }
 .map-walker-img {
-  width: 36px;
-  height: 52px;
+  width: 26px;
+  height: 38px;
   display: block;
   object-fit: contain;
   pointer-events: none;
 }
 .map-walker-num {
   position: absolute;
-  right: -2px;
-  top: 0;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
+  right: -4px;
+  top: -2px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
   border-radius: 999px;
   background: #1a1208;
   color: #f0d48a;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
-  line-height: 16px;
+  line-height: 14px;
   text-align: center;
   font-family: var(--font-ui, sans-serif);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.15) inset;
@@ -782,23 +782,41 @@ html[data-theme="marble"] .photo-slot {
   padding: 8px 22px;
   border-radius: 999px;
   border: 1.5px solid var(--theme-accent);
-  background: transparent;
-  color: var(--theme-accent);
+  background: color-mix(in srgb, var(--theme-accent) 22%, var(--theme-panel));
+  color: var(--theme-ink);
   font-family: var(--font-display);
   font-size: 15px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--theme-accent) 25%, transparent);
-  transition: transform 0.12s ease, background 0.12s ease;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--theme-accent) 35%, transparent),
+    0 6px 16px rgba(0, 0, 0, 0.28);
+  transition: transform 0.12s ease, background 0.12s ease, filter 0.12s ease;
 }
 .hint-pill:active {
   transform: scale(0.97);
-  background: color-mix(in srgb, var(--theme-accent) 18%, transparent);
+  background: color-mix(in srgb, var(--theme-accent) 38%, var(--theme-panel));
 }
 html[data-theme="marble"] .hint-pill {
-  color: #8a6420;
+  color: #5c4010;
   border-color: #a67c2d;
+  background: linear-gradient(180deg, #f7e7c2 0%, #e8c878 100%);
+}
+html[data-theme="crystal"] .hint-pill {
+  color: #021018;
+  border-color: #3dd6ff;
+  background: linear-gradient(180deg, #9ae8ff 0%, #3dd6ff 100%);
+}
+html[data-theme="basalt"] .hint-pill {
+  color: #1a1208;
+  border-color: #d4a84b;
+  background: linear-gradient(180deg, #f0d48a 0%, #d4a84b 100%);
+}
+html[data-theme="slate"] .hint-pill {
+  color: #121214;
+  border-color: #e6e0d4;
+  background: linear-gradient(180deg, #f5f0e6 0%, #d4cfc4 100%);
 }
 .hint-panel {
   margin: -4px 0 12px;
