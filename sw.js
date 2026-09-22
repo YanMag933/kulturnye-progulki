@@ -1,5 +1,5 @@
 /* Service worker - offline PWA cache */
-const CACHE = "kultprogulki-v49";
+const CACHE = "kultprogulki-v50";
 const ASSETS = [
   "./",
   "./index.html",
@@ -80,7 +80,7 @@ self.addEventListener("fetch", (event) => {
 
   if (networkFirst) {
     event.respondWith(
-      fetch(req)
+      fetch(req, { cache: "no-store" })
         .then((res) => {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
