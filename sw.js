@@ -1,5 +1,5 @@
 /* Service worker - offline PWA cache */
-const CACHE = "kultprogulki-v51";
+const CACHE = "kultprogulki-v52";
 const ASSETS = [
   "./",
   "./index.html",
@@ -19,6 +19,9 @@ const ASSETS = [
   "./monuments-extra.js",
   "./demo-quest.js",
   "./story-pushkin.js",
+  "./story-mayakovsky.js",
+  "./story-griboedov.js",
+  "./story-gogol.js",
   "./walk.js",
   "./create.js",
   "./mechanics-data.js",
@@ -37,10 +40,15 @@ const ASSETS = [
   "./assets/ui/themes/crystal.jpg",
   "./assets/ui/themes/marble.jpg",
   "./assets/ui/themes/basalt.jpg",
+  "./assets/ui/themes/char-pushkin.jpg",
+  "./assets/ui/themes/char-mayakovsky.jpg",
+  "./assets/ui/themes/char-griboedov.jpg",
+  "./assets/ui/themes/char-gogol.jpg",
+  "./assets/ui/torn-paper-texture.jpg",
+  "./assets/ui/antique-letter.jpg",
   "./assets/maps/pushkin-route.jpg",
   "./assets/maps/walker-3d.svg",
   "./assets/maps/tverskoy-clock.jpg",
-  "./assets/ui/antique-letter.jpg",
   "./assets/fonts/Montserrat-Variable.ttf",
   "./assets/fonts/Manrope-Variable.ttf",
   "./assets/fonts/Rubik-Variable.ttf",

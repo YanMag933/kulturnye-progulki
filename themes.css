@@ -152,6 +152,122 @@ html[data-theme="basalt"] {
   --theme-press: 0 4px 14px rgba(0, 0, 0, 0.34);
 }
 
+/* —— Темы персонажей (сюжетный квест перекрывает дизайн) —— */
+html[data-character="pushkin"] {
+  --theme-bg-image: url("assets/ui/themes/char-pushkin.jpg");
+  --theme-scrim: rgba(8, 12, 28, 0.72);
+  --theme-panel: rgba(18, 22, 40, 0.78);
+  --theme-cta: #1a2038;
+  --theme-ink: #f7f0de;
+  --theme-muted: #b8a878;
+  --theme-accent: #d4a84b;
+  --theme-accent-ink: #1a1208;
+  --theme-line: rgba(212, 168, 75, 0.28);
+  --theme-glow: rgba(212, 168, 75, 0.18);
+}
+html[data-character="mayakovsky"] {
+  --theme-bg-image: url("assets/ui/themes/char-mayakovsky.jpg");
+  --theme-scrim: rgba(40, 18, 16, 0.7);
+  --theme-panel: rgba(52, 28, 24, 0.82);
+  --theme-cta: #6e1c1c;
+  --theme-ink: #f5ecd8;
+  --theme-muted: #c4a898;
+  --theme-accent: #c62828;
+  --theme-accent-ink: #fff8e8;
+  --theme-line: rgba(198, 40, 40, 0.35);
+  --theme-glow: rgba(198, 40, 40, 0.2);
+}
+html[data-character="griboedov"] {
+  --theme-bg-image: url("assets/ui/themes/char-griboedov.jpg");
+  --theme-scrim: rgba(12, 28, 22, 0.72);
+  --theme-panel: rgba(20, 40, 34, 0.8);
+  --theme-cta: #1e3a30;
+  --theme-ink: #f2ebe0;
+  --theme-muted: #a8b8a8;
+  --theme-accent: #c9a227;
+  --theme-accent-ink: #142018;
+  --theme-line: rgba(201, 162, 39, 0.3);
+  --theme-glow: rgba(80, 140, 100, 0.16);
+}
+html[data-character="gogol"] {
+  --theme-bg-image: url("assets/ui/themes/char-gogol.jpg");
+  --theme-scrim: rgba(6, 10, 28, 0.68);
+  --theme-panel: rgba(14, 18, 40, 0.8);
+  --theme-cta: #14182e;
+  --theme-ink: #e8eef8;
+  --theme-muted: #8a9ab8;
+  --theme-accent: #c9a66b;
+  --theme-accent-ink: #0a0e1c;
+  --theme-line: rgba(140, 170, 220, 0.22);
+  --theme-glow: rgba(180, 200, 255, 0.14);
+}
+
+.char-fx {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  overflow: hidden;
+}
+.char-snow-layer {
+  position: absolute;
+  inset: -20% 0 0;
+  background-image:
+    radial-gradient(2px 2px at 10% 20%, rgba(255, 255, 255, 0.9), transparent),
+    radial-gradient(1.5px 1.5px at 30% 60%, rgba(255, 255, 255, 0.75), transparent),
+    radial-gradient(2px 2px at 55% 35%, rgba(255, 255, 255, 0.85), transparent),
+    radial-gradient(1px 1px at 70% 80%, rgba(255, 255, 255, 0.7), transparent),
+    radial-gradient(2px 2px at 85% 25%, rgba(255, 255, 255, 0.8), transparent),
+    radial-gradient(1.5px 1.5px at 45% 10%, rgba(255, 255, 255, 0.65), transparent);
+  background-size: 180px 220px;
+  animation: char-snow-fall 12s linear infinite;
+  opacity: 0.55;
+}
+@keyframes char-snow-fall {
+  from { transform: translateY(-8%); }
+  to { transform: translateY(30%); }
+}
+.char-devil {
+  position: absolute;
+  right: 6%;
+  bottom: 12%;
+  width: 42px;
+  height: 48px;
+  opacity: 0.35;
+  background:
+    radial-gradient(circle at 50% 30%, #1a0a12 0 28%, transparent 30%),
+    radial-gradient(ellipse at 50% 70%, #2a1018 0 40%, transparent 42%);
+  filter: drop-shadow(0 0 6px rgba(120, 40, 60, 0.4));
+  animation: char-devil-peek 7s ease-in-out infinite;
+}
+.char-devil::before,
+.char-devil::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  width: 8px;
+  height: 14px;
+  background: #1a0a12;
+  border-radius: 40% 40% 10% 10%;
+}
+.char-devil::before { left: 6px; transform: rotate(-18deg); }
+.char-devil::after { right: 6px; transform: rotate(18deg); }
+@keyframes char-devil-peek {
+  0%, 70%, 100% { transform: translateY(18px) scale(0.92); opacity: 0.15; }
+  80%, 90% { transform: translateY(0) scale(1); opacity: 0.4; }
+}
+.char-inkblot {
+  position: absolute;
+  width: 70px;
+  height: 54px;
+  border-radius: 60% 40% 55% 45%;
+  background: radial-gradient(circle at 40% 40%, rgba(10, 12, 24, 0.55), rgba(10, 12, 24, 0.05) 70%);
+  filter: blur(0.4px);
+  opacity: 0.35;
+}
+.char-inkblot.a { left: 8%; top: 18%; transform: rotate(-12deg); }
+.char-inkblot.b { right: 12%; top: 42%; width: 48px; height: 40px; opacity: 0.25; transform: rotate(20deg); }
+
 body {
   font-family: var(--font-ui);
   color: var(--theme-ink);
@@ -565,13 +681,13 @@ html[data-theme="marble"] .theme-swatch::after {
 }
 
 .route-map .route-dash {
-  stroke: #1e6bff;
+  stroke: #6b5340;
   stroke-linecap: round;
-  stroke-dasharray: 8 12;
-  animation: route-dash-flow 1.8s linear infinite;
+  stroke-dasharray: 7 11;
+  animation: route-dash-flow 2s linear infinite;
 }
 @keyframes route-dash-flow {
-  to { stroke-dashoffset: -20; }
+  to { stroke-dashoffset: -18; }
 }
 
 .route-arrow-wrap {
@@ -579,12 +695,12 @@ html[data-theme="marble"] .theme-swatch::after {
   border: 0 !important;
 }
 .route-arrow {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(0 1px 2px rgba(0, 40, 120, 0.55));
+  filter: drop-shadow(0 1px 2px rgba(40, 28, 16, 0.45));
   transform-origin: 50% 50%;
 }
 .route-arrow svg {
@@ -592,51 +708,49 @@ html[data-theme="marble"] .theme-swatch::after {
   overflow: visible;
 }
 
-.map-walker-wrap {
+.map-pin-wrap {
   background: transparent !important;
   border: 0 !important;
 }
-.map-walker {
-  position: relative;
-  width: 26px;
-  height: 38px;
-  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.45));
+.map-pin {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255, 248, 230, 0.95) 0%, rgba(255, 248, 230, 0.15) 42%, transparent 58%),
+    linear-gradient(160deg, #c4a574 0%, #8a6a42 48%, #5c4328 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 248, 230, 0.55) inset,
+    0 -2px 4px rgba(40, 28, 16, 0.35) inset,
+    0 4px 10px rgba(20, 12, 6, 0.45),
+    0 0 0 1.5px rgba(92, 64, 32, 0.55);
   transform: translateZ(0);
 }
-.map-walker-img {
-  width: 26px;
-  height: 38px;
-  display: block;
-  object-fit: contain;
-  pointer-events: none;
-}
-.map-walker-num {
-  position: absolute;
-  right: -4px;
-  top: -2px;
-  min-width: 14px;
-  height: 14px;
-  padding: 0 3px;
-  border-radius: 999px;
-  background: #1a1208;
-  color: #f0d48a;
-  font-size: 9px;
-  font-weight: 800;
-  line-height: 14px;
-  text-align: center;
+.map-pin-num {
   font-family: var(--font-ui, sans-serif);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.15) inset;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  color: #1a1208;
+  text-shadow: 0 1px 0 rgba(255, 248, 230, 0.45);
 }
-.map-walker-tip {
+.map-pin-tip {
   font-family: var(--font-ui, sans-serif) !important;
   font-size: 12px !important;
   border: 0 !important;
-  background: rgba(12, 12, 14, 0.92) !important;
-  color: #f5f0e6 !important;
+  background: rgba(26, 18, 10, 0.94) !important;
+  color: #f5ecd8 !important;
   border-radius: 10px !important;
   padding: 6px 10px !important;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
 }
+
+/* legacy aliases */
+.map-walker-wrap { background: transparent !important; border: 0 !important; }
+.map-walker-tip { /* kept for old cache */ }
 
 html[data-theme="crystal"] .radar-crystal-glow {
   background: radial-gradient(
@@ -1055,10 +1169,10 @@ html[data-theme="crystal"] .home-premium h1 {
   align-items: stretch;
   justify-content: stretch;
   background:
-    linear-gradient(165deg, rgba(255, 248, 230, 0.28) 0%, transparent 45%),
-    #e8d9b9 url("assets/ui/antique-letter.jpg") center / cover no-repeat;
+    linear-gradient(165deg, rgba(255, 248, 230, 0.22) 0%, transparent 42%),
+    #e4d4b4 url("assets/ui/torn-paper-texture.jpg") center / cover no-repeat;
   box-shadow:
-    0 1px 0 rgba(255, 248, 230, 0.4) inset,
+    0 1px 0 rgba(255, 248, 230, 0.35) inset,
     0 10px 22px rgba(0, 0, 0, 0.28);
   filter: drop-shadow(0 6px 10px rgba(40, 28, 16, 0.22));
 }
@@ -1183,8 +1297,8 @@ html[data-theme="crystal"] .home-premium h1 {
   flex: 0 0 auto;
   border-radius: 2px;
   background:
-    linear-gradient(180deg, rgba(255, 248, 230, 0.2), transparent 30%),
-    #e6d7b8 url("assets/ui/antique-letter.jpg") center / cover no-repeat;
+    linear-gradient(180deg, rgba(255, 248, 230, 0.18), transparent 30%),
+    #e4d4b4 url("assets/ui/torn-paper-texture.jpg") center / cover no-repeat;
   border: 1px solid rgba(92, 64, 32, 0.35);
   box-shadow:
     0 1px 0 rgba(255, 248, 230, 0.35) inset,

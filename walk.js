@@ -27,7 +27,31 @@
   let uiState = {};
   let mapInstance = null;
 
-  const PHOTO_BANK_KEY = "kultprogulki.story.photos.pushkin";
+  function applyCharacterTheme(characterId) {
+    const root = document.documentElement;
+    const id = characterId || "";
+    if (id) root.setAttribute("data-character", id);
+    else root.removeAttribute("data-character");
+    document.body.classList.toggle("char-snow", id === "gogol");
+    let fx = document.getElementById("char-fx");
+    if (id === "gogol") {
+      if (!fx) {
+        fx = document.createElement("div");
+        fx.id = "char-fx";
+        fx.className = "char-fx char-fx-gogol";
+        fx.setAttribute("aria-hidden", "true");
+        fx.innerHTML =
+          '<div class="char-snow-layer"></div><div class="char-devil" title=""></div><div class="char-inkblot a"></div><div class="char-inkblot b"></div>';
+        document.body.appendChild(fx);
+      }
+    } else if (fx) {
+      fx.remove();
+    }
+  }
+
+  applyCharacterTheme(quest.characterId);
+
+  const PHOTO_BANK_KEY = `kultprogulki.story.photos.${quest.characterId || STORY_ID || "default"}`;
 
   function loadPhotoBank() {
     try {
@@ -159,43 +183,58 @@
     return `<img class="route-map-fallback" src="assets/maps/pushkin-route.jpg" alt="Карта маршрута «Пушкин в Москве»" />`;
   }
 
-  function walkerIcon(slot) {
+  function stopPinIcon(slot) {
     return L.divIcon({
-      className: "map-walker-wrap",
-      html: `<div class="map-walker" aria-hidden="true">
-        <img class="map-walker-img" src="assets/maps/walker-3d.svg" alt="" draggable="false" />
-        <span class="map-walker-num">${slot}</span>
-      </div>`,
-      iconSize: [26, 38],
-      iconAnchor: [13, 36],
-      tooltipAnchor: [0, -32],
+      className: "map-pin-wrap",
+      html: `<div class="map-pin" aria-hidden="true"><span class="map-pin-num">${slot}</span></div>`,
+      iconSize: [34, 34],
+      iconAnchor: [17, 17],
+      tooltipAnchor: [0, -18],
     });
   }
 
-  /** Развести маркеры с одинаковыми координатами (1/2/9 на площади и т.п.) */
+  /** Развести маркеры: одинаковые координаты и слишком близкие точки (~45 м). */
   function markerPositions(stepsWithGeo) {
+    const n = stepsWithGeo.length;
+    const pos = stepsWithGeo.map((s) => [Number(s.lat), Number(s.lon)]);
+    const minSep = 0.00038; // ~42 м по широте
+    // 1) кластеры точного совпадения → кольцо
     const groups = new Map();
-    stepsWithGeo.forEach((s, i) => {
-      const key = `${Number(s.lat).toFixed(5)},${Number(s.lon).toFixed(5)}`;
+    pos.forEach((p, i) => {
+      const key = `${p[0].toFixed(5)},${p[1].toFixed(5)}`;
       if (!groups.has(key)) groups.set(key, []);
-      groups.get(key).push({ s, i });
+      groups.get(key).push(i);
     });
-    const pos = new Array(stepsWithGeo.length);
-    groups.forEach((arr) => {
-      if (arr.length === 1) {
-        pos[arr[0].i] = [arr[0].s.lat, arr[0].s.lon];
-        return;
-      }
-      const n = arr.length;
-      arr.forEach((item, k) => {
-        const angle = (Math.PI * 2 * k) / n - Math.PI / 2;
-        const ring = 0.00032 + (n > 2 ? 0.00006 : 0);
-        pos[item.i] = [
-          item.s.lat + Math.cos(angle) * ring,
-          item.s.lon + Math.sin(angle) * ring * 1.55,
+    groups.forEach((idxs) => {
+      if (idxs.length < 2) return;
+      const base = pos[idxs[0]];
+      const ring = 0.00036 + Math.max(0, idxs.length - 2) * 0.00008;
+      idxs.forEach((i, k) => {
+        const angle = (Math.PI * 2 * k) / idxs.length - Math.PI / 2;
+        pos[i] = [
+          base[0] + Math.cos(angle) * ring,
+          base[1] + Math.sin(angle) * ring * 1.6,
         ];
       });
     });
+    // 2) мягкое отталкивание близких точек (2–3 итерации)
+    for (let iter = 0; iter < 3; iter++) {
+      for (let i = 0; i < n; i++) {
+        for (let j = i + 1; j < n; j++) {
+          const dLat = pos[j][0] - pos[i][0];
+          const dLon = (pos[j][1] - pos[i][1]) / 1.6;
+          const dist = Math.hypot(dLat, dLon);
+          if (dist >= minSep || dist < 1e-9) continue;
+          const push = ((minSep - dist) / 2) * 1.05;
+          const ux = dLat / dist;
+          const uy = dLon / dist;
+          pos[i][0] -= ux * push;
+          pos[i][1] -= uy * push * 1.6;
+          pos[j][0] += ux * push;
+          pos[j][1] += uy * push * 1.6;
+        }
+      }
+    }
     return pos;
   }
 
@@ -250,7 +289,7 @@
         icon: L.divIcon({
           className: "route-arrow-wrap",
           html: `<div class="route-arrow" style="transform:rotate(${deg}deg)" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 11h10l-3.5-3.5 1.4-1.4L18.8 12l-6.9 5.9-1.4-1.4L14 13H4z" fill="#1e6bff"/></svg>
+            <svg viewBox="0 0 24 24" width="16" height="16"><path d="M4 11h10l-3.5-3.5 1.4-1.4L18.8 12l-6.9 5.9-1.4-1.4L14 13H4z" fill="#6b5340"/></svg>
           </div>`,
           iconSize: [18, 18],
           iconAnchor: [9, 9],
@@ -287,18 +326,18 @@
       const openLine = openRoutePoints(stepsWithGeo);
       const roadLine = await fetchRoadGeometry(openLine);
       L.polyline(roadLine, {
-        color: "#0b3d91",
+        color: "#3d2e22",
         weight: 7,
-        opacity: 0.22,
+        opacity: 0.28,
         lineCap: "round",
         lineJoin: "round",
         interactive: false,
       }).addTo(mapInstance);
       const line = L.polyline(roadLine, {
-        color: "#1e6bff",
+        color: "#6b5340",
         weight: 4,
-        opacity: 0.98,
-        dashArray: "8 12",
+        opacity: 0.95,
+        dashArray: "7 11",
         lineCap: "round",
         lineJoin: "round",
         className: "route-dash",
@@ -308,15 +347,16 @@
       const markerPos = markerPositions(stepsWithGeo);
       stepsWithGeo.forEach((s, i) => {
         L.marker(markerPos[i], {
-          icon: walkerIcon(s.slot || i + 1),
+          icon: stopPinIcon(s.slot || i + 1),
           keyboard: false,
           riseOnHover: true,
+          zIndexOffset: 400 + i,
         })
           .bindTooltip(`${s.slot || i + 1}. ${s.placeName}`, {
             direction: "top",
             sticky: true,
             opacity: 0.95,
-            className: "map-walker-tip",
+            className: "map-pin-tip",
           })
           .addTo(mapInstance);
       });
@@ -681,7 +721,7 @@
   }
 
   function letterEdgeProfiles() {
-    // flat = прямая рамка листа; стыки — мягкий рваный край (не «пила»)
+    // flat = прямая рамка листа; стыки — неровный «ручной» обрыв (волокна, не пила)
     return {
       flat: [
         [0, 0],
@@ -689,99 +729,163 @@
       ],
       v0: [
         [0, 0],
-        [12, 2],
-        [22, -3],
-        [35, 4],
-        [48, -2],
-        [62, 3],
-        [75, -4],
-        [88, 2],
+        [7, 1.1],
+        [13, -2.4],
+        [18, 0.6],
+        [24, 3.2],
+        [31, -1.9],
+        [37, 2.5],
+        [44, -3.0],
+        [52, 1.4],
+        [58, 3.8],
+        [65, -2.2],
+        [72, 0.9],
+        [79, -1.7],
+        [86, 2.6],
+        [93, -0.8],
         [100, 0],
       ],
       v1: [
         [0, 0],
-        [10, -3],
-        [25, 2],
-        [40, -4],
-        [55, 3],
-        [70, -2],
-        [85, 3],
+        [6, -1.8],
+        [12, 2.9],
+        [19, -0.5],
+        [26, -3.1],
+        [33, 1.7],
+        [40, 3.4],
+        [47, -2.6],
+        [54, 0.4],
+        [61, -1.2],
+        [68, 2.8],
+        [75, -3.3],
+        [82, 1.1],
+        [90, 2.2],
         [100, 0],
       ],
       v2: [
         [0, 0],
-        [15, 3],
-        [30, -2],
-        [42, 5],
-        [58, -3],
-        [72, 2],
-        [90, -2],
+        [9, 2.4],
+        [16, -1.6],
+        [22, 3.6],
+        [29, -2.8],
+        [36, 0.7],
+        [43, -0.9],
+        [50, 2.1],
+        [57, -3.4],
+        [64, 1.5],
+        [71, 3.0],
+        [78, -1.4],
+        [85, 0.3],
+        [92, -2.0],
         [100, 0],
       ],
       v3: [
         [0, 0],
-        [18, -2],
-        [32, 4],
-        [50, -3],
-        [65, 2],
-        [80, -4],
-        [92, 2],
+        [8, -2.2],
+        [15, 1.3],
+        [21, -0.4],
+        [28, 3.1],
+        [35, -2.9],
+        [42, 0.8],
+        [49, 2.4],
+        [56, -1.6],
+        [63, 3.5],
+        [70, -0.7],
+        [77, -2.5],
+        [84, 1.9],
+        [91, -1.1],
         [100, 0],
       ],
       h0: [
         [0, 0],
-        [14, 3],
-        [28, -2],
-        [44, 4],
-        [60, -3],
-        [76, 2],
-        [90, -2],
+        [8, 2.6],
+        [15, -1.8],
+        [22, 0.9],
+        [29, -3.0],
+        [36, 2.2],
+        [44, -0.6],
+        [51, 3.3],
+        [58, -2.4],
+        [66, 1.2],
+        [73, -1.5],
+        [81, 2.8],
+        [88, -0.9],
         [100, 0],
       ],
       h1: [
         [0, 0],
-        [12, -3],
-        [26, 2],
-        [40, -4],
-        [55, 3],
-        [70, -2],
-        [86, 3],
+        [7, -2.5],
+        [14, 1.6],
+        [21, 3.0],
+        [28, -1.2],
+        [35, -2.8],
+        [42, 2.4],
+        [49, -0.3],
+        [56, 1.8],
+        [63, -3.2],
+        [71, 0.7],
+        [78, 2.9],
+        [86, -1.7],
         [100, 0],
       ],
       h2: [
         [0, 0],
-        [16, 2],
-        [34, -3],
-        [50, 4],
-        [66, -2],
-        [82, 3],
+        [10, 1.4],
+        [17, -2.7],
+        [25, 3.2],
+        [32, -0.8],
+        [40, 2.0],
+        [47, -3.1],
+        [55, 1.1],
+        [62, -1.4],
+        [70, 2.6],
+        [78, -2.2],
+        [86, 0.5],
         [100, 0],
       ],
       h3: [
         [0, 0],
-        [20, -2],
-        [38, 3],
-        [55, -4],
-        [72, 2],
-        [88, -2],
+        [9, -1.9],
+        [16, 2.7],
+        [24, -2.4],
+        [31, 0.6],
+        [39, 3.4],
+        [46, -1.3],
+        [54, -2.9],
+        [61, 1.7],
+        [69, -0.5],
+        [76, 2.3],
+        [84, -2.6],
         [100, 0],
       ],
       h4: [
         [0, 0],
-        [15, 3],
-        [32, -2],
-        [48, 4],
-        [64, -3],
-        [80, 2],
+        [8, 3.0],
+        [16, -2.1],
+        [23, 1.0],
+        [31, -2.8],
+        [38, 2.5],
+        [46, -0.7],
+        [53, 1.9],
+        [61, -3.3],
+        [68, 0.4],
+        [76, 2.2],
+        [84, -1.6],
         [100, 0],
       ],
       h5: [
         [0, 0],
-        [18, -3],
-        [35, 2],
-        [52, -2],
-        [68, 3],
-        [85, -2],
+        [11, -2.6],
+        [18, 1.8],
+        [26, -0.9],
+        [33, 3.1],
+        [41, -2.3],
+        [48, 0.8],
+        [56, -1.5],
+        [63, 2.7],
+        [71, -3.0],
+        [79, 1.2],
+        [87, -0.6],
         [100, 0],
       ],
     };
@@ -801,8 +905,8 @@
   /** Прямые внешние грани; мягкий рваный стык между кусками. */
   function scrapClipPath(piece) {
     const e = piece.edges || {};
-    const inset = 1.4;
-    const tearAmp = 0.72;
+    const inset = 1.6;
+    const tearAmp = 1.15;
     const topName = e.t || "flat";
     const rightName = e.r || "flat";
     const botName = e.b || "flat";
