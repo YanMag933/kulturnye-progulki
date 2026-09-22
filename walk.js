@@ -596,64 +596,192 @@
   }
 
   function letterEdgeProfiles() {
+    // Неровный рваный край (не «плоттер»): много мелких зубцов разной амплитуды
     return {
       flat: [
         [0, 0],
         [100, 0],
       ],
-      "zag-a": [
+      "outer-t": [
         [0, 0],
-        [12, 10],
-        [28, -8],
-        [46, 12],
-        [62, -10],
-        [78, 8],
+        [8, 2],
+        [18, -1],
+        [31, 3],
+        [44, -2],
+        [57, 2],
+        [71, -1],
+        [84, 3],
         [100, 0],
       ],
-      "zag-b": [
+      "outer-b": [
         [0, 0],
-        [18, -12],
-        [34, 9],
-        [52, -11],
-        [70, 10],
-        [86, -7],
+        [11, 3],
+        [25, -2],
+        [39, 2],
+        [52, -3],
+        [66, 2],
+        [80, -1],
+        [93, 2],
         [100, 0],
       ],
-      "zag-c": [
+      "outer-l": [
         [0, 0],
-        [10, 8],
-        [22, -14],
-        [40, 11],
-        [58, -9],
-        [74, 13],
-        [90, -6],
+        [9, 3],
+        [22, -2],
+        [38, 4],
+        [55, -3],
+        [70, 2],
+        [86, -2],
         [100, 0],
       ],
-      "zag-d": [
+      "outer-r": [
         [0, 0],
-        [16, -9],
-        [30, 12],
-        [48, -13],
-        [66, 8],
-        [82, -10],
+        [12, -2],
+        [27, 3],
+        [41, -3],
+        [58, 2],
+        [73, -2],
+        [88, 3],
         [100, 0],
       ],
-      "zag-e": [
+      v0: [
         [0, 0],
-        [14, 11],
-        [32, -10],
-        [50, 9],
-        [68, -12],
-        [84, 7],
+        [7, 5],
+        [14, -4],
+        [22, 7],
+        [31, -6],
+        [40, 4],
+        [49, -5],
+        [58, 6],
+        [67, -3],
+        [76, 5],
+        [85, -4],
+        [93, 3],
         [100, 0],
       ],
-      "zag-f": [
+      v1: [
         [0, 0],
-        [20, -11],
-        [38, 10],
-        [55, -8],
-        [72, 12],
-        [88, -9],
+        [6, -5],
+        [15, 6],
+        [24, -4],
+        [33, 7],
+        [42, -6],
+        [51, 4],
+        [60, -5],
+        [69, 6],
+        [78, -3],
+        [87, 5],
+        [100, 0],
+      ],
+      v2: [
+        [0, 0],
+        [8, 4],
+        [17, -6],
+        [26, 5],
+        [35, -4],
+        [45, 7],
+        [54, -5],
+        [64, 4],
+        [73, -6],
+        [82, 5],
+        [91, -3],
+        [100, 0],
+      ],
+      v3: [
+        [0, 0],
+        [9, -4],
+        [18, 6],
+        [28, -5],
+        [37, 4],
+        [47, -7],
+        [56, 5],
+        [66, -4],
+        [75, 6],
+        [84, -3],
+        [92, 4],
+        [100, 0],
+      ],
+      h0: [
+        [0, 0],
+        [8, 6],
+        [16, -5],
+        [25, 4],
+        [34, -7],
+        [43, 5],
+        [52, -4],
+        [61, 6],
+        [70, -5],
+        [79, 4],
+        [88, -3],
+        [100, 0],
+      ],
+      h1: [
+        [0, 0],
+        [7, -5],
+        [15, 6],
+        [24, -4],
+        [33, 7],
+        [42, -6],
+        [51, 4],
+        [60, -5],
+        [69, 6],
+        [78, -3],
+        [87, 4],
+        [100, 0],
+      ],
+      h2: [
+        [0, 0],
+        [9, 5],
+        [18, -6],
+        [27, 4],
+        [36, -5],
+        [46, 7],
+        [55, -4],
+        [65, 5],
+        [74, -6],
+        [83, 3],
+        [92, -4],
+        [100, 0],
+      ],
+      h3: [
+        [0, 0],
+        [8, -4],
+        [17, 6],
+        [26, -5],
+        [35, 4],
+        [44, -6],
+        [54, 5],
+        [63, -4],
+        [72, 7],
+        [81, -3],
+        [90, 4],
+        [100, 0],
+      ],
+      h4: [
+        [0, 0],
+        [10, 5],
+        [19, -4],
+        [29, 6],
+        [38, -5],
+        [48, 4],
+        [57, -6],
+        [67, 5],
+        [76, -3],
+        [85, 4],
+        [100, 0],
+      ],
+      h5: [
+        [0, 0],
+        [9, -5],
+        [18, 4],
+        [28, -6],
+        [37, 5],
+        [47, -4],
+        [56, 6],
+        [66, -5],
+        [75, 4],
+        [84, -3],
+        [93, 3],
         [100, 0],
       ],
     };
@@ -666,36 +794,67 @@
     return pts.map(([x, y]) => [x, y * a]);
   }
 
-  /** clip-path polygon for a scrap: topEdge name from previous piece bottom, bottomEdge from this piece.edge */
-  function scrapClipPath(piece, prevEdge) {
-    const top = edgePath(prevEdge || "flat", 1).map(([x, y]) => [x, Math.max(0, 6 + y)]);
-    const bot = edgePath(piece.edge || "flat", 1).map(([x, y]) => [x, 94 - y]);
-    const left = [
-      [1.2, 8],
-      [0, 28],
-      [2, 52],
-      [0.5, 74],
-      [1.5, 92],
-    ];
-    const right = [
-      [98.5, 92],
-      [100, 70],
-      [98, 48],
-      [99.5, 26],
-      [98.8, 8],
-    ];
+  /** Рваный прямоугольник: 4 края с зубцами (смежные куски делят профиль). */
+  function scrapClipPath(piece) {
+    const e = piece.edges || {};
+    const inset = 2.2;
+    const amp = 1.35;
+    const top = edgePath(e.t || "outer-t", amp).map(([x, y]) => [x, Math.max(0.4, inset + y)]);
+    const right = edgePath(e.r || "outer-r", amp).map(([x, y]) => [Math.min(99.6, 100 - inset - y), x]);
+    const bot = edgePath(e.b || "outer-b", amp).map(([x, y]) => [x, Math.min(99.6, 100 - inset - y)]);
+    const left = edgePath(e.l || "outer-l", amp).map(([x, y]) => [Math.max(0.4, inset + y), x]);
     const poly = [];
-    top.forEach(([x, y]) => poly.push(`${x}% ${y}%`));
-    right.forEach(([x, y]) => poly.push(`${x}% ${y}%`));
+    top.forEach(([x, y]) => poly.push(`${x.toFixed(2)}% ${y.toFixed(2)}%`));
+    right.forEach(([x, y]) => poly.push(`${x.toFixed(2)}% ${y.toFixed(2)}%`));
     bot
       .slice()
       .reverse()
-      .forEach(([x, y]) => poly.push(`${x}% ${y}%`));
+      .forEach(([x, y]) => poly.push(`${x.toFixed(2)}% ${y.toFixed(2)}%`));
     left
       .slice()
       .reverse()
-      .forEach(([x, y]) => poly.push(`${x}% ${y}%`));
+      .forEach(([x, y]) => poly.push(`${x.toFixed(2)}% ${y.toFixed(2)}%`));
     return `polygon(${poly.join(", ")})`;
+  }
+
+  function prevEdgeForOrder() {
+    return "flat";
+  }
+
+  function scrapPieceHtml(piece, opts = {}) {
+    if (!piece) return "";
+    const clip = scrapClipPath(piece);
+    const rot = opts.rotate != null ? opts.rotate : ((piece.order * 7) % 11) - 5;
+    const blur = opts.blurText ? " is-blurred" : "";
+    const placed = opts.placed ? " is-placed" : "";
+    const tray = opts.tray ? " is-tray" : "";
+    const align = piece.x >= 50 ? " is-right" : " is-left";
+    return `<div class="scrap-piece scrap-rect scrap-${piece.id}${blur}${placed}${tray}${align}" data-piece="${piece.id}" data-order="${piece.order}" style="clip-path:${clip};-webkit-clip-path:${clip};--scrap-rot:${rot}deg">
+      <div class="scrap-piece-face">
+        <p class="scrap-piece-text">${letterLines(piece.text)}</p>
+      </div>
+    </div>`;
+  }
+
+  function factLetterHtml(text) {
+    if (!text) return "";
+    if (!isLetterEra()) return `<div class="fact-box">${escapeHtml(text)}</div>`;
+    return letterSheetHtml({
+      body: text,
+      variant: "reveal",
+    });
+  }
+
+  function scrapRevealHtml(step) {
+    const piece = dealtPieceForStep(step);
+    if (piece) {
+      return `<div class="scrap-reveal">${scrapPieceHtml(piece, { rotate: ((piece.order * 9) % 13) - 6, tray: true })}</div>`;
+    }
+    return factLetterHtml(scrapText(step));
+  }
+
+  function questLetterScraps() {
+    return letterPieces();
   }
 
   function shuffleIds(ids) {
@@ -757,52 +916,9 @@
 
   function ownedPieces() {
     const owned = new Set(progress.letterScraps || []);
-    // test / fallback: if none tracked but we're on puzzle after awards, show all
     const pieces = letterPieces();
     if (!owned.size && TEST_MODE) return pieces;
     return pieces.filter((p) => owned.has(p.id));
-  }
-
-  function prevEdgeForOrder(order) {
-    if (order <= 0) return "flat";
-    const prev = letterPieces().find((p) => p.order === order - 1);
-    return (prev && prev.edge) || "flat";
-  }
-
-  function scrapPieceHtml(piece, opts = {}) {
-    if (!piece) return "";
-    const prev = prevEdgeForOrder(piece.order);
-    const clip = scrapClipPath(piece, prev);
-    const rot = opts.rotate != null ? opts.rotate : ((piece.order * 7) % 11) - 5;
-    const blur = opts.blurText ? " is-blurred" : "";
-    const placed = opts.placed ? " is-placed" : "";
-    const tray = opts.tray ? " is-tray" : "";
-    return `<div class="scrap-piece scrap-${piece.id}${blur}${placed}${tray}" data-piece="${piece.id}" data-order="${piece.order}" style="clip-path:${clip};-webkit-clip-path:${clip};flex:${piece.h} 1 0;--scrap-rot:${rot}deg">
-      <div class="scrap-piece-face">
-        <p class="scrap-piece-text">${escapeHtml(piece.text)}</p>
-      </div>
-    </div>`;
-  }
-
-  function factLetterHtml(text) {
-    if (!text) return "";
-    if (!isLetterEra()) return `<div class="fact-box">${escapeHtml(text)}</div>`;
-    return letterSheetHtml({
-      body: text,
-      variant: "reveal",
-    });
-  }
-
-  function scrapRevealHtml(step) {
-    const piece = dealtPieceForStep(step);
-    if (piece) {
-      return `<div class="scrap-reveal">${scrapPieceHtml(piece, { rotate: 0, tray: true })}</div>`;
-    }
-    return factLetterHtml(scrapText(step));
-  }
-
-  function questLetterScraps() {
-    return letterPieces();
   }
 
   function panelInputHint(step) {
@@ -1196,7 +1312,6 @@
     const pieces = letterPieces();
     let owned = ownedPieces();
     if (!owned.length) {
-      // если прогресс потерял обрывки — восстановить из deal (тест / повтор)
       ensureScrapDeal();
       progress.letterScraps = (progress.scrapDeal || []).slice();
       save();
@@ -1210,14 +1325,13 @@
     }
 
     const allPlaced = pieces.every((p) => uiState.placed[p.id]);
-    if (allPlaced && !uiState.done) {
-      uiState.done = true;
-    }
+    if (allPlaced && !uiState.done) uiState.done = true;
 
     const trayPieces = owned.filter((p) => !uiState.placed[p.id]);
-    const trayOrder = uiState.trayOrder && uiState.trayOrder.length
-      ? uiState.trayOrder.filter((id) => trayPieces.some((p) => p.id === id))
-      : shuffleIds(trayPieces.map((p) => p.id));
+    let trayOrder =
+      uiState.trayOrder && uiState.trayOrder.length
+        ? uiState.trayOrder.filter((id) => trayPieces.some((p) => p.id === id))
+        : shuffleIds(trayPieces.map((p) => p.id));
     trayPieces.forEach((p) => {
       if (!trayOrder.includes(p.id)) trayOrder.push(p.id);
     });
@@ -1226,12 +1340,12 @@
     const slotsHtml = pieces
       .map((p) => {
         const filled = uiState.placed[p.id];
-        const prev = prevEdgeForOrder(p.order);
-        const clip = scrapClipPath(p, prev);
-        return `<div class="a4-slot${filled ? " is-filled" : ""}" data-order="${p.order}" data-piece="${p.id}" style="flex:${p.h} 1 0;clip-path:${clip};-webkit-clip-path:${clip}">
+        const clip = scrapClipPath(p);
+        const align = p.x >= 50 ? " is-right" : " is-left";
+        return `<div class="a4-slot${filled ? " is-filled" : ""}${align}" data-order="${p.order}" data-piece="${p.id}" style="left:${p.x}%;top:${p.y}%;width:${p.w}%;height:${p.h}%;clip-path:${clip};-webkit-clip-path:${clip}">
           ${
             filled
-              ? `<div class="a4-slot-face"><p class="scrap-piece-text">${escapeHtml(p.text)}</p></div>`
+              ? `<div class="a4-slot-face"><p class="scrap-piece-text">${letterLines(p.text)}</p></div>`
               : `<div class="a4-slot-ghost" aria-hidden="true"></div>`
           }
         </div>`;
@@ -1242,36 +1356,41 @@
       .map((id) => {
         const p = pieceById(id);
         if (!p || uiState.placed[p.id]) return "";
-        const prev = prevEdgeForOrder(p.order);
-        const clip = scrapClipPath(p, prev);
+        const clip = scrapClipPath(p);
         const rot = ((p.order * 13) % 17) - 8;
-        return `<div class="a4-tray-item" data-piece="${p.id}" style="--scrap-rot:${rot}deg">
-          <div class="scrap-piece is-tray" data-piece="${p.id}" data-order="${p.order}" style="clip-path:${clip};-webkit-clip-path:${clip};--scrap-rot:${rot}deg;min-height:${Math.max(52, p.h * 5.2)}px">
+        const align = p.x >= 50 ? " is-right" : " is-left";
+        return `<div class="a4-tray-item" data-piece="${p.id}">
+          <div class="scrap-piece scrap-rect is-tray${align}" data-piece="${p.id}" data-order="${p.order}" style="clip-path:${clip};-webkit-clip-path:${clip};--scrap-rot:${rot}deg">
             <div class="scrap-piece-face">
-              <p class="scrap-piece-text">${escapeHtml(p.text)}</p>
+              <p class="scrap-piece-text">${letterLines(p.text)}</p>
             </div>
           </div>
         </div>`;
       })
       .join("");
 
+    const sheetInner = uiState.done
+      ? `<div class="a4-full-letter"><p class="letter-body">${letterLines(window.KP_LETTER_FULL || pieces.map((p) => p.text).join(" "))}</p></div>`
+      : slotsHtml;
+
     shell(
       `<div class="walk-screen walk-letter-era walk-a4-era">
-        <div class="chip-row"><span class="chip">${step.slot} / ${quest.steps.length}</span></div>
-        <h2 class="place">${escapeHtml(step.placeName)}</h2>
-        <p class="a4-lead">Перетащи обрывки на лист. Края подскажут соседство — целое письмо проступит, когда все куски встанут на место.</p>
+        <div class="a4-topbar">
+          <span class="chip">${step.slot} / ${quest.steps.length}</span>
+          <h2 class="place">${escapeHtml(step.placeName)}</h2>
+        </div>
+        <p class="a4-lead">Перетащи обрывок на своё место на листе. Края — как у рваной бумаги.</p>
         ${hintPillHtml()}
-        <div class="a4-assemble" id="a4-assemble">
-          <div class="a4-sheet${uiState.done ? " is-complete" : ""}" id="a4-sheet">
-            ${slotsHtml}
+        <div class="a4-workspace" id="a4-assemble">
+          <div class="a4-sheet a4-mosaic${uiState.done ? " is-complete" : ""}" id="a4-sheet">
+            ${sheetInner}
           </div>
           ${
             uiState.done
-              ? ""
-              : `<div class="a4-tray" id="a4-tray">${trayHtml || "<p class='muted'>Обрывков пока нет</p>"}</div>`
+              ? `<p class="a4-done-note">${escapeHtml(step.fact || "Письмо собрано.")}</p>`
+              : `<div class="a4-tray a4-tray-rail" id="a4-tray">${trayHtml || "<p class='muted a4-tray-empty'>Обрывков пока нет</p>"}</div>`
           }
         </div>
-        ${uiState.done ? `<p class="a4-done-note">${escapeHtml(step.fact || "Письмо собрано.")}</p>` : ""}
       </div>`,
       footer(!!uiState.done)
     );
