@@ -37,7 +37,10 @@
     progress.answers = [];
     progress.startedAt = Date.now();
     progress.mapReady = true;
+    progress.letterScraps = [];
+    progress.scrapDeal = null;
     uiState = {};
+    ensureScrapDeal();
     if (mapInstance) {
       try {
         mapInstance.remove();
@@ -53,7 +56,10 @@
     progress.stepIndex = 0;
     progress.answers = [];
     progress.startedAt = Date.now();
+    progress.letterScraps = [];
+    progress.scrapDeal = null;
     uiState = {};
+    ensureScrapDeal();
     if (mapInstance) {
       try {
         mapInstance.remove();
@@ -339,8 +345,13 @@
       return;
     }
     if (ui === "letter_puzzle") {
-      const scraps = questLetterScraps();
-      uiState.order = scraps.map((_, i) => i);
+      ensureScrapDeal();
+      progress.letterScraps = (progress.scrapDeal || letterPieces().map((p) => p.id)).slice();
+      save();
+      uiState.placed = {};
+      letterPieces().forEach((p) => {
+        uiState.placed[p.id] = true;
+      });
       uiState.done = true;
       setFeedback("Тест: письмо собрано", "ok");
       renderLetterPuzzle(step);
@@ -355,7 +366,7 @@
         const input = document.getElementById("answer");
         if (input && ans) input.value = ans.replace(/-/g, "");
         const fact = document.getElementById("fact");
-        if (fact) fact.innerHTML = factLetterHtml(scrapText(step));
+        if (fact) fact.innerHTML = scrapRevealHtml(step);
         const opts = app.querySelectorAll(".opt");
         if (opts.length && step.correctIndex != null) {
           opts.forEach((b, i) => {
@@ -580,6 +591,199 @@
     </article>`;
   }
 
+  function letterPieces() {
+    return (window.KP_LETTER_PIECES || []).slice().sort((a, b) => a.order - b.order);
+  }
+
+  function letterEdgeProfiles() {
+    return {
+      flat: [
+        [0, 0],
+        [100, 0],
+      ],
+      "zag-a": [
+        [0, 0],
+        [12, 10],
+        [28, -8],
+        [46, 12],
+        [62, -10],
+        [78, 8],
+        [100, 0],
+      ],
+      "zag-b": [
+        [0, 0],
+        [18, -12],
+        [34, 9],
+        [52, -11],
+        [70, 10],
+        [86, -7],
+        [100, 0],
+      ],
+      "zag-c": [
+        [0, 0],
+        [10, 8],
+        [22, -14],
+        [40, 11],
+        [58, -9],
+        [74, 13],
+        [90, -6],
+        [100, 0],
+      ],
+      "zag-d": [
+        [0, 0],
+        [16, -9],
+        [30, 12],
+        [48, -13],
+        [66, 8],
+        [82, -10],
+        [100, 0],
+      ],
+      "zag-e": [
+        [0, 0],
+        [14, 11],
+        [32, -10],
+        [50, 9],
+        [68, -12],
+        [84, 7],
+        [100, 0],
+      ],
+      "zag-f": [
+        [0, 0],
+        [20, -11],
+        [38, 10],
+        [55, -8],
+        [72, 12],
+        [88, -9],
+        [100, 0],
+      ],
+    };
+  }
+
+  function edgePath(name, amp) {
+    const profiles = letterEdgeProfiles();
+    const pts = profiles[name] || profiles.flat;
+    const a = amp == null ? 1 : amp;
+    return pts.map(([x, y]) => [x, y * a]);
+  }
+
+  /** clip-path polygon for a scrap: topEdge name from previous piece bottom, bottomEdge from this piece.edge */
+  function scrapClipPath(piece, prevEdge) {
+    const top = edgePath(prevEdge || "flat", 1).map(([x, y]) => [x, Math.max(0, 6 + y)]);
+    const bot = edgePath(piece.edge || "flat", 1).map(([x, y]) => [x, 94 - y]);
+    const left = [
+      [1.2, 8],
+      [0, 28],
+      [2, 52],
+      [0.5, 74],
+      [1.5, 92],
+    ];
+    const right = [
+      [98.5, 92],
+      [100, 70],
+      [98, 48],
+      [99.5, 26],
+      [98.8, 8],
+    ];
+    const poly = [];
+    top.forEach(([x, y]) => poly.push(`${x}% ${y}%`));
+    right.forEach(([x, y]) => poly.push(`${x}% ${y}%`));
+    bot
+      .slice()
+      .reverse()
+      .forEach(([x, y]) => poly.push(`${x}% ${y}%`));
+    left
+      .slice()
+      .reverse()
+      .forEach(([x, y]) => poly.push(`${x}% ${y}%`));
+    return `polygon(${poly.join(", ")})`;
+  }
+
+  function shuffleIds(ids) {
+    const arr = ids.slice();
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = arr[i];
+      arr[i] = arr[j];
+      arr[j] = t;
+    }
+    if (arr.length > 1 && arr.every((v, i) => v === ids[i])) {
+      const last = arr.pop();
+      arr.unshift(last);
+    }
+    return arr;
+  }
+
+  function ensureScrapDeal() {
+    const pieces = letterPieces();
+    const n = pieces.length;
+    if (progress.scrapDeal && progress.scrapDeal.length === n) return progress.scrapDeal;
+    progress.scrapDeal = shuffleIds(pieces.map((p) => p.id));
+    save();
+    return progress.scrapDeal;
+  }
+
+  function awardSteps() {
+    return (quest.steps || []).filter((s) => s.awardsScrap);
+  }
+
+  function pieceById(id) {
+    return letterPieces().find((p) => p.id === id) || null;
+  }
+
+  function dealtPieceForStep(step) {
+    if (!step || !step.awardsScrap) return null;
+    const deal = ensureScrapDeal();
+    const steps = awardSteps();
+    const idx = steps.findIndex((s) => s.slot === step.slot);
+    if (idx < 0) return null;
+    return pieceById(deal[idx]);
+  }
+
+  function scrapText(step) {
+    const piece = dealtPieceForStep(step);
+    if (piece) return piece.text;
+    return (step && step.letterScrap && step.letterScrap.text) || step.fact || "";
+  }
+
+  function collectScrap(step) {
+    const piece = dealtPieceForStep(step);
+    if (!piece) return;
+    progress.letterScraps = progress.letterScraps || [];
+    if (!progress.letterScraps.includes(piece.id)) {
+      progress.letterScraps.push(piece.id);
+      save();
+    }
+  }
+
+  function ownedPieces() {
+    const owned = new Set(progress.letterScraps || []);
+    // test / fallback: if none tracked but we're on puzzle after awards, show all
+    const pieces = letterPieces();
+    if (!owned.size && TEST_MODE) return pieces;
+    return pieces.filter((p) => owned.has(p.id));
+  }
+
+  function prevEdgeForOrder(order) {
+    if (order <= 0) return "flat";
+    const prev = letterPieces().find((p) => p.order === order - 1);
+    return (prev && prev.edge) || "flat";
+  }
+
+  function scrapPieceHtml(piece, opts = {}) {
+    if (!piece) return "";
+    const prev = prevEdgeForOrder(piece.order);
+    const clip = scrapClipPath(piece, prev);
+    const rot = opts.rotate != null ? opts.rotate : ((piece.order * 7) % 11) - 5;
+    const blur = opts.blurText ? " is-blurred" : "";
+    const placed = opts.placed ? " is-placed" : "";
+    const tray = opts.tray ? " is-tray" : "";
+    return `<div class="scrap-piece scrap-${piece.id}${blur}${placed}${tray}" data-piece="${piece.id}" data-order="${piece.order}" style="clip-path:${clip};-webkit-clip-path:${clip};flex:${piece.h} 1 0;--scrap-rot:${rot}deg">
+      <div class="scrap-piece-face">
+        <p class="scrap-piece-text">${escapeHtml(piece.text)}</p>
+      </div>
+    </div>`;
+  }
+
   function factLetterHtml(text) {
     if (!text) return "";
     if (!isLetterEra()) return `<div class="fact-box">${escapeHtml(text)}</div>`;
@@ -589,44 +793,16 @@
     });
   }
 
-  function scrapText(step) {
-    return (step && step.letterScrap && step.letterScrap.text) || step.fact || "";
-  }
-
-  function collectScrap(step) {
-    if (!step || !step.letterScrap) return;
-    const id = step.letterScrap.id || `s${step.slot}`;
-    progress.letterScraps = progress.letterScraps || [];
-    if (!progress.letterScraps.includes(id)) {
-      progress.letterScraps.push(id);
-      save();
+  function scrapRevealHtml(step) {
+    const piece = dealtPieceForStep(step);
+    if (piece) {
+      return `<div class="scrap-reveal">${scrapPieceHtml(piece, { rotate: 0, tray: true })}</div>`;
     }
+    return factLetterHtml(scrapText(step));
   }
 
   function questLetterScraps() {
-    return (quest.steps || [])
-      .filter((s) => s.letterScrap && s.letterScrap.text)
-      .map((s) => ({
-        id: s.letterScrap.id || `s${s.slot}`,
-        order: s.letterScrap.order != null ? s.letterScrap.order : s.slot - 1,
-        text: s.letterScrap.text,
-      }))
-      .sort((a, b) => a.order - b.order);
-  }
-
-  function shuffleOrder(n) {
-    const arr = Array.from({ length: n }, (_, i) => i);
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      const t = arr[i];
-      arr[i] = arr[j];
-      arr[j] = t;
-    }
-    if (n > 1 && arr.every((v, i) => v === i)) {
-      const last = arr.pop();
-      arr.unshift(last);
-    }
-    return arr;
+    return letterPieces();
   }
 
   function panelInputHint(step) {
@@ -715,7 +891,7 @@
         collectScrap(step);
         setFeedback(isLetterEra() ? "Обрывок получен" : "Засчитано", "ok");
         const fact = document.getElementById("fact");
-        if (fact) fact.innerHTML = factLetterHtml(scrapText(step));
+        if (fact) fact.innerHTML = scrapRevealHtml(step);
         bindNext(true);
       } else setFeedback(isLetterEra() ? "Мимо — открой намёк" : "Мимо — откройте подсказку", "bad");
     };
@@ -729,7 +905,7 @@
        ${hintPillHtml()}
        ${
          uiState.done
-           ? factLetterHtml(scrapText(step))
+           ? scrapRevealHtml(step)
            : inputSimHtml(step)
        }`,
       footer(!!uiState.done)
@@ -852,7 +1028,7 @@
             uiState.done = true;
             uiState.phase = "done";
             setFeedback("Принято", "ok");
-            document.getElementById("extra").innerHTML += factLetterHtml(scrapText(step));
+            document.getElementById("extra").innerHTML += scrapRevealHtml(step);
             collectScrap(step);
             bindNext(true);
           } else setFeedback("Попробуйте ещё", "bad");
@@ -897,7 +1073,7 @@
           uiState.done = true;
           uiState.phase = "done";
           setFeedback(`Совпало (${pct}%, погрешность ~${errPct}%). Засчитано.`, "ok");
-          document.getElementById("extra").innerHTML = factLetterHtml(scrapText(step) || step.fact);
+          document.getElementById("extra").innerHTML = scrapRevealHtml(step) || factLetterHtml(step.fact);
           collectScrap(step);
           bindNext(true);
         } else {
@@ -916,7 +1092,7 @@
       step,
       `<div class="panel">
         <div class="silhouette-stage aligned">${silGuess}</div>
-        ${factLetterHtml(scrapText(step) || step.fact)}
+        ${scrapRevealHtml(step) || factLetterHtml(step.fact)}
       </div>`,
       footer(true)
     );
@@ -1017,76 +1193,210 @@
   }
 
   function renderLetterPuzzle(step) {
-    const scraps = questLetterScraps();
-    if (!scraps.length) {
-      taskChrome(
-        step,
-        `${hintPillHtml()}${factLetterHtml("Обрывки ещё не собраны — пройдите главы пути.")}`,
-        footer(false)
-      );
-      bindHintPill(step);
-      bindNext(false);
-      return;
+    const pieces = letterPieces();
+    let owned = ownedPieces();
+    if (!owned.length) {
+      // если прогресс потерял обрывки — восстановить из deal (тест / повтор)
+      ensureScrapDeal();
+      progress.letterScraps = (progress.scrapDeal || []).slice();
+      save();
+      owned = ownedPieces();
     }
-    if (!uiState.order || uiState.order.length !== scraps.length) {
-      uiState.order = shuffleOrder(scraps.length);
-      uiState.pick = null;
+    if (!uiState.placed) uiState.placed = {};
+    if (uiState.done) {
+      pieces.forEach((p) => {
+        uiState.placed[p.id] = true;
+      });
     }
-    const assembled = uiState.done
-      ? scraps.map((s) => s.text).join("\n")
-      : "";
-    const board = uiState.done
-      ? letterSheetHtml({ body: assembled, variant: "assembled" })
-      : `<div class="letter-puzzle" id="letter-puzzle">
-          ${uiState.order
-            .map((srcIdx, pos) => {
-              const scrap = scraps[srcIdx];
-              const sel = uiState.pick === pos ? " is-selected" : "";
-              return `<button type="button" class="letter-scrap${sel}" data-pos="${pos}">
-                <span class="letter-scrap-text">${escapeHtml(scrap.text)}</span>
-              </button>`;
-            })
-            .join("")}
+
+    const allPlaced = pieces.every((p) => uiState.placed[p.id]);
+    if (allPlaced && !uiState.done) {
+      uiState.done = true;
+    }
+
+    const trayPieces = owned.filter((p) => !uiState.placed[p.id]);
+    const trayOrder = uiState.trayOrder && uiState.trayOrder.length
+      ? uiState.trayOrder.filter((id) => trayPieces.some((p) => p.id === id))
+      : shuffleIds(trayPieces.map((p) => p.id));
+    trayPieces.forEach((p) => {
+      if (!trayOrder.includes(p.id)) trayOrder.push(p.id);
+    });
+    uiState.trayOrder = trayOrder;
+
+    const slotsHtml = pieces
+      .map((p) => {
+        const filled = uiState.placed[p.id];
+        const prev = prevEdgeForOrder(p.order);
+        const clip = scrapClipPath(p, prev);
+        return `<div class="a4-slot${filled ? " is-filled" : ""}" data-order="${p.order}" data-piece="${p.id}" style="flex:${p.h} 1 0;clip-path:${clip};-webkit-clip-path:${clip}">
+          ${
+            filled
+              ? `<div class="a4-slot-face"><p class="scrap-piece-text">${escapeHtml(p.text)}</p></div>`
+              : `<div class="a4-slot-ghost" aria-hidden="true"></div>`
+          }
+        </div>`;
+      })
+      .join("");
+
+    const trayHtml = trayOrder
+      .map((id) => {
+        const p = pieceById(id);
+        if (!p || uiState.placed[p.id]) return "";
+        const prev = prevEdgeForOrder(p.order);
+        const clip = scrapClipPath(p, prev);
+        const rot = ((p.order * 13) % 17) - 8;
+        return `<div class="a4-tray-item" data-piece="${p.id}" style="--scrap-rot:${rot}deg">
+          <div class="scrap-piece is-tray" data-piece="${p.id}" data-order="${p.order}" style="clip-path:${clip};-webkit-clip-path:${clip};--scrap-rot:${rot}deg;min-height:${Math.max(52, p.h * 5.2)}px">
+            <div class="scrap-piece-face">
+              <p class="scrap-piece-text">${escapeHtml(p.text)}</p>
+            </div>
+          </div>
+        </div>`;
+      })
+      .join("");
+
+    shell(
+      `<div class="walk-screen walk-letter-era walk-a4-era">
+        <div class="chip-row"><span class="chip">${step.slot} / ${quest.steps.length}</span></div>
+        <h2 class="place">${escapeHtml(step.placeName)}</h2>
+        <p class="a4-lead">Перетащи обрывки на лист. Края подскажут соседство — целое письмо проступит, когда все куски встанут на место.</p>
+        ${hintPillHtml()}
+        <div class="a4-assemble" id="a4-assemble">
+          <div class="a4-sheet${uiState.done ? " is-complete" : ""}" id="a4-sheet">
+            ${slotsHtml}
+          </div>
+          ${
+            uiState.done
+              ? ""
+              : `<div class="a4-tray" id="a4-tray">${trayHtml || "<p class='muted'>Обрывков пока нет</p>"}</div>`
+          }
         </div>
-        <p class="letter-puzzle-hint muted">Коснись двух обрывков — они поменяются местами.</p>`;
-    taskChrome(
-      step,
-      `${hintPillHtml()}
-       ${board}
-       ${uiState.done ? factLetterHtml(step.fact || "") : ""}`,
+        ${uiState.done ? `<p class="a4-done-note">${escapeHtml(step.fact || "Письмо собрано.")}</p>` : ""}
+      </div>`,
       footer(!!uiState.done)
     );
     bindHintPill(step);
-    if (!uiState.done) {
-      app.querySelectorAll(".letter-scrap").forEach((btn) => {
-        btn.onclick = () => {
-          const pos = Number(btn.dataset.pos);
-          if (uiState.pick == null) {
-            uiState.pick = pos;
-            renderLetterPuzzle(step);
-            return;
-          }
-          if (uiState.pick === pos) {
-            uiState.pick = null;
-            renderLetterPuzzle(step);
-            return;
-          }
-          const a = uiState.pick;
-          const b = pos;
-          const tmp = uiState.order[a];
-          uiState.order[a] = uiState.order[b];
-          uiState.order[b] = tmp;
-          uiState.pick = null;
-          const ok = uiState.order.every((v, i) => v === i);
-          if (ok) {
-            uiState.done = true;
-            setFeedback("Письмо собрано", "ok");
-          }
-          renderLetterPuzzle(step);
+    if (!uiState.done) bindA4Drag(step, pieces);
+    bindNext(!!uiState.done);
+  }
+
+  function bindA4Drag(step, pieces) {
+    const root = document.getElementById("a4-assemble");
+    if (!root) return;
+    let drag = null;
+
+    const clearHover = () => {
+      root.querySelectorAll(".a4-slot.is-hover").forEach((el) => el.classList.remove("is-hover"));
+    };
+
+    const slotAtPoint = (x, y) => {
+      const els = document.elementsFromPoint(x, y);
+      return els.find((el) => el.classList && el.classList.contains("a4-slot")) || null;
+    };
+
+    const placePiece = (pieceId, slotEl, ghost) => {
+      const piece = pieceById(pieceId);
+      if (!piece || !slotEl) return false;
+      const want = Number(slotEl.dataset.order);
+      if (want !== piece.order || uiState.placed[piece.id]) {
+        return false;
+      }
+      uiState.placed[piece.id] = true;
+      uiState.trayOrder = (uiState.trayOrder || []).filter((id) => id !== piece.id);
+      if (ghost) ghost.remove();
+      const all = pieces.every((p) => uiState.placed[p.id]);
+      if (all) {
+        uiState.done = true;
+        setFeedback("Письмо собрано", "ok");
+      } else {
+        setFeedback("Кусок на месте", "ok");
+      }
+      renderLetterPuzzle(step);
+      return true;
+    };
+
+    const returnGhost = (ghost, fromEl) => {
+      if (!ghost) return;
+      ghost.classList.add("is-return");
+      const rect = fromEl ? fromEl.getBoundingClientRect() : null;
+      if (rect) {
+        ghost.style.transition = "transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.35s ease";
+        ghost.style.transform = `translate(${rect.left}px, ${rect.top}px) rotate(var(--scrap-rot, 0deg)) scale(1)`;
+      }
+      setTimeout(() => ghost.remove(), 360);
+    };
+
+    root.querySelectorAll(".a4-tray-item .scrap-piece").forEach((el) => {
+      el.style.touchAction = "none";
+      el.addEventListener("pointerdown", (ev) => {
+        if (uiState.done) return;
+        ev.preventDefault();
+        const pieceId = el.dataset.piece;
+        const piece = pieceById(pieceId);
+        if (!piece || uiState.placed[piece.id]) return;
+        const rect = el.getBoundingClientRect();
+        const ghost = el.cloneNode(true);
+        ghost.classList.add("scrap-ghost");
+        ghost.style.position = "fixed";
+        ghost.style.left = "0";
+        ghost.style.top = "0";
+        ghost.style.width = `${rect.width}px`;
+        ghost.style.height = `${rect.height}px`;
+        ghost.style.margin = "0";
+        ghost.style.zIndex = "80";
+        ghost.style.pointerEvents = "none";
+        ghost.style.transform = `translate(${rect.left}px, ${rect.top}px) rotate(${getComputedStyle(el).getPropertyValue("--scrap-rot") || "0deg"}) scale(1.04)`;
+        ghost.style.transition = "none";
+        document.body.appendChild(ghost);
+        el.classList.add("is-dragging-source");
+        el.setPointerCapture(ev.pointerId);
+        drag = {
+          pieceId,
+          el,
+          ghost,
+          ox: ev.clientX - rect.left,
+          oy: ev.clientY - rect.top,
         };
       });
-    }
-    bindNext(!!uiState.done);
+
+      el.addEventListener("pointermove", (ev) => {
+        if (!drag || drag.el !== el) return;
+        const x = ev.clientX - drag.ox;
+        const y = ev.clientY - drag.oy;
+        drag.ghost.style.transform = `translate(${x}px, ${y}px) rotate(-2deg) scale(1.06)`;
+        clearHover();
+        const slot = slotAtPoint(ev.clientX, ev.clientY);
+        if (slot && Number(slot.dataset.order) === Number(el.dataset.order) && !slot.classList.contains("is-filled")) {
+          slot.classList.add("is-hover");
+        }
+      });
+
+      el.addEventListener("pointerup", (ev) => {
+        if (!drag || drag.el !== el) return;
+        clearHover();
+        const slot = slotAtPoint(ev.clientX, ev.clientY);
+        const ok = slot && placePiece(drag.pieceId, slot, drag.ghost);
+        if (!ok) {
+          el.classList.add("is-shake");
+          setTimeout(() => el.classList.remove("is-shake"), 420);
+          returnGhost(drag.ghost, el);
+          setFeedback("Край не сходится — ищи своё место", "bad");
+        }
+        el.classList.remove("is-dragging-source");
+        try {
+          el.releasePointerCapture(ev.pointerId);
+        } catch (_) {}
+        drag = null;
+      });
+
+      el.addEventListener("pointercancel", () => {
+        if (!drag || drag.el !== el) return;
+        clearHover();
+        returnGhost(drag.ghost, el);
+        el.classList.remove("is-dragging-source");
+        drag = null;
+      });
+    });
   }
 
   function renderDetail(step) {
@@ -1232,7 +1542,7 @@
          <div class="panel geo-lock panel-compact">
           ${
             uiState.unlocked
-              ? factLetterHtml(scrapText(step) || step.fact || step.unlockedText || "")
+              ? scrapRevealHtml(step) || factLetterHtml(step.fact || step.unlockedText || "")
               : `<button type="button" class="btn primary" id="open-radar">Кристалл</button>
                  <button type="button" class="btn ghost" id="geo-demo">Демо</button>`
           }

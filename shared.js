@@ -342,6 +342,7 @@ window.KP = (() => {
       atmosphere: ch.atmosphere,
       brief: ch.brief,
       letterScrap: ch.letterScrap || null,
+      awardsScrap: !!ch.awardsScrap,
       silhouetteKey: ch.silhouetteKey,
       skipGuess: !!ch.skipGuess,
       hidePlaceUntilGuess: ch.hidePlaceUntilGuess,
