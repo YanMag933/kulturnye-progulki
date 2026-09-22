@@ -183,7 +183,11 @@
         attributionControl: false,
         doubleClickZoom: false,
         boxZoom: false,
+        scrollWheelZoom: false,
+        tapHold: false,
       });
+      mapInstance.doubleClickZoom.disable();
+      el.style.touchAction = "manipulation";
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
         attribution: "",
@@ -238,19 +242,11 @@
       `<div class="start-hero">
         <p class="eyebrow">Сюжет · карта</p>
         <h1>${quest.title}</h1>
-        <p class="route-map-caption">${quest.subtitle || "Сначала посмотрите весь маршрут — задания откроются после карты."}</p>
+        <p class="route-map-caption">${quest.subtitle || ""}</p>
         <div class="route-map" id="route-map-wrap">
           <div id="route-map-el"></div>
           <div id="route-map-svg-host" hidden>${buildRouteSvg()}</div>
         </div>
-        <ol class="steps-mini route-legend">
-          ${quest.steps
-            .map(
-              (s) =>
-                `<li><b>${s.slot}.</b> ${s.chapterTitle || s.mechanicName}<br/><span class="muted">${s.placeName}</span></li>`
-            )
-            .join("")}
-        </ol>
         <button type="button" class="btn primary" id="start-after-map">К заданиям</button>
         <a class="btn ghost" href="index.html" style="display:block;text-align:center;margin-top:8px">В меню</a>
       </div>`
@@ -559,10 +555,13 @@
 
   function photoSlotHtml(step, opts = {}) {
     const inputHint = opts.hintText || panelInputHint(step);
-    return `<div class="photo-slot" aria-label="Место под фото с точки">
-      <span class="photo-slot-label">ваше фото</span>
+    const clue = step.clueImage
+      ? `<img class="photo-slot-clue" src="${step.clueImage}" alt="" draggable="false" />`
+      : "";
+    return `<div class="photo-slot${step.clueImage ? " has-clue" : ""}" aria-label="Кадр задания">
+      ${clue}
+      <span class="photo-slot-label">${step.clueImage ? "циферблат" : "ваше фото"}</span>
       <div class="photo-slot-hint">
-        <span class="photo-slot-hint-kicker">На табло</span>
         <p>${inputHint}</p>
       </div>
     </div>`;
@@ -587,7 +586,7 @@
         return;
       }
       panel.hidden = false;
-      panel.innerHTML = `<p><b>L${level + 1}</b> · ${levels[level]}</p>`;
+      panel.innerHTML = `<p>${levels[level]}</p>`;
       pill.setAttribute("aria-expanded", "true");
       level = Math.min(level + 1, levels.length - 1);
     };
@@ -605,35 +604,16 @@
     const placeholder = wantsWord
       ? step.safePrompt || "слово"
       : step.safeType === "year"
-        ? "4 цифры"
+        ? "год"
         : step.safePrompt || "код";
     return `<div class="input-sim panel">
-      <input class="field input-sim-field" id="answer" type="text" inputmode="${inputMode}" lang="ru" autocomplete="off" enterkeyhint="done" placeholder="${placeholder}" ${wantsWord ? "" : 'pattern="[0-9\\-]*"'} />
-      <div class="input-sim-keys" id="sim-keys" ${wantsWord ? "hidden" : ""}>
-        ${[1, 2, 3, 4, 5, 6, 7, 8, 9, "⌫", 0, "OK"]
-          .map((k) => `<button type="button" class="sim-key" data-k="${k}">${k}</button>`)
-          .join("")}
-      </div>
+      <input class="field input-sim-field" id="answer" type="text" inputmode="${inputMode}" lang="ru" autocomplete="off" enterkeyhint="done" placeholder="${placeholder}" />
       <button type="button" class="btn primary" id="check">Проверить</button>
       <div id="fact"></div>
     </div>`;
   }
 
   function bindInputSim(step) {
-    const input = document.getElementById("answer");
-    const keys = document.getElementById("sim-keys");
-    if (keys && !keys.hidden) {
-      keys.querySelectorAll(".sim-key").forEach((btn) => {
-        btn.onclick = () => {
-          if (!input) return;
-          const k = btn.dataset.k;
-          if (k === "⌫") input.value = input.value.slice(0, -1);
-          else if (k === "OK") document.getElementById("check")?.click();
-          else input.value += k;
-          input.focus();
-        };
-      });
-    }
     document.getElementById("check").onclick = () => {
       const expected = step.safeCode || step.expected || "";
       const alts = step.alternatives || [];
@@ -642,9 +622,9 @@
         uiState.done = true;
         setFeedback("Засчитано", "ok");
         const fact = document.getElementById("fact");
-        if (fact) fact.innerHTML = `<div class="fact-box">${step.fact || ""}</div>`;
+        if (fact && step.fact) fact.innerHTML = `<div class="fact-box">${step.fact}</div>`;
         bindNext(true);
-      } else setFeedback("Пока мимо — смотрите подсказку на фото-слоте", "bad");
+      } else setFeedback("Мимо — откройте подсказку", "bad");
     };
     bindNext(!!uiState.done);
   }
@@ -669,20 +649,15 @@
   function taskChrome(step, bodyHtml, footerHtml, opts = {}) {
     const hidePlace = opts.hidePlace || (step.hidePlaceUntilGuess && !uiState.guessed);
     const brief = step.brief || step.hint || "";
-    const atmosphere = step.atmosphere || "";
-    const cardBody = [brief, atmosphere].filter(Boolean).join(" ");
     shell(
       `<div class="walk-screen">
         <div class="chip-row">
-          <span class="chip">Шаг ${step.slot} / ${quest.steps.length}</span>
-          <span class="chip">${step.mechanicName}</span>
-          ${step.uniqueFeature ? '<span class="chip feature">фишка</span>' : ""}
+          <span class="chip">${step.slot} / ${quest.steps.length}</span>
         </div>
         <h2 class="place">${hidePlace ? "???" : step.placeName}</h2>
-        <p class="addr">${hidePlace ? "Сначала совместите контур" : step.address || ""}</p>
-        <div class="panel">
+        <div class="panel panel-compact">
           <h2>${step.title}</h2>
-          <p>${cardBody}</p>
+          ${brief ? `<p>${brief}</p>` : ""}
         </div>
         ${bodyHtml}
       </div>`,
@@ -1077,17 +1052,12 @@
         step,
         `${photoSlotHtml(step)}
          ${hintPillHtml()}
-         <div class="panel geo-lock">
-          <div class="lock-icon">${uiState.unlocked ? "открыто" : "закрыто"}</div>
-          <p>${uiState.unlocked ? step.unlockedText : step.brief || step.lockedTeaser}</p>
-          <div class="geo-hint-box">
-            <p class="muted"><b>Кристалл.</b> Красный свет с ${reveal}&nbsp;м · сейф ≤ ${unlock}&nbsp;м.</p>
-          </div>
+         <div class="panel geo-lock panel-compact">
           ${
             uiState.unlocked
-              ? `<div class="fact-box">${step.fact}</div>`
-              : `<button type="button" class="btn primary" id="open-radar">Включить кристалл</button>
-                 <button type="button" class="btn ghost" id="geo-demo">Демо без GPS</button>`
+              ? `<div class="fact-box">${step.fact || step.unlockedText || ""}</div>`
+              : `<button type="button" class="btn primary" id="open-radar">Кристалл</button>
+                 <button type="button" class="btn ghost" id="geo-demo">Демо</button>`
           }
         </div>`,
         footer(!!uiState.unlocked)

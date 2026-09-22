@@ -651,18 +651,28 @@ html[data-theme="crystal"] .radar-crystal-glow {
 .photo-slot {
   position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1;
-  max-height: min(52vw, 320px);
-  margin: 0 0 12px;
+  aspect-ratio: 3 / 4;
+  max-height: min(78vw, 460px);
+  min-height: 280px;
+  margin: 0 0 14px;
   border-radius: 16px;
   overflow: hidden;
   background: #0a0a0a;
-  border: 1.5px solid var(--theme-line);
-  box-shadow:
-    0 2px 0 rgba(255, 255, 255, 0.08) inset,
-    0 12px 28px rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--theme-line);
+  box-shadow: var(--theme-shadow);
   display: grid;
   place-items: center;
+}
+.photo-slot.has-clue {
+  background: #111;
+}
+.photo-slot-clue {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 .photo-slot-label {
   position: absolute;
@@ -670,13 +680,29 @@ html[data-theme="crystal"] .radar-crystal-glow {
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;
-  font-family: var(--font-display);
-  font-size: 14px;
-  letter-spacing: 0.2em;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.72);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  color: rgba(255, 255, 255, 0.7);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
   pointer-events: none;
+}
+.panel-compact {
+  padding: 14px 16px !important;
+}
+.panel-compact h2 {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+}
+.panel-compact p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.route-map,
+.route-map #route-map-el {
+  touch-action: manipulation;
 }
 .silhouette-stage-lg {
   aspect-ratio: 3 / 5;
@@ -696,22 +722,16 @@ html[data-theme="marble"] .photo-slot {
   position: relative;
   z-index: 1;
   width: calc(100% - 28px);
-  margin: 28px 14px 14px;
-  padding: 16px 14px;
+  margin: auto 14px 16px;
+  padding: 12px 14px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   text-align: center;
+  backdrop-filter: blur(8px);
 }
-.photo-slot-hint-kicker {
-  display: inline-block;
-  margin-bottom: 8px;
-  font-family: var(--font-ui);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--theme-accent);
+.photo-slot.has-clue .photo-slot-hint {
+  margin-top: auto;
 }
 .photo-slot-hint p {
   margin: 0;
@@ -800,39 +820,9 @@ html[data-theme="slate"] .hint-pill {
   letter-spacing: 0.08em;
   text-align: center;
 }
-.input-sim-keys {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin: 0 0 12px;
-}
+.input-sim-keys,
 .sim-key {
-  appearance: none;
-  min-height: 48px;
-  border-radius: 14px;
-  border: 1.5px solid var(--theme-line);
-  font-family: var(--font-ui);
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--theme-ink);
-  background:
-    linear-gradient(180deg, var(--theme-btn-top), transparent 42%),
-    var(--theme-cta);
-  box-shadow:
-    0 2px 0 rgba(255, 255, 255, 0.18) inset,
-    0 -2px 0 rgba(0, 0, 0, 0.28) inset,
-    0 6px 0 rgba(0, 0, 0, 0.22);
-  cursor: pointer;
-}
-.sim-key:active {
-  transform: translateY(3px);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.1) inset,
-    0 2px 0 rgba(0, 0, 0, 0.25);
-}
-html[data-theme="marble"] .sim-key {
-  color: #141414;
-  background: linear-gradient(180deg, #fff, #ebe7df);
+  display: none !important;
 }
 
 html[data-theme="slate"] .home-cta-title,

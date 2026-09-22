@@ -337,6 +337,7 @@ window.KP = (() => {
       safePrompt: ch.safePrompt,
       photoTile: ch.photoTile,
       photoHint: ch.photoHint,
+      clueImage: ch.clueImage,
       atmosphere: ch.atmosphere,
       brief: ch.brief,
       silhouetteKey: ch.silhouetteKey,
