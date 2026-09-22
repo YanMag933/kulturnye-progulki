@@ -6,12 +6,12 @@
   <meta name="theme-color" content="#0e0e10" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Культурные прогулки</title>
-  <link rel="stylesheet" href="styles.css?v=50" />
-  <link rel="stylesheet" href="themes.css?v=50" />
+  <link rel="stylesheet" href="styles.css?v=51" />
+  <link rel="stylesheet" href="themes.css?v=51" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <script src="theme.js?v=50"></script>
+  <script src="theme.js?v=51"></script>
 </head>
 <body class="home-body">
   <div class="phone-shell home-shell">
@@ -35,21 +35,13 @@
       </section>
 
       <nav class="home-actions" aria-label="Главное меню">
-        <a class="home-cta story" href="walk.html?story=pushkin&v=50">
+        <a class="home-cta story" href="walk.html?story=pushkin&v=51">
           <span class="home-cta-label">История</span>
           <span class="home-cta-title">Прогулка с Пушкиным</span>
         </a>
-        <a class="home-cta walk" href="walk.html?v=50">
-          <span class="home-cta-label">Сборка</span>
-          <span class="home-cta-title">Случайный маршрут</span>
-        </a>
-        <a class="home-cta test" href="walk.html?story=pushkin&test=1&v=50">
+        <a class="home-cta test" href="walk.html?story=pushkin&test=1&v=51">
           <span class="home-cta-label">Просмотр</span>
           <span class="home-cta-title">Тест · Пушкин</span>
-        </a>
-        <a class="home-cta create" href="create.html?v=50">
-          <span class="home-cta-label">Редактор</span>
-          <span class="home-cta-title">Создать маршрут</span>
         </a>
       </nav>
 
@@ -64,11 +56,11 @@
       </footer>
     </main>
   </div>
-  <script src="content-db.js?v=50"></script>
-  <script src="monuments-extra.js?v=50"></script>
-  <script src="demo-quest.js?v=50"></script>
-  <script src="story-pushkin.js?v=50"></script>
-  <script src="shared.js?v=50"></script>
+  <script src="content-db.js?v=51"></script>
+  <script src="monuments-extra.js?v=51"></script>
+  <script src="demo-quest.js?v=51"></script>
+  <script src="story-pushkin.js?v=51"></script>
+  <script src="shared.js?v=51"></script>
   <script>
     const active = KP.loadActiveQuest();
     const dbCount = (window.QUEST_DB && QUEST_DB.tasks.length) || 0;
@@ -116,7 +108,7 @@
     };
 
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("./sw.js?v=50").catch(() => {});
+      navigator.serviceWorker.register("./sw.js?v=51").catch(() => {});
     }
   </script>
 </body>
