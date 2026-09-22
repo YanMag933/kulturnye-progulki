@@ -155,59 +155,193 @@ html[data-theme="basalt"] {
 /* —— Темы персонажей (сюжетный квест перекрывает дизайн) —— */
 html[data-character="pushkin"] {
   --theme-bg-image: url("assets/ui/themes/char-pushkin.jpg");
-  --theme-scrim: rgba(8, 12, 28, 0.72);
-  --theme-panel: rgba(18, 22, 40, 0.78);
-  --theme-cta: #1a2038;
-  --theme-ink: #f7f0de;
-  --theme-muted: #b8a878;
-  --theme-accent: #d4a84b;
+  --theme-scrim: rgba(6, 10, 24, 0.42);
+  --theme-panel: rgba(10, 14, 28, 0.52);
+  --theme-cta: rgba(18, 24, 44, 0.78);
+  --theme-ink: #fff6e4;
+  --theme-muted: #e8d7a8;
+  --theme-accent: #ecc86a;
   --theme-accent-ink: #1a1208;
-  --theme-line: rgba(212, 168, 75, 0.28);
-  --theme-glow: rgba(212, 168, 75, 0.18);
+  --theme-line: rgba(236, 200, 106, 0.38);
+  --theme-glow: rgba(236, 200, 106, 0.22);
+  --theme-btn-top: rgba(255, 240, 200, 0.14);
+  --theme-shadow: 0 12px 28px rgba(0, 0, 0, 0.38);
 }
 html[data-character="mayakovsky"] {
   --theme-bg-image: url("assets/ui/themes/char-mayakovsky.jpg");
-  --theme-scrim: rgba(40, 18, 16, 0.7);
-  --theme-panel: rgba(52, 28, 24, 0.82);
-  --theme-cta: #6e1c1c;
-  --theme-ink: #f5ecd8;
-  --theme-muted: #c4a898;
-  --theme-accent: #c62828;
+  --theme-scrim: rgba(32, 12, 10, 0.4);
+  --theme-panel: rgba(36, 14, 12, 0.52);
+  --theme-cta: rgba(110, 28, 28, 0.82);
+  --theme-ink: #fff4e4;
+  --theme-muted: #f0d2b8;
+  --theme-accent: #e53935;
   --theme-accent-ink: #fff8e8;
-  --theme-line: rgba(198, 40, 40, 0.35);
-  --theme-glow: rgba(198, 40, 40, 0.2);
+  --theme-line: rgba(229, 57, 53, 0.42);
+  --theme-glow: rgba(229, 57, 53, 0.24);
+  --theme-btn-top: rgba(255, 220, 200, 0.12);
+  --theme-shadow: 0 12px 28px rgba(40, 0, 0, 0.4);
 }
 html[data-character="griboedov"] {
   --theme-bg-image: url("assets/ui/themes/char-griboedov.jpg");
-  --theme-scrim: rgba(12, 28, 22, 0.72);
-  --theme-panel: rgba(20, 40, 34, 0.8);
-  --theme-cta: #1e3a30;
-  --theme-ink: #f2ebe0;
-  --theme-muted: #a8b8a8;
-  --theme-accent: #c9a227;
+  --theme-scrim: rgba(8, 22, 18, 0.42);
+  --theme-panel: rgba(12, 28, 24, 0.52);
+  --theme-cta: rgba(24, 52, 42, 0.8);
+  --theme-ink: #fff7ea;
+  --theme-muted: #d8e4d0;
+  --theme-accent: #e0b84a;
   --theme-accent-ink: #142018;
-  --theme-line: rgba(201, 162, 39, 0.3);
-  --theme-glow: rgba(80, 140, 100, 0.16);
+  --theme-line: rgba(224, 184, 74, 0.38);
+  --theme-glow: rgba(90, 150, 110, 0.2);
+  --theme-btn-top: rgba(230, 255, 230, 0.1);
+  --theme-shadow: 0 12px 28px rgba(0, 20, 12, 0.4);
 }
 html[data-character="gogol"] {
   --theme-bg-image: url("assets/ui/themes/char-gogol.jpg");
-  --theme-scrim: rgba(6, 10, 28, 0.68);
-  --theme-panel: rgba(14, 18, 40, 0.8);
-  --theme-cta: #14182e;
-  --theme-ink: #e8eef8;
-  --theme-muted: #8a9ab8;
-  --theme-accent: #c9a66b;
+  --theme-scrim: rgba(4, 8, 22, 0.4);
+  --theme-panel: rgba(8, 12, 30, 0.52);
+  --theme-cta: rgba(16, 20, 42, 0.8);
+  --theme-ink: #f2f6ff;
+  --theme-muted: #c8d4ec;
+  --theme-accent: #d4b07a;
   --theme-accent-ink: #0a0e1c;
-  --theme-line: rgba(140, 170, 220, 0.22);
-  --theme-glow: rgba(180, 200, 255, 0.14);
+  --theme-line: rgba(180, 200, 240, 0.32);
+  --theme-glow: rgba(160, 190, 255, 0.18);
+  --theme-btn-top: rgba(220, 230, 255, 0.12);
+  --theme-shadow: 0 12px 28px rgba(0, 0, 20, 0.42);
+}
+
+/* Читаемость поверх пёстрого фона + полупрозрачные экраны заданий */
+html[data-character] .phone-shell {
+  background-image:
+    linear-gradient(
+      180deg,
+      var(--theme-scrim),
+      color-mix(in srgb, var(--theme-scrim) 75%, transparent)
+    ),
+    var(--theme-bg-image) !important;
+}
+html[data-character] .panel,
+html[data-character] .walk-top,
+html[data-character] .home-settings,
+html[data-character] .steps-mini > div,
+html[data-character] .map-fake,
+html[data-character] .start-hero .map-fake,
+html[data-character] .route-legend li,
+html[data-character] .walk-footer,
+html[data-character] .letter-hint-panel .letter-sheet,
+html[data-character] .contour-panel {
+  background: var(--theme-panel) !important;
+  border: 1px solid var(--theme-line) !important;
+  color: var(--theme-ink) !important;
+  backdrop-filter: blur(22px) saturate(1.2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    var(--theme-shadow) !important;
+}
+html[data-character] .walk-title,
+html[data-character] .place,
+html[data-character] .panel h2,
+html[data-character] .start-hero h1,
+html[data-character] .home-premium h1,
+html[data-character] .eyebrow,
+html[data-character] .home-premium .eyebrow,
+html[data-character] .panel p,
+html[data-character] .muted,
+html[data-character] .addr,
+html[data-character] .route-map-caption,
+html[data-character] .feedback,
+html[data-character] .fact-box,
+html[data-character] .steps-mini > div,
+html[data-character] .steps-mini > div b,
+html[data-character] .walk-nav a,
+html[data-character] .linkish {
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.65),
+    0 0 14px rgba(0, 0, 0, 0.35);
+}
+html[data-character] .walk-title,
+html[data-character] .place,
+html[data-character] .panel h2,
+html[data-character] .start-hero h1,
+html[data-character] .steps-mini > div b {
+  color: var(--theme-ink) !important;
+}
+html[data-character] .eyebrow,
+html[data-character] .home-premium .eyebrow,
+html[data-character] .home-cta-label,
+html[data-character] .theme-picker-label,
+html[data-character] .home-settings-label {
+  color: var(--theme-accent) !important;
+  opacity: 1;
+}
+html[data-character] .panel p,
+html[data-character] .muted,
+html[data-character] .addr,
+html[data-character] .route-map-caption,
+html[data-character] .feedback,
+html[data-character] .home-note,
+html[data-character] .home-lead {
+  color: var(--theme-muted) !important;
+}
+html[data-character] .fact-box {
+  color: var(--theme-ink) !important;
+  border-left-color: var(--theme-accent) !important;
+  background: color-mix(in srgb, var(--theme-panel) 70%, transparent);
+  border-radius: 0 10px 10px 0;
+  padding: 10px 12px 10px 14px;
+}
+html[data-character] .field,
+html[data-character] .input-sim-field {
+  background: color-mix(in srgb, #000 35%, var(--theme-panel)) !important;
+  color: var(--theme-ink) !important;
+  border-color: var(--theme-line) !important;
+  caret-color: var(--theme-accent);
+}
+html[data-character] .field::placeholder {
+  color: color-mix(in srgb, var(--theme-muted) 75%, transparent) !important;
+}
+html[data-character] .btn.ghost,
+html[data-character] .walk-nav a {
+  color: var(--theme-muted) !important;
+  background: color-mix(in srgb, var(--theme-panel) 80%, transparent) !important;
+}
+html[data-character] .btn.primary {
+  background: var(--theme-accent) !important;
+  color: var(--theme-accent-ink) !important;
+}
+html[data-character="mayakovsky"] .btn.primary {
+  color: #fff8e8 !important;
+}
+html[data-character] .opt {
+  background: color-mix(in srgb, var(--theme-cta) 88%, transparent) !important;
+  color: var(--theme-ink) !important;
+  border-color: var(--theme-line) !important;
+}
+html[data-character] .letter-body,
+html[data-character] .letter-title,
+html[data-character] .scrap-piece-text {
+  text-shadow:
+    0 1px 0 rgba(255, 248, 230, 0.75),
+    0 1px 2px rgba(40, 28, 16, 0.35);
+  color: #2a1c10 !important;
+}
+html[data-character] .a4-lead,
+html[data-character] .a4-done-note {
+  color: var(--theme-muted) !important;
 }
 
 .char-fx {
   pointer-events: none;
   position: fixed;
   inset: 0;
-  z-index: 3;
+  z-index: 0;
   overflow: hidden;
+}
+html[data-character] .phone-shell,
+html[data-character] .home-shell {
+  position: relative;
+  z-index: 2;
 }
 .char-snow-layer {
   position: absolute;
@@ -221,7 +355,7 @@ html[data-character="gogol"] {
     radial-gradient(1.5px 1.5px at 45% 10%, rgba(255, 255, 255, 0.65), transparent);
   background-size: 180px 220px;
   animation: char-snow-fall 12s linear infinite;
-  opacity: 0.55;
+  opacity: 0.4;
 }
 @keyframes char-snow-fall {
   from { transform: translateY(-8%); }
