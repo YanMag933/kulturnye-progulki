@@ -909,6 +909,10 @@ html[data-theme="crystal"] .home-premium h1 {
   letter-spacing: 0.01em;
   text-align: center;
   text-wrap: balance;
+  text-shadow:
+    0 1px 0 rgba(255, 248, 230, 0.75),
+    0 1px 2px rgba(40, 28, 16, 0.35),
+    0 0 1px rgba(40, 28, 16, 0.4);
 }
 .letter-body {
   margin: 0;
@@ -917,9 +921,18 @@ html[data-theme="crystal"] .home-premium h1 {
   font-weight: 500;
   font-style: italic;
   line-height: 1.55;
-  color: #3a2a1a;
+  color: #2f2116;
   text-align: center;
   text-wrap: pretty;
+  text-shadow:
+    0 1px 0 rgba(255, 248, 230, 0.7),
+    0 1px 2px rgba(40, 28, 16, 0.32),
+    0 0 1px rgba(40, 28, 16, 0.35);
+}
+.letter-assembled .letter-body {
+  text-align: left;
+  font-size: 15px;
+  line-height: 1.65;
 }
 .letter-hint-panel {
   margin: -4px 0 12px;
@@ -932,6 +945,9 @@ html[data-theme="crystal"] .home-premium h1 {
   margin: 0;
 }
 .walk-letter-era .hint-pill {
+  display: flex;
+  margin-left: auto;
+  margin-right: auto;
   border-radius: 4px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -949,9 +965,9 @@ html[data-theme="crystal"] .home-premium h1 {
   letter-spacing: 0.06em;
 }
 .scroll-card.letter-scroll-card {
-  padding: 26px 20px 20px;
+  padding: 28px 22px 22px;
   border-radius: 4px;
-  text-align: left;
+  text-align: center;
   background:
     linear-gradient(165deg, rgba(255, 248, 230, 0.2) 0%, transparent 45%),
     #e6d7b8 url("assets/ui/antique-letter.jpg") center / cover no-repeat;
@@ -961,22 +977,83 @@ html[data-theme="crystal"] .home-premium h1 {
     0 18px 40px rgba(0, 0, 0, 0.5);
 }
 .scroll-card.letter-scroll-card .scroll-title {
-  font-family: "Playfair Display", Georgia, serif;
-  font-size: 13px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: #6b4e2e;
-  text-align: center;
+  display: none;
 }
 .scroll-card.letter-scroll-card .scroll-body {
+  margin: 0 0 20px;
   font-family: "Playfair Display", Georgia, serif;
   font-size: 16px;
   font-weight: 500;
   font-style: italic;
-  line-height: 1.5;
+  line-height: 1.55;
   color: #2a1c10;
   text-align: center;
+  text-shadow:
+    0 1px 0 rgba(255, 248, 230, 0.7),
+    0 1px 2px rgba(40, 28, 16, 0.32);
 }
-.scroll-card.letter-scroll-card .btn {
+.scroll-card.letter-scroll-card .btn,
+.letter-premium-btn {
+  display: block;
+  width: min(100%, 220px);
+  margin: 0 auto;
+  padding: 14px 28px;
+  border: 1px solid rgba(255, 232, 180, 0.55);
+  border-radius: 999px;
   font-family: "Playfair Display", Georgia, serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #1a1208 !important;
+  background: linear-gradient(180deg, #ffe9a8 0%, #e6c36a 48%, #c9a24a 100%) !important;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.55) inset,
+    0 10px 24px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(120, 80, 30, 0.2);
+}
+
+/* Обрывки письма · пазл */
+.letter-puzzle {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 10px;
+}
+.letter-scrap {
+  appearance: none;
+  width: 100%;
+  margin: 0;
+  padding: 14px 16px;
+  text-align: left;
+  cursor: pointer;
+  border: 1px solid rgba(92, 64, 32, 0.35);
+  border-radius: 2px 8px 3px 10px;
+  background:
+    linear-gradient(135deg, rgba(255, 248, 230, 0.22), transparent 50%),
+    #e6d7b8 url("assets/ui/antique-letter.jpg") center / cover no-repeat;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.letter-scrap:active {
+  transform: scale(0.985);
+}
+.letter-scrap.is-selected {
+  outline: 2px solid #9a7340;
+  box-shadow: 0 0 0 3px rgba(154, 115, 64, 0.25), 0 10px 22px rgba(0, 0, 0, 0.28);
+}
+.letter-scrap-text {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 14.5px;
+  font-style: italic;
+  line-height: 1.45;
+  color: #2a1c10;
+  text-shadow:
+    0 1px 0 rgba(255, 248, 230, 0.7),
+    0 1px 2px rgba(40, 28, 16, 0.28);
+}
+.letter-puzzle-hint {
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: 13px;
 }

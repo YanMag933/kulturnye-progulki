@@ -163,9 +163,8 @@
 
           <div class="scroll-sheet" id="scroll-sheet" hidden>
             <div class="scroll-card${this.letterEra ? " letter-scroll-card" : ""}">
-              <p class="scroll-title">${this.letterEra ? "Строка письма" : "Подсказка"}</p>
               <p class="scroll-body" id="scroll-hint-text"></p>
-              <button type="button" class="btn primary" id="scroll-done">${this.letterEra ? "Далее" : "Продолжить"}</button>
+              <button type="button" class="btn primary letter-premium-btn" id="scroll-done">${this.letterEra ? "Далее" : "Продолжить"}</button>
             </div>
           </div>
         </div>`;
@@ -402,7 +401,7 @@
           <div class="safe-variant safe-year">
             <img class="safe-img safe-img-body" src="assets/ui/safe-dial-body.png" alt="Сейф" draggable="false" />
             <div class="safe-overlay-card">
-              <p class="safe-tap-hint">${prompt || "Прокрутите год"}</p>
+              ${this.letterEra ? "" : `<p class="safe-tap-hint">${prompt || "Прокрутите год"}</p>`}
               <div class="year-lock" id="year-drums">
                 ${[0, 1, 2, 3]
                   .map(

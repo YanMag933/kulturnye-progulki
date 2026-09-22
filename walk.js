@@ -307,7 +307,7 @@
     const ui = step.ui || "generic";
     if (ui === "geo") return !!uiState.unlocked;
     if (ui === "contour") return !!uiState.done || uiState.phase === "done";
-    if (ui === "safe" || ui === "input") return !!uiState.done;
+    if (ui === "safe" || ui === "input" || ui === "letter_puzzle") return !!uiState.done;
     return !!uiState.done;
   }
 
@@ -326,25 +326,36 @@
       uiState.guessed = true;
       uiState.done = true;
       uiState.phase = "done";
+      collectScrap(step);
       setFeedback("Тест: верный ответ показан", "ok");
       renderContour(step);
       return;
     }
     if (ui === "geo") {
       uiState.unlocked = true;
+      collectScrap(step);
       setFeedback("Тест: сейф открыт", "ok");
       renderStep();
       return;
     }
+    if (ui === "letter_puzzle") {
+      const scraps = questLetterScraps();
+      uiState.order = scraps.map((_, i) => i);
+      uiState.done = true;
+      setFeedback("Тест: письмо собрано", "ok");
+      renderLetterPuzzle(step);
+      return;
+    }
     if (ui === "detail" || ui === "quiz" || ui === "finale" || ui === "input" || ui === "safe") {
       uiState.done = true;
+      collectScrap(step);
       const ans = String(step.safeCode || step.expected || "");
       renderStep();
       requestAnimationFrame(() => {
         const input = document.getElementById("answer");
         if (input && ans) input.value = ans.replace(/-/g, "");
         const fact = document.getElementById("fact");
-        if (fact) fact.innerHTML = `<div class="fact-box">${step.fact || ""}</div>`;
+        if (fact) fact.innerHTML = factLetterHtml(scrapText(step));
         const opts = app.querySelectorAll(".opt");
         if (opts.length && step.correctIndex != null) {
           opts.forEach((b, i) => {
@@ -561,12 +572,11 @@
     return escapeHtml(text).replace(/\n/g, "<br />");
   }
 
-  function letterSheetHtml({ eyebrow, title, body, variant = "task" } = {}) {
-    const eye = eyebrow ? `<p class="letter-eyebrow">${escapeHtml(eyebrow)}</p>` : "";
+  function letterSheetHtml({ title, body, variant = "task" } = {}) {
     const tit = title ? `<h2 class="letter-title">${escapeHtml(title)}</h2>` : "";
     const bod = body ? `<p class="letter-body">${letterLines(body)}</p>` : "";
     return `<article class="letter-sheet letter-${variant}" aria-label="Письмо">
-      <div class="letter-sheet-inner">${eye}${tit}${bod}</div>
+      <div class="letter-sheet-inner">${tit}${bod}</div>
     </article>`;
   }
 
@@ -574,32 +584,75 @@
     if (!text) return "";
     if (!isLetterEra()) return `<div class="fact-box">${escapeHtml(text)}</div>`;
     return letterSheetHtml({
-      eyebrow: "Из сейфа",
-      title: "Строка письма",
       body: text,
       variant: "reveal",
     });
+  }
+
+  function scrapText(step) {
+    return (step && step.letterScrap && step.letterScrap.text) || step.fact || "";
+  }
+
+  function collectScrap(step) {
+    if (!step || !step.letterScrap) return;
+    const id = step.letterScrap.id || `s${step.slot}`;
+    progress.letterScraps = progress.letterScraps || [];
+    if (!progress.letterScraps.includes(id)) {
+      progress.letterScraps.push(id);
+      save();
+    }
+  }
+
+  function questLetterScraps() {
+    return (quest.steps || [])
+      .filter((s) => s.letterScrap && s.letterScrap.text)
+      .map((s) => ({
+        id: s.letterScrap.id || `s${s.slot}`,
+        order: s.letterScrap.order != null ? s.letterScrap.order : s.slot - 1,
+        text: s.letterScrap.text,
+      }))
+      .sort((a, b) => a.order - b.order);
+  }
+
+  function shuffleOrder(n) {
+    const arr = Array.from({ length: n }, (_, i) => i);
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = arr[i];
+      arr[i] = arr[j];
+      arr[j] = t;
+    }
+    if (n > 1 && arr.every((v, i) => v === i)) {
+      const last = arr.pop();
+      arr.unshift(last);
+    }
+    return arr;
   }
 
   function panelInputHint(step) {
     if (step.safePrompt) return step.safePrompt;
     if (step.ui === "contour") return isLetterEra() ? "Совмести контур с бронзой" : "Совместите контур в камере";
     if (step.ui === "geo") return isLetterEra() ? "Открой сейф у точки" : "Откройте сейф у точки";
-    if (step.expected) return isLetterEra() ? "Впиши ответ чернилами" : "Введите ответ на табло";
-    return isLetterEra() ? "Впиши ответ чернилами" : "Введите ответ на табло";
+    if (step.expected) return isLetterEra() ? "Впиши ответ" : "Введите ответ на табло";
+    return isLetterEra() ? "Впиши ответ" : "Введите ответ на табло";
   }
 
   function photoSlotHtml(step, opts = {}) {
+    if (opts.hide || step.hideClueOnTask) return "";
     const inputHint = opts.hintText || panelInputHint(step);
     const clue = step.clueImage
       ? `<img class="photo-slot-clue" src="${step.clueImage}" alt="" draggable="false" />`
       : "";
+    const showLabel = !isLetterEra() && !opts.hideLabel;
+    const showHint = !isLetterEra() && !!inputHint && !opts.hideHint;
     return `<div class="photo-slot${step.clueImage ? " has-clue" : ""}" aria-label="Кадр задания">
       ${clue}
-      <span class="photo-slot-label">${step.clueImage ? "циферблат" : "ваше фото"}</span>
-      <div class="photo-slot-hint">
-        <p>${escapeHtml(inputHint)}</p>
-      </div>
+      ${showLabel ? `<span class="photo-slot-label">${step.clueImage ? "циферблат" : "ваше фото"}</span>` : ""}
+      ${
+        showHint
+          ? `<div class="photo-slot-hint"><p>${escapeHtml(inputHint)}</p></div>`
+          : ""
+      }
     </div>`;
   }
 
@@ -620,7 +673,6 @@
       panel.hidden = false;
       if (isLetterEra()) {
         panel.innerHTML = letterSheetHtml({
-          eyebrow: `Намёк ${levels.length ? level + 1 : ""}`.trim(),
           body: text,
           variant: "hint",
         });
@@ -660,9 +712,10 @@
       const ok = checkText(expected, alts) || (expected && checkText(String(expected).replace(/-/g, ""), alts));
       if (ok) {
         uiState.done = true;
-        setFeedback(isLetterEra() ? "Строка принята" : "Засчитано", "ok");
+        collectScrap(step);
+        setFeedback(isLetterEra() ? "Обрывок получен" : "Засчитано", "ok");
         const fact = document.getElementById("fact");
-        if (fact && step.fact) fact.innerHTML = factLetterHtml(step.fact);
+        if (fact) fact.innerHTML = factLetterHtml(scrapText(step));
         bindNext(true);
       } else setFeedback(isLetterEra() ? "Мимо — открой намёк" : "Мимо — откройте подсказку", "bad");
     };
@@ -676,7 +729,7 @@
        ${hintPillHtml()}
        ${
          uiState.done
-           ? factLetterHtml(step.fact || "")
+           ? factLetterHtml(scrapText(step))
            : inputSimHtml(step)
        }`,
       footer(!!uiState.done)
@@ -692,7 +745,6 @@
     const eraClass = isLetterEra() ? " walk-letter-era" : "";
     const taskCard = isLetterEra()
       ? letterSheetHtml({
-          eyebrow: step.chapterTitle || "Строфа письма",
           title: step.title,
           body: brief,
           variant: "task",
@@ -800,7 +852,8 @@
             uiState.done = true;
             uiState.phase = "done";
             setFeedback("Принято", "ok");
-            document.getElementById("extra").innerHTML += factLetterHtml(step.fact);
+            document.getElementById("extra").innerHTML += factLetterHtml(scrapText(step));
+            collectScrap(step);
             bindNext(true);
           } else setFeedback("Попробуйте ещё", "bad");
         };
@@ -844,7 +897,8 @@
           uiState.done = true;
           uiState.phase = "done";
           setFeedback(`Совпало (${pct}%, погрешность ~${errPct}%). Засчитано.`, "ok");
-          document.getElementById("extra").innerHTML = factLetterHtml(step.fact);
+          document.getElementById("extra").innerHTML = factLetterHtml(scrapText(step) || step.fact);
+          collectScrap(step);
           bindNext(true);
         } else {
           setFeedback(
@@ -862,7 +916,7 @@
       step,
       `<div class="panel">
         <div class="silhouette-stage aligned">${silGuess}</div>
-        ${factLetterHtml(step.fact)}
+        ${factLetterHtml(scrapText(step) || step.fact)}
       </div>`,
       footer(true)
     );
@@ -881,7 +935,7 @@
         <h1>${quest.title}</h1>
         <p class="muted">${
           TEST_MODE
-            ? "Все 9 глав сюжета. «Далее» само подставляет ответ — можно листать без камеры, GPS и ввода."
+            ? "Все главы сюжета. «Далее» само подставляет ответ — можно листать без камеры, GPS и ввода."
             : quest.subtitle
         }</p>
         <div class="map-fake">${storyMode ? "Маршрут готов · " : "Кластер точек · "}${quest.zoneLabel}</div>
@@ -960,6 +1014,79 @@
     );
     document.getElementById("again").onclick = startWalk;
     document.getElementById("menu").onclick = () => (location.href = "index.html");
+  }
+
+  function renderLetterPuzzle(step) {
+    const scraps = questLetterScraps();
+    if (!scraps.length) {
+      taskChrome(
+        step,
+        `${hintPillHtml()}${factLetterHtml("Обрывки ещё не собраны — пройдите главы пути.")}`,
+        footer(false)
+      );
+      bindHintPill(step);
+      bindNext(false);
+      return;
+    }
+    if (!uiState.order || uiState.order.length !== scraps.length) {
+      uiState.order = shuffleOrder(scraps.length);
+      uiState.pick = null;
+    }
+    const assembled = uiState.done
+      ? scraps.map((s) => s.text).join("\n")
+      : "";
+    const board = uiState.done
+      ? letterSheetHtml({ body: assembled, variant: "assembled" })
+      : `<div class="letter-puzzle" id="letter-puzzle">
+          ${uiState.order
+            .map((srcIdx, pos) => {
+              const scrap = scraps[srcIdx];
+              const sel = uiState.pick === pos ? " is-selected" : "";
+              return `<button type="button" class="letter-scrap${sel}" data-pos="${pos}">
+                <span class="letter-scrap-text">${escapeHtml(scrap.text)}</span>
+              </button>`;
+            })
+            .join("")}
+        </div>
+        <p class="letter-puzzle-hint muted">Коснись двух обрывков — они поменяются местами.</p>`;
+    taskChrome(
+      step,
+      `${hintPillHtml()}
+       ${board}
+       ${uiState.done ? factLetterHtml(step.fact || "") : ""}`,
+      footer(!!uiState.done)
+    );
+    bindHintPill(step);
+    if (!uiState.done) {
+      app.querySelectorAll(".letter-scrap").forEach((btn) => {
+        btn.onclick = () => {
+          const pos = Number(btn.dataset.pos);
+          if (uiState.pick == null) {
+            uiState.pick = pos;
+            renderLetterPuzzle(step);
+            return;
+          }
+          if (uiState.pick === pos) {
+            uiState.pick = null;
+            renderLetterPuzzle(step);
+            return;
+          }
+          const a = uiState.pick;
+          const b = pos;
+          const tmp = uiState.order[a];
+          uiState.order[a] = uiState.order[b];
+          uiState.order[b] = tmp;
+          uiState.pick = null;
+          const ok = uiState.order.every((v, i) => v === i);
+          if (ok) {
+            uiState.done = true;
+            setFeedback("Письмо собрано", "ok");
+          }
+          renderLetterPuzzle(step);
+        };
+      });
+    }
+    bindNext(!!uiState.done);
   }
 
   function renderDetail(step) {
@@ -1090,6 +1217,7 @@
     if (ui === "contour") return renderContour(step);
     if (ui === "detail" || ui === "input") return renderDetail(step);
     if (ui === "safe") return renderSafeInput(step);
+    if (ui === "letter_puzzle") return renderLetterPuzzle(step);
     if (ui === "puzzle") return renderPuzzle(step);
     if (ui === "circle") return renderCircle(step);
     if (ui === "mosaic") return renderMosaic(step);
@@ -1104,8 +1232,8 @@
          <div class="panel geo-lock panel-compact">
           ${
             uiState.unlocked
-              ? factLetterHtml(step.fact || step.unlockedText || "")
-              : `<button type="button" class="btn primary" id="open-radar">${isLetterEra() ? "Кристалл" : "Кристалл"}</button>
+              ? factLetterHtml(scrapText(step) || step.fact || step.unlockedText || "")
+              : `<button type="button" class="btn primary" id="open-radar">Кристалл</button>
                  <button type="button" class="btn ghost" id="geo-demo">Демо</button>`
           }
         </div>`,
@@ -1118,7 +1246,6 @@
           return;
         }
         if (uiState.radar) return;
-        // Ровно один fixed safeType на задание (из content-db); без пикера/цикла.
         const safe = resolveStepSafe(step) || {
           safeType: step.safeType || "wheel",
           safeCode: step.safeCode || "",
@@ -1132,13 +1259,14 @@
           demo,
           fitMode: false,
           letterEra: isLetterEra(),
-          hintText: step.fact || step.unlockedText || (isLetterEra() ? "Строка письма открыта." : "Подсказка открыта."),
+          hintText: scrapText(step) || step.fact || step.unlockedText || (isLetterEra() ? "Обрывок получен." : "Подсказка открыта."),
           safeType: safe.safeType,
           safeCode: safe.safeCode || "",
           safePrompt: safe.safePrompt || "",
           onUnlock: () => {
             uiState.unlocked = true;
-            setFeedback(isLetterEra() ? "Сейф открыт. Строка получена." : "Сейф открыт. Подсказка получена.", "ok");
+            collectScrap(step);
+            setFeedback(isLetterEra() ? "Обрывок получен" : "Сейф открыт. Подсказка получена.", "ok");
             bindNext(true);
           },
           onClose: () => {
