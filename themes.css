@@ -1043,10 +1043,11 @@ html[data-theme="crystal"] .home-premium h1 {
   justify-content: center;
 }
 .scrap-reveal .scrap-piece {
-  width: min(92%, 280px);
-  min-height: 110px;
-  aspect-ratio: 5 / 4;
-  transform: rotate(var(--scrap-rot, -3deg));
+  width: min(96%, 360px);
+  min-height: 0;
+  aspect-ratio: auto;
+  height: auto;
+  transform: rotate(var(--scrap-rot, -2deg));
 }
 .scrap-piece {
   position: relative;
@@ -1064,23 +1065,42 @@ html[data-theme="crystal"] .home-premium h1 {
 .scrap-piece-face {
   width: 100%;
   height: 100%;
-  padding: 10px 12px;
+  padding: 16px 18px 18px;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
+  justify-content: center;
+}
+.scrap-reveal .scrap-piece-face {
+  min-height: 0;
+  padding: 26px 28px 28px;
 }
 .scrap-piece-text {
   margin: 0;
   width: 100%;
   font-family: "Playfair Display", Georgia, serif;
-  font-size: 12.5px;
+  font-size: clamp(11px, 3vw, 13px);
   font-style: italic;
-  line-height: 1.35;
+  font-weight: 500;
+  line-height: 1.4;
   color: #2a1c10;
   text-align: left;
   text-shadow:
     0 1px 0 rgba(255, 248, 230, 0.7),
     0 1px 2px rgba(40, 28, 16, 0.28);
   white-space: pre-line;
+  text-wrap: pretty;
+}
+.scrap-reveal .scrap-piece-text {
+  font-size: clamp(16px, 4.6vw, 19px);
+  line-height: 1.52;
+  text-align: left;
+  max-width: 28ch;
+  margin: 0 auto;
+}
+.a4-tray-item .scrap-piece-text {
+  font-size: clamp(9px, 2.3vw, 11px);
+  line-height: 1.28;
 }
 .scrap-piece.is-right .scrap-piece-text,
 .a4-slot.is-right .scrap-piece-text {
@@ -1180,17 +1200,6 @@ html[data-theme="crystal"] .home-premium h1 {
   animation: a4-seal 0.8s ease;
   overflow: auto;
 }
-.a4-full-letter {
-  height: 100%;
-  padding: 22px 20px 18px;
-  overflow: auto;
-}
-.a4-full-letter .letter-body {
-  text-align: left;
-  font-size: 14px;
-  line-height: 1.55;
-  white-space: pre-line;
-}
 @keyframes a4-seal {
   0% {
     filter: brightness(0.92);
@@ -1198,6 +1207,30 @@ html[data-theme="crystal"] .home-premium h1 {
   100% {
     filter: none;
   }
+}
+.a4-full-letter {
+  height: 100%;
+  padding: clamp(20px, 7%, 36px) clamp(18px, 8%, 34px);
+  overflow: auto;
+  display: flex;
+  align-items: flex-start;
+  box-sizing: border-box;
+}
+.a4-full-letter .letter-body {
+  margin: 0;
+  width: 100%;
+  text-align: left;
+  font-family: "Playfair Display", Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(14px, 3.9vw, 16.5px);
+  line-height: 1.68;
+  color: #2a1c10;
+  white-space: pre-line;
+  text-wrap: pretty;
+  text-shadow:
+    0 1px 0 rgba(255, 248, 230, 0.7),
+    0 1px 2px rgba(40, 28, 16, 0.22);
 }
 .a4-slot {
   position: absolute;
@@ -1228,10 +1261,14 @@ html[data-theme="crystal"] .home-premium h1 {
 .a4-slot-face {
   width: 100%;
   height: 100%;
-  padding: 8px 10px;
+  padding: 9% 10%;
   display: flex;
   align-items: center;
   box-sizing: border-box;
+}
+.a4-slot .scrap-piece-text {
+  font-size: clamp(8.5px, 2.15vw, 11px);
+  line-height: 1.32;
 }
 .a4-tray-rail {
   display: flex;
