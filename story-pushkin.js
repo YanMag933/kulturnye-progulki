@@ -33,7 +33,7 @@ window.KP_LETTER_PIECES = [
     y: 0,
     w: 47,
     h: 22,
-    edges: { t: "outer-t", r: "v0", b: "h0", l: "outer-l" },
+    edges: { t: "flat", r: "v0", b: "h0", l: "flat" },
     text: "Любезный Александр\nСергеевич!\n\nМосква пишет тебе не\nчернилами канце-",
   },
   {
@@ -43,7 +43,7 @@ window.KP_LETTER_PIECES = [
     y: 0,
     w: 53,
     h: 22,
-    edges: { t: "outer-t", r: "outer-r", b: "h1", l: "v0" },
+    edges: { t: "flat", r: "flat", b: "h1", l: "v0" },
     text: "лярии — а теплом\nкровель, звоном буль-\nваров и тишиною\nАрбата. Ты пришёл",
   },
   {
@@ -53,7 +53,7 @@ window.KP_LETTER_PIECES = [
     y: 22,
     w: 54,
     h: 26,
-    edges: { t: "h0", r: "v1", b: "h2", l: "outer-l" },
+    edges: { t: "h0", r: "v1", b: "h2", l: "flat" },
     text: "к нам странником в\nплаще стиха — и остался\nкровным сыном наших\nпереулков.\n\nЗа то, что слух наш",
   },
   {
@@ -63,7 +63,7 @@ window.KP_LETTER_PIECES = [
     y: 22,
     w: 46,
     h: 26,
-    edges: { t: "h1", r: "outer-r", b: "h3", l: "v1" },
+    edges: { t: "h1", r: "flat", b: "h3", l: "v1" },
     text: "стал тоньше, а сердце —\nсмелее; за то, что пло-\nщади заговорили по-\nчеловечески, а дома",
   },
   {
@@ -73,7 +73,7 @@ window.KP_LETTER_PIECES = [
     y: 48,
     w: 43,
     h: 25,
-    edges: { t: "h2", r: "v2", b: "h4", l: "outer-l" },
+    edges: { t: "h2", r: "v2", b: "h4", l: "flat" },
     text: "научились помнить\nимена, — благодар-\nствуем.\n\nТы вошёл в Москву —",
   },
   {
@@ -83,7 +83,7 @@ window.KP_LETTER_PIECES = [
     y: 48,
     w: 57,
     h: 25,
-    edges: { t: "h3", r: "outer-r", b: "h5", l: "v2" },
+    edges: { t: "h3", r: "flat", b: "h5", l: "v2" },
     text: "и Москва вошла в тебя:\nсмягчилась речь, ожила\nплощадь, и бронза нау-\nчилась дышать. Мы",
   },
   {
@@ -93,7 +93,7 @@ window.KP_LETTER_PIECES = [
     y: 73,
     w: 51,
     h: 27,
-    edges: { t: "h4", r: "v3", b: "outer-b", l: "outer-l" },
+    edges: { t: "h4", r: "v3", b: "flat", l: "flat" },
     text: "изменили друг друга,\nкак меняют берег и\nрека.\n\nНыне же взгляни иначе:\nне только в лицо",
   },
   {
@@ -103,7 +103,7 @@ window.KP_LETTER_PIECES = [
     y: 73,
     w: 49,
     h: 27,
-    edges: { t: "h5", r: "outer-r", b: "outer-b", l: "v3" },
+    edges: { t: "h5", r: "flat", b: "flat", l: "v3" },
     text: "легенде — чуть сбоку,\nгде живая тень. Пусть\nпечать ляжет на кон-\nверт, и письмо станет\nвоздухом города.",
   },
 ];

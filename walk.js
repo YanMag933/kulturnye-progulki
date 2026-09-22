@@ -27,6 +27,91 @@
   let uiState = {};
   let mapInstance = null;
 
+  const PHOTO_BANK_KEY = "kultprogulki.story.photos.pushkin";
+
+  function loadPhotoBank() {
+    try {
+      return JSON.parse(localStorage.getItem(PHOTO_BANK_KEY) || "{}") || {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function savePhotoBank(photos) {
+    try {
+      localStorage.setItem(PHOTO_BANK_KEY, JSON.stringify(photos || {}));
+    } catch (_) {}
+  }
+
+  function hydrateStepPhotos() {
+    progress.photos = progress.photos || {};
+    const bank = loadPhotoBank();
+    Object.keys(bank).forEach((k) => {
+      if (!progress.photos[k] && bank[k]) progress.photos[k] = bank[k];
+    });
+    (quest.steps || []).forEach((s) => {
+      const key = String(s.slot);
+      if (s.userPhoto) progress.photos[key] = s.userPhoto;
+      else if (progress.photos[key]) s.userPhoto = progress.photos[key];
+    });
+  }
+
+  function getStepPhoto(step) {
+    if (!step) return "";
+    const key = String(step.slot);
+    progress.photos = progress.photos || {};
+    return progress.photos[key] || step.userPhoto || "";
+  }
+
+  function setStepPhoto(step, dataUrl) {
+    if (!step) return;
+    const key = String(step.slot);
+    progress.photos = progress.photos || {};
+    if (dataUrl) progress.photos[key] = dataUrl;
+    else delete progress.photos[key];
+    step.userPhoto = dataUrl || "";
+    const qi = (quest.steps || []).findIndex((s) => s.slot === step.slot);
+    if (qi >= 0) quest.steps[qi].userPhoto = dataUrl || "";
+    KP.saveActiveQuest(quest);
+    savePhotoBank(progress.photos);
+    save();
+  }
+
+  function compressImageFile(file) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const max = 1280;
+        let w = img.width;
+        let h = img.height;
+        if (w > max || h > max) {
+          const r = Math.min(max / w, max / h);
+          w = Math.round(w * r);
+          h = Math.round(h * r);
+        }
+        const c = document.createElement("canvas");
+        c.width = w;
+        c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        resolve(c.toDataURL("image/jpeg", 0.78));
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error("Не удалось прочитать фото"));
+      };
+      img.src = url;
+    });
+  }
+
+  hydrateStepPhotos();
+  (quest.steps || []).forEach((s) => {
+    const p = progress.photos && progress.photos[String(s.slot)];
+    if (p) s.userPhoto = p;
+  });
+  if (STORY_ID === "pushkin") KP.saveActiveQuest(quest);
+
   function save() {
     if (TEST_MODE) localStorage.setItem(TEST_PROGRESS_KEY, JSON.stringify(progress));
     else KP.saveProgress(progress);
@@ -468,7 +553,7 @@
           <a href="index.html">← Меню</a>
           <a href="create.html">Создать</a>
         </div>
-        ${TEST_MODE ? `<p class="test-banner">ТЕСТ · Пушкин · «Далее» подставляет ответ</p>` : ""}
+        ${TEST_MODE ? `<p class="test-banner">ТЕСТ · Пушкин · «Далее» подставляет ответ · можно вставлять фото</p>` : ""}
         <h1 class="walk-title">${quest.title}${TEST_MODE ? " · тест" : ""}</h1>
         <p class="walk-meta">${[quest.zoneLabel, quest.difficultyLabel, quest.durationHint].filter(Boolean).join(" · ")}</p>
         ${dots}
@@ -596,192 +681,156 @@
   }
 
   function letterEdgeProfiles() {
-    // Неровный рваный край (не «плоттер»): много мелких зубцов разной амплитуды
+    // flat = прямая грань листа; v*/h* = заметно разные рваные стыки
     return {
       flat: [
         [0, 0],
         [100, 0],
       ],
-      "outer-t": [
-        [0, 0],
-        [8, 2],
-        [18, -1],
-        [31, 3],
-        [44, -2],
-        [57, 2],
-        [71, -1],
-        [84, 3],
-        [100, 0],
-      ],
-      "outer-b": [
-        [0, 0],
-        [11, 3],
-        [25, -2],
-        [39, 2],
-        [52, -3],
-        [66, 2],
-        [80, -1],
-        [93, 2],
-        [100, 0],
-      ],
-      "outer-l": [
-        [0, 0],
-        [9, 3],
-        [22, -2],
-        [38, 4],
-        [55, -3],
-        [70, 2],
-        [86, -2],
-        [100, 0],
-      ],
-      "outer-r": [
-        [0, 0],
-        [12, -2],
-        [27, 3],
-        [41, -3],
-        [58, 2],
-        [73, -2],
-        [88, 3],
-        [100, 0],
-      ],
+      // широкий редкий рваный шов
       v0: [
         [0, 0],
-        [7, 5],
-        [14, -4],
-        [22, 7],
-        [31, -6],
-        [40, 4],
-        [49, -5],
-        [58, 6],
-        [67, -3],
-        [76, 5],
-        [85, -4],
-        [93, 3],
+        [10, 0],
+        [14, 14],
+        [22, -10],
+        [30, 12],
+        [38, -8],
+        [48, 0],
+        [55, 11],
+        [64, -12],
+        [74, 9],
+        [84, -7],
+        [92, 0],
         [100, 0],
       ],
+      // частые мелкие зубцы
       v1: [
         [0, 0],
-        [6, -5],
-        [15, 6],
-        [24, -4],
-        [33, 7],
-        [42, -6],
-        [51, 4],
-        [60, -5],
-        [69, 6],
-        [78, -3],
-        [87, 5],
+        [6, 7],
+        [12, -6],
+        [18, 8],
+        [24, -7],
+        [30, 6],
+        [36, -8],
+        [42, 7],
+        [48, -6],
+        [54, 8],
+        [60, -7],
+        [66, 6],
+        [72, -8],
+        [78, 7],
+        [84, -5],
+        [90, 6],
+        [96, -4],
         [100, 0],
       ],
+      // глубокая «ступенька» по центру
       v2: [
         [0, 0],
-        [8, 4],
-        [17, -6],
-        [26, 5],
-        [35, -4],
-        [45, 7],
-        [54, -5],
-        [64, 4],
-        [73, -6],
-        [82, 5],
-        [91, -3],
+        [18, 0],
+        [22, 16],
+        [35, 16],
+        [40, -12],
+        [55, -12],
+        [60, 10],
+        [78, 10],
+        [82, 0],
         [100, 0],
       ],
+      // волна с одним большим вырезом
       v3: [
         [0, 0],
-        [9, -4],
-        [18, 6],
-        [28, -5],
-        [37, 4],
-        [47, -7],
-        [56, 5],
-        [66, -4],
-        [75, 6],
-        [84, -3],
-        [92, 4],
+        [12, 5],
+        [25, -4],
+        [40, 6],
+        [48, -14],
+        [58, 14],
+        [70, -5],
+        [82, 6],
+        [92, -3],
         [100, 0],
       ],
+      // горизонталь: крупные пилы
       h0: [
         [0, 0],
-        [8, 6],
-        [16, -5],
-        [25, 4],
-        [34, -7],
-        [43, 5],
-        [52, -4],
-        [61, 6],
-        [70, -5],
-        [79, 4],
-        [88, -3],
+        [8, 0],
+        [12, 13],
+        [20, -11],
+        [32, 10],
+        [44, -9],
+        [56, 12],
+        [68, -10],
+        [80, 9],
+        [90, -6],
         [100, 0],
       ],
+      // горизонталь: мелкая греёнка
       h1: [
         [0, 0],
-        [7, -5],
-        [15, 6],
-        [24, -4],
-        [33, 7],
-        [42, -6],
-        [51, 4],
-        [60, -5],
-        [69, 6],
-        [78, -3],
-        [87, 4],
+        [5, 6],
+        [10, -5],
+        [15, 7],
+        [20, -6],
+        [25, 5],
+        [30, -7],
+        [35, 6],
+        [40, -5],
+        [45, 7],
+        [50, -6],
+        [55, 5],
+        [60, -7],
+        [65, 6],
+        [70, -5],
+        [75, 7],
+        [80, -4],
+        [85, 5],
+        [90, -6],
+        [95, 4],
         [100, 0],
       ],
+      // горизонталь: два глубоких кармана
       h2: [
         [0, 0],
-        [9, 5],
-        [18, -6],
-        [27, 4],
-        [36, -5],
-        [46, 7],
-        [55, -4],
-        [65, 5],
-        [74, -6],
-        [83, 3],
-        [92, -4],
+        [15, 0],
+        [20, 15],
+        [32, 15],
+        [38, -10],
+        [50, -10],
+        [55, 14],
+        [68, 14],
+        [74, 0],
         [100, 0],
       ],
       h3: [
         [0, 0],
-        [8, -4],
-        [17, 6],
-        [26, -5],
-        [35, 4],
-        [44, -6],
-        [54, 5],
-        [63, -4],
-        [72, 7],
-        [81, -3],
-        [90, 4],
+        [10, -8],
+        [22, 9],
+        [35, -11],
+        [48, 10],
+        [60, -9],
+        [72, 11],
+        [85, -7],
         [100, 0],
       ],
       h4: [
         [0, 0],
-        [10, 5],
-        [19, -4],
-        [29, 6],
-        [38, -5],
-        [48, 4],
-        [57, -6],
-        [67, 5],
-        [76, -3],
-        [85, 4],
+        [20, 4],
+        [28, -13],
+        [42, 12],
+        [55, -8],
+        [70, 10],
+        [85, -5],
         [100, 0],
       ],
       h5: [
         [0, 0],
-        [9, -5],
-        [18, 4],
-        [28, -6],
-        [37, 5],
-        [47, -4],
-        [56, 6],
-        [66, -5],
-        [75, 4],
-        [84, -3],
-        [93, 3],
+        [12, 9],
+        [25, -6],
+        [40, 0],
+        [48, 14],
+        [62, -12],
+        [75, 7],
+        [88, -5],
         [100, 0],
       ],
     };
@@ -794,15 +843,35 @@
     return pts.map(([x, y]) => [x, y * a]);
   }
 
-  /** Рваный прямоугольник: 4 края с зубцами (смежные куски делят профиль). */
+  function edgeIsFlat(name) {
+    return !name || name === "flat";
+  }
+
+  /** Прямые внешние грани листа; рваные только стыки между кусками. */
   function scrapClipPath(piece) {
     const e = piece.edges || {};
-    const inset = 2.2;
-    const amp = 1.35;
-    const top = edgePath(e.t || "outer-t", amp).map(([x, y]) => [x, Math.max(0.4, inset + y)]);
-    const right = edgePath(e.r || "outer-r", amp).map(([x, y]) => [Math.min(99.6, 100 - inset - y), x]);
-    const bot = edgePath(e.b || "outer-b", amp).map(([x, y]) => [x, Math.min(99.6, 100 - inset - y)]);
-    const left = edgePath(e.l || "outer-l", amp).map(([x, y]) => [Math.max(0.4, inset + y), x]);
+    const inset = 1.2;
+    const tearAmp = 1.55;
+    const topName = e.t || "flat";
+    const rightName = e.r || "flat";
+    const botName = e.b || "flat";
+    const leftName = e.l || "flat";
+    const top = edgePath(topName, edgeIsFlat(topName) ? 0 : tearAmp).map(([x, y]) => [
+      x,
+      Math.max(0.2, inset + y),
+    ]);
+    const right = edgePath(rightName, edgeIsFlat(rightName) ? 0 : tearAmp).map(([x, y]) => [
+      Math.min(99.8, 100 - inset - y),
+      x,
+    ]);
+    const bot = edgePath(botName, edgeIsFlat(botName) ? 0 : tearAmp).map(([x, y]) => [
+      x,
+      Math.min(99.8, 100 - inset - y),
+    ]);
+    const left = edgePath(leftName, edgeIsFlat(leftName) ? 0 : tearAmp).map(([x, y]) => [
+      Math.max(0.2, inset + y),
+      x,
+    ]);
     const poly = [];
     top.forEach(([x, y]) => poly.push(`${x.toFixed(2)}% ${y.toFixed(2)}%`));
     right.forEach(([x, y]) => poly.push(`${x.toFixed(2)}% ${y.toFixed(2)}%`));
@@ -930,22 +999,51 @@
   }
 
   function photoSlotHtml(step, opts = {}) {
-    if (opts.hide || step.hideClueOnTask) return "";
-    const inputHint = opts.hintText || panelInputHint(step);
-    const clue = step.clueImage
-      ? `<img class="photo-slot-clue" src="${step.clueImage}" alt="" draggable="false" />`
-      : "";
-    const showLabel = !isLetterEra() && !opts.hideLabel;
-    const showHint = !isLetterEra() && !!inputHint && !opts.hideHint;
-    return `<div class="photo-slot${step.clueImage ? " has-clue" : ""}" aria-label="Кадр задания">
-      ${clue}
-      ${showLabel ? `<span class="photo-slot-label">${step.clueImage ? "циферблат" : "ваше фото"}</span>` : ""}
+    if (opts.hide) return "";
+    const userPhoto = getStepPhoto(step);
+    const showClue = !!(step.clueImage && !userPhoto && !step.hideClueOnTask);
+    if (!TEST_MODE && !userPhoto && !showClue && step.hideClueOnTask) return "";
+    if (!TEST_MODE && !userPhoto && !showClue && !opts.forceEmpty && step.ui === "letter_puzzle") return "";
+
+    const src = userPhoto || (showClue ? step.clueImage : "");
+    const hasImg = !!src;
+    const canEdit = TEST_MODE;
+    const label = userPhoto ? "ваше фото" : showClue ? "циферблат" : "фото точки";
+    const btnLabel = userPhoto ? "Заменить фото" : "Добавить фото";
+
+    return `<div class="photo-slot${hasImg ? " has-clue" : ""}${canEdit ? " photo-slot-editable" : ""}" aria-label="Кадр задания">
+      ${hasImg ? `<img class="photo-slot-clue" src="${src}" alt="" draggable="false" />` : `<span class="photo-slot-empty">${canEdit ? "Нет фото" : ""}</span>`}
+      ${!isLetterEra() || canEdit ? `<span class="photo-slot-label">${label}</span>` : ""}
       ${
-        showHint
-          ? `<div class="photo-slot-hint"><p>${escapeHtml(inputHint)}</p></div>`
+        canEdit
+          ? `<div class="photo-slot-actions">
+              <input type="file" id="photo-file" accept="image/*" capture="environment" hidden />
+              <button type="button" class="btn photo-pick-btn" id="photo-pick">${btnLabel}</button>
+            </div>`
           : ""
       }
     </div>`;
+  }
+
+  function bindPhotoSlot(step) {
+    if (!TEST_MODE) return;
+    const pick = document.getElementById("photo-pick");
+    const file = document.getElementById("photo-file");
+    if (!pick || !file) return;
+    pick.onclick = () => file.click();
+    file.onchange = async () => {
+      const f = file.files && file.files[0];
+      if (!f) return;
+      try {
+        setFeedback("Сжимаю фото…", "ok");
+        const dataUrl = await compressImageFile(f);
+        setStepPhoto(step, dataUrl);
+        setFeedback("Фото сохранено в прогулку", "ok");
+        renderStep();
+      } catch (err) {
+        setFeedback(err.message || "Ошибка фото", "bad");
+      }
+    };
   }
 
   function hintPillHtml() {
@@ -1027,6 +1125,7 @@
       footer(!!uiState.done)
     );
     bindHintPill(step);
+    bindPhotoSlot(step);
     if (!uiState.done) bindInputSim(step);
     else bindNext(true);
   }
@@ -1110,7 +1209,8 @@
     if (phase === "ready") {
       taskChrome(
         step,
-        `<div class="panel contour-panel">
+        `${TEST_MODE ? photoSlotHtml(step) : ""}
+        <div class="panel contour-panel">
           <div class="silhouette-stage silhouette-stage-lg">${silGuess || `<img class="sticker-outline guess" src="assets/contours/pushkin-sticker-preview.png" alt="Контур Пушкина" />`}</div>
           <p class="muted">${step.contourHint || "Откройте камеру и совместите контур с памятником."}</p>
           ${hintPillHtml()}
@@ -1121,6 +1221,7 @@
         footer(!!uiState.done)
       );
       bindHintPill(step);
+      bindPhotoSlot(step);
       document.getElementById("open-cam").onclick = async () => {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({
@@ -1379,7 +1480,8 @@
           <span class="chip">${step.slot} / ${quest.steps.length}</span>
           <h2 class="place">${escapeHtml(step.placeName)}</h2>
         </div>
-        <p class="a4-lead">Перетащи обрывок на своё место на листе. Края — как у рваной бумаги.</p>
+        <p class="a4-lead">Перетащи обрывок на своё место на листе. Прямые края — внешняя рамка письма; зубцы — стык с соседом.</p>
+        ${TEST_MODE ? photoSlotHtml(step) : ""}
         ${hintPillHtml()}
         <div class="a4-workspace" id="a4-assemble">
           <div class="a4-sheet a4-mosaic${uiState.done ? " is-complete" : ""}" id="a4-sheet">
@@ -1395,6 +1497,7 @@
       footer(!!uiState.done)
     );
     bindHintPill(step);
+    bindPhotoSlot(step);
     if (!uiState.done) bindA4Drag(step, pieces);
     bindNext(!!uiState.done);
   }
@@ -1669,6 +1772,7 @@
         footer(!!uiState.unlocked)
       );
       bindHintPill(step);
+      bindPhotoSlot(step);
       const openRadar = (demo) => {
         if (!window.KP_Radar) {
           setFeedback("Модуль радара не загружен", "bad");
