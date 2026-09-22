@@ -70,6 +70,7 @@
       this.onUnlock = opts.onUnlock || (() => {});
       this.onClose = opts.onClose || (() => {});
       this.hintText = opts.hintText || "Подсказка открыта.";
+    this.letterEra = !!opts.letterEra;
       this.demo = !!opts.demo;
       this.fitMode = !!opts.fitMode; // прогон сейфов: без автопоказа
       this.safeOnly = !!opts.safeOnly; // задание без гео: сразу сейф, без кристалла
@@ -156,15 +157,15 @@
             <div class="safe-photo-wrap" id="radar-safe"></div>
           </div>
 
-          <button type="button" class="scroll-fly" id="scroll-fly" hidden aria-label="Открыть подсказку">
-            <span class="hint-pill scroll-hint-pill">Подсказка</span>
+          <button type="button" class="scroll-fly" id="scroll-fly" hidden aria-label="Открыть письмо">
+            <span class="hint-pill scroll-hint-pill">${this.letterEra ? "Письмо" : "Подсказка"}</span>
           </button>
 
           <div class="scroll-sheet" id="scroll-sheet" hidden>
-            <div class="scroll-card">
-              <p class="scroll-title">Подсказка</p>
+            <div class="scroll-card${this.letterEra ? " letter-scroll-card" : ""}">
+              <p class="scroll-title">${this.letterEra ? "Строка письма" : "Подсказка"}</p>
               <p class="scroll-body" id="scroll-hint-text"></p>
-              <button type="button" class="btn primary" id="scroll-done">Продолжить</button>
+              <button type="button" class="btn primary" id="scroll-done">${this.letterEra ? "Далее" : "Продолжить"}</button>
             </div>
           </div>
         </div>`;
@@ -941,7 +942,7 @@
       this.elScrollHint.textContent = this.hintText;
       this.elScrollSheet.hidden = false;
       requestAnimationFrame(() => this.elScrollSheet.classList.add("unfurl"));
-      this.elStatus.textContent = "ЧИТАЙТЕ ПОДСКАЗКУ";
+      this.elStatus.textContent = this.letterEra ? "ЧИТАЙТЕ ПИСЬМО" : "ЧИТАЙТЕ ПОДСКАЗКУ";
     }
 
     _setUnlockedAndLeave() {
@@ -1050,6 +1051,7 @@
       safeCode: opts.safeCode || "",
       safePrompt: opts.safePrompt || "",
       hintText: opts.hintText || "Открыто!",
+      letterEra: !!opts.letterEra,
       onUnlock: opts.onUnlock || (() => {}),
       onClose: opts.onClose || (() => {}),
     });

@@ -545,12 +545,48 @@
     return null;
   }
 
+  function isLetterEra() {
+    return !!(quest && (quest.letterEra || quest.characterId === "pushkin" || quest.storyId === "pushkin"));
+  }
+
+  function escapeHtml(s) {
+    return String(s || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function letterLines(text) {
+    return escapeHtml(text).replace(/\n/g, "<br />");
+  }
+
+  function letterSheetHtml({ eyebrow, title, body, variant = "task" } = {}) {
+    const eye = eyebrow ? `<p class="letter-eyebrow">${escapeHtml(eyebrow)}</p>` : "";
+    const tit = title ? `<h2 class="letter-title">${escapeHtml(title)}</h2>` : "";
+    const bod = body ? `<p class="letter-body">${letterLines(body)}</p>` : "";
+    return `<article class="letter-sheet letter-${variant}" aria-label="Письмо">
+      <div class="letter-sheet-inner">${eye}${tit}${bod}</div>
+    </article>`;
+  }
+
+  function factLetterHtml(text) {
+    if (!text) return "";
+    if (!isLetterEra()) return `<div class="fact-box">${escapeHtml(text)}</div>`;
+    return letterSheetHtml({
+      eyebrow: "Из сейфа",
+      title: "Строка письма",
+      body: text,
+      variant: "reveal",
+    });
+  }
+
   function panelInputHint(step) {
     if (step.safePrompt) return step.safePrompt;
-    if (step.ui === "contour") return "Совместите контур в камере";
-    if (step.ui === "geo") return "Откройте сейф у точки";
-    if (step.expected) return "Введите ответ на табло";
-    return "Введите ответ на табло";
+    if (step.ui === "contour") return isLetterEra() ? "Совмести контур с бронзой" : "Совместите контур в камере";
+    if (step.ui === "geo") return isLetterEra() ? "Открой сейф у точки" : "Откройте сейф у точки";
+    if (step.expected) return isLetterEra() ? "Впиши ответ чернилами" : "Введите ответ на табло";
+    return isLetterEra() ? "Впиши ответ чернилами" : "Введите ответ на табло";
   }
 
   function photoSlotHtml(step, opts = {}) {
@@ -562,14 +598,15 @@
       ${clue}
       <span class="photo-slot-label">${step.clueImage ? "циферблат" : "ваше фото"}</span>
       <div class="photo-slot-hint">
-        <p>${inputHint}</p>
+        <p>${escapeHtml(inputHint)}</p>
       </div>
     </div>`;
   }
 
   function hintPillHtml() {
-    return `<button type="button" class="hint-pill" id="hint-pill" aria-expanded="false">Подсказка</button>
-      <div class="hint-panel" id="hint-panel" hidden></div>`;
+    const label = isLetterEra() ? "Намёк" : "Подсказка";
+    return `<button type="button" class="hint-pill" id="hint-pill" aria-expanded="false">${label}</button>
+      <div class="hint-panel${isLetterEra() ? " letter-hint-panel" : ""}" id="hint-panel" hidden></div>`;
   }
 
   function bindHintPill(step) {
@@ -579,16 +616,19 @@
     const levels = [step.hintL1, step.hintL2, step.hintL3].filter(Boolean);
     let level = 0;
     pill.onclick = () => {
-      if (!levels.length) {
-        panel.hidden = false;
-        panel.textContent = step.hint || "Смотрите на место.";
-        pill.setAttribute("aria-expanded", "true");
-        return;
-      }
+      const text = levels.length ? levels[level] : step.hint || "Смотрите на место.";
       panel.hidden = false;
-      panel.innerHTML = `<p>${levels[level]}</p>`;
+      if (isLetterEra()) {
+        panel.innerHTML = letterSheetHtml({
+          eyebrow: `Намёк ${levels.length ? level + 1 : ""}`.trim(),
+          body: text,
+          variant: "hint",
+        });
+      } else {
+        panel.innerHTML = `<p>${escapeHtml(text)}</p>`;
+      }
       pill.setAttribute("aria-expanded", "true");
-      level = Math.min(level + 1, levels.length - 1);
+      if (levels.length) level = Math.min(level + 1, levels.length - 1);
     };
   }
 
@@ -608,7 +648,7 @@
         : step.safePrompt || "код";
     return `<div class="input-sim panel">
       <input class="field input-sim-field" id="answer" type="text" inputmode="${inputMode}" lang="ru" autocomplete="off" enterkeyhint="done" placeholder="${placeholder}" />
-      <button type="button" class="btn primary" id="check">Проверить</button>
+      <button type="button" class="btn primary" id="check">${isLetterEra() ? "Сверить" : "Проверить"}</button>
       <div id="fact"></div>
     </div>`;
   }
@@ -620,11 +660,11 @@
       const ok = checkText(expected, alts) || (expected && checkText(String(expected).replace(/-/g, ""), alts));
       if (ok) {
         uiState.done = true;
-        setFeedback("Засчитано", "ok");
+        setFeedback(isLetterEra() ? "Строка принята" : "Засчитано", "ok");
         const fact = document.getElementById("fact");
-        if (fact && step.fact) fact.innerHTML = `<div class="fact-box">${step.fact}</div>`;
+        if (fact && step.fact) fact.innerHTML = factLetterHtml(step.fact);
         bindNext(true);
-      } else setFeedback("Мимо — откройте подсказку", "bad");
+      } else setFeedback(isLetterEra() ? "Мимо — открой намёк" : "Мимо — откройте подсказку", "bad");
     };
     bindNext(!!uiState.done);
   }
@@ -636,7 +676,7 @@
        ${hintPillHtml()}
        ${
          uiState.done
-           ? `<div class="panel fact-box">${step.fact || ""}</div>`
+           ? factLetterHtml(step.fact || "")
            : inputSimHtml(step)
        }`,
       footer(!!uiState.done)
@@ -649,16 +689,25 @@
   function taskChrome(step, bodyHtml, footerHtml, opts = {}) {
     const hidePlace = opts.hidePlace || (step.hidePlaceUntilGuess && !uiState.guessed);
     const brief = step.brief || step.hint || "";
+    const eraClass = isLetterEra() ? " walk-letter-era" : "";
+    const taskCard = isLetterEra()
+      ? letterSheetHtml({
+          eyebrow: step.chapterTitle || "Строфа письма",
+          title: step.title,
+          body: brief,
+          variant: "task",
+        })
+      : `<div class="panel panel-compact">
+          <h2>${escapeHtml(step.title)}</h2>
+          ${brief ? `<p>${letterLines(brief)}</p>` : ""}
+        </div>`;
     shell(
-      `<div class="walk-screen">
+      `<div class="walk-screen${eraClass}">
         <div class="chip-row">
           <span class="chip">${step.slot} / ${quest.steps.length}</span>
         </div>
-        <h2 class="place">${hidePlace ? "???" : step.placeName}</h2>
-        <div class="panel panel-compact">
-          <h2>${step.title}</h2>
-          ${brief ? `<p>${brief}</p>` : ""}
-        </div>
+        <h2 class="place">${hidePlace ? "???" : escapeHtml(step.placeName)}</h2>
+        ${taskCard}
         ${bodyHtml}
       </div>`,
       footerHtml
@@ -751,7 +800,7 @@
             uiState.done = true;
             uiState.phase = "done";
             setFeedback("Принято", "ok");
-            document.getElementById("extra").innerHTML += `<div class="fact-box">${step.fact}</div>`;
+            document.getElementById("extra").innerHTML += factLetterHtml(step.fact);
             bindNext(true);
           } else setFeedback("Попробуйте ещё", "bad");
         };
@@ -795,7 +844,7 @@
           uiState.done = true;
           uiState.phase = "done";
           setFeedback(`Совпало (${pct}%, погрешность ~${errPct}%). Засчитано.`, "ok");
-          document.getElementById("extra").innerHTML = `<div class="fact-box">${step.fact}</div>`;
+          document.getElementById("extra").innerHTML = factLetterHtml(step.fact);
           bindNext(true);
         } else {
           setFeedback(
@@ -813,7 +862,7 @@
       step,
       `<div class="panel">
         <div class="silhouette-stage aligned">${silGuess}</div>
-        <div class="fact-box">${step.fact}</div>
+        ${factLetterHtml(step.fact)}
       </div>`,
       footer(true)
     );
@@ -1055,8 +1104,8 @@
          <div class="panel geo-lock panel-compact">
           ${
             uiState.unlocked
-              ? `<div class="fact-box">${step.fact || step.unlockedText || ""}</div>`
-              : `<button type="button" class="btn primary" id="open-radar">Кристалл</button>
+              ? factLetterHtml(step.fact || step.unlockedText || "")
+              : `<button type="button" class="btn primary" id="open-radar">${isLetterEra() ? "Кристалл" : "Кристалл"}</button>
                  <button type="button" class="btn ghost" id="geo-demo">Демо</button>`
           }
         </div>`,
@@ -1082,13 +1131,14 @@
           revealM: reveal,
           demo,
           fitMode: false,
-          hintText: step.unlockedText || step.fact || "Подсказка открыта.",
+          letterEra: isLetterEra(),
+          hintText: step.fact || step.unlockedText || (isLetterEra() ? "Строка письма открыта." : "Подсказка открыта."),
           safeType: safe.safeType,
           safeCode: safe.safeCode || "",
           safePrompt: safe.safePrompt || "",
           onUnlock: () => {
             uiState.unlocked = true;
-            setFeedback("Сейф открыт. Подсказка получена.", "ok");
+            setFeedback(isLetterEra() ? "Сейф открыт. Строка получена." : "Сейф открыт. Подсказка получена.", "ok");
             bindNext(true);
           },
           onClose: () => {
@@ -1161,7 +1211,8 @@
               safeType: safe.safeType,
               safeCode: safe.safeCode || "",
               safePrompt: safe.safePrompt || step.prompt || "",
-              hintText: step.fact || "Открыто!",
+              letterEra: isLetterEra(),
+              hintText: step.fact || (isLetterEra() ? "Строка открыта." : "Открыто!"),
               onUnlock: () => {
                 uiState.done = true;
                 setFeedback("Сейф открыт", "ok");

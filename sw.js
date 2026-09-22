@@ -1,5 +1,5 @@
 /* Service worker - offline PWA cache */
-const CACHE = "kultprogulki-v43";
+const CACHE = "kultprogulki-v44";
 const ASSETS = [
   "./",
   "./index.html",
@@ -40,6 +40,7 @@ const ASSETS = [
   "./assets/maps/pushkin-route.jpg",
   "./assets/maps/walker-3d.svg",
   "./assets/maps/tverskoy-clock.jpg",
+  "./assets/ui/antique-letter.jpg",
   "./assets/fonts/Montserrat-Variable.ttf",
   "./assets/fonts/Manrope-Variable.ttf",
   "./assets/fonts/Rubik-Variable.ttf",

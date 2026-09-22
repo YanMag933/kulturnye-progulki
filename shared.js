@@ -363,6 +363,8 @@ window.KP = (() => {
       createdAt: new Date().toISOString(),
       storyId,
       isStory: true,
+      characterId: story.characterId || null,
+      letterEra: !!story.letterEra,
       mapBounds: story.mapBounds || null,
       contourVersion: 8,
       steps,

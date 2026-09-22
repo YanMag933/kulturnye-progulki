@@ -841,3 +841,142 @@ html[data-theme="crystal"] .home-premium h1 {
   text-transform: uppercase;
   font-size: clamp(2rem, 9vw, 2.6rem);
 }
+
+/* —— Невидимое письмо · XIX век —— */
+.walk-letter-era .place {
+  font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  font-style: italic;
+}
+.letter-sheet {
+  position: relative;
+  margin: 0 0 14px;
+  border-radius: 3px 5px 4px 3px;
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow:
+    0 1px 0 rgba(255, 248, 230, 0.35) inset,
+    0 14px 32px rgba(0, 0, 0, 0.4);
+  background:
+    linear-gradient(165deg, rgba(255, 248, 230, 0.18) 0%, transparent 42%),
+    #e6d7b8 url("assets/ui/antique-letter.jpg") center / cover no-repeat;
+  border: 1px solid rgba(92, 64, 32, 0.35);
+}
+.letter-sheet::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 0%, rgba(255, 250, 235, 0.35) 0%, transparent 55%),
+    radial-gradient(ellipse 80% 50% at 80% 100%, rgba(90, 55, 20, 0.18) 0%, transparent 60%),
+    linear-gradient(180deg, rgba(60, 40, 20, 0.06) 0%, transparent 30%, rgba(40, 28, 12, 0.12) 100%);
+}
+.letter-sheet-inner {
+  position: relative;
+  z-index: 1;
+  padding: 26px 22px 22px;
+  min-height: 120px;
+}
+.letter-task .letter-sheet-inner {
+  min-height: 168px;
+  padding: 30px 24px 26px;
+}
+.letter-hint .letter-sheet-inner,
+.letter-reveal .letter-sheet-inner {
+  min-height: 0;
+  padding: 18px 16px 16px;
+}
+.letter-eyebrow {
+  margin: 0 0 8px;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #6b4e2e;
+  text-align: center;
+}
+.letter-title {
+  margin: 0 0 12px;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(1.35rem, 5.5vw, 1.7rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: #2a1c10;
+  letter-spacing: 0.01em;
+  text-align: center;
+  text-wrap: balance;
+}
+.letter-body {
+  margin: 0;
+  font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+  font-size: 15.5px;
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.55;
+  color: #3a2a1a;
+  text-align: center;
+  text-wrap: pretty;
+}
+.letter-hint-panel {
+  margin: -4px 0 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.letter-hint-panel .letter-sheet {
+  margin: 0;
+}
+.walk-letter-era .hint-pill {
+  border-radius: 4px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+}
+.walk-letter-era .photo-slot-hint {
+  border-radius: 4px;
+  background: rgba(42, 28, 16, 0.72);
+  border-color: rgba(230, 200, 140, 0.28);
+}
+.walk-letter-era .input-sim-field {
+  font-family: "Playfair Display", Georgia, serif !important;
+  font-style: italic;
+  letter-spacing: 0.06em;
+}
+.scroll-card.letter-scroll-card {
+  padding: 26px 20px 20px;
+  border-radius: 4px;
+  text-align: left;
+  background:
+    linear-gradient(165deg, rgba(255, 248, 230, 0.2) 0%, transparent 45%),
+    #e6d7b8 url("assets/ui/antique-letter.jpg") center / cover no-repeat;
+  border: 1px solid rgba(92, 64, 32, 0.4);
+  box-shadow:
+    0 1px 0 rgba(255, 248, 230, 0.35) inset,
+    0 18px 40px rgba(0, 0, 0, 0.5);
+}
+.scroll-card.letter-scroll-card .scroll-title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 13px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #6b4e2e;
+  text-align: center;
+}
+.scroll-card.letter-scroll-card .scroll-body {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 16px;
+  font-weight: 500;
+  font-style: italic;
+  line-height: 1.5;
+  color: #2a1c10;
+  text-align: center;
+}
+.scroll-card.letter-scroll-card .btn {
+  font-family: "Playfair Display", Georgia, serif;
+}
