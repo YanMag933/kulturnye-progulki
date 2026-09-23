@@ -307,11 +307,8 @@ html[data-character] .walk-nav a {
   background: color-mix(in srgb, var(--theme-panel) 80%, transparent) !important;
 }
 html[data-character] .btn.primary {
-  background: var(--theme-accent) !important;
-  color: var(--theme-accent-ink) !important;
-}
-html[data-character="mayakovsky"] .btn.primary {
-  color: #fff8e8 !important;
+  /* цвет и объём задаёт ui-premium.css по поэту */
+  border-color: color-mix(in srgb, var(--theme-accent) 70%, #fff) !important;
 }
 html[data-character] .opt {
   background: color-mix(in srgb, var(--theme-cta) 88%, transparent) !important;
