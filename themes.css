@@ -874,8 +874,8 @@ html[data-theme="marble"] .theme-swatch::after {
   border: 0 !important;
 }
 .map-pin {
-  width: 34px;
-  height: 34px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -886,13 +886,13 @@ html[data-theme="marble"] .theme-swatch::after {
   box-shadow:
     0 1px 0 rgba(255, 248, 230, 0.55) inset,
     0 -2px 4px rgba(40, 28, 16, 0.35) inset,
-    0 4px 10px rgba(20, 12, 6, 0.45),
+    0 3px 8px rgba(20, 12, 6, 0.45),
     0 0 0 1.5px rgba(92, 64, 32, 0.55);
   transform: scale(0.4);
   opacity: 0;
 }
 .map-pin-wrap.is-revealed .map-pin {
-  animation: map-pin-pop 0.48s cubic-bezier(0.22, 1.15, 0.36, 1) forwards;
+  animation: map-pin-pop 0.55s cubic-bezier(0.22, 1.15, 0.36, 1) forwards;
 }
 @keyframes map-pin-pop {
   0% {
@@ -900,7 +900,7 @@ html[data-theme="marble"] .theme-swatch::after {
     opacity: 0;
   }
   65% {
-    transform: scale(1.1);
+    transform: scale(1.08);
     opacity: 1;
   }
   100% {
@@ -910,7 +910,7 @@ html[data-theme="marble"] .theme-swatch::after {
 }
 .map-pin-num {
   font-family: var(--font-ui, sans-serif);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 800;
   line-height: 1;
   color: #1a1208;

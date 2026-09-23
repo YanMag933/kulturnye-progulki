@@ -201,11 +201,11 @@
 
   function stopPinIcon(slot) {
     return L.divIcon({
-      className: "map-pin-wrap",
+      className: "map-pin-wrap is-revealed",
       html: `<div class="map-pin" aria-hidden="true"><span class="map-pin-num">${slot}</span></div>`,
-      iconSize: [34, 34],
-      iconAnchor: [17, 17],
-      tooltipAnchor: [0, -18],
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
+      tooltipAnchor: [0, -14],
     });
   }
 
@@ -375,10 +375,26 @@
     if (el) el.classList.add("is-revealed");
   }
 
+  function placeStopMarker(map, step, pos, index) {
+    return L.marker(pos, {
+      icon: stopPinIcon(step.slot || index + 1),
+      keyboard: false,
+      riseOnHover: true,
+      zIndexOffset: 400 + index,
+    })
+      .bindTooltip(`${step.slot || index + 1}. ${step.placeName}`, {
+        direction: "top",
+        sticky: true,
+        opacity: 0.95,
+        className: "map-pin-tip",
+      })
+      .addTo(map);
+  }
+
   async function playRouteReveal(map, roadLine, stepsWithGeo, markerPos) {
     const glow = L.polyline([], {
       color: "#3d2e22",
-      weight: 7,
+      weight: 6,
       opacity: 0.28,
       lineCap: "round",
       lineJoin: "round",
@@ -386,7 +402,7 @@
     }).addTo(map);
     const line = L.polyline([], {
       color: "#6b5340",
-      weight: 4,
+      weight: 3.5,
       opacity: 0.95,
       dashArray: "7 11",
       lineCap: "round",
@@ -394,44 +410,33 @@
       className: "route-dash",
     }).addTo(map);
 
-    const markers = stepsWithGeo.map((s, i) =>
-      L.marker(markerPos[i], {
-        icon: stopPinIcon(s.slot || i + 1),
-        keyboard: false,
-        riseOnHover: true,
-        zIndexOffset: 400 + i,
-      })
-        .bindTooltip(`${s.slot || i + 1}. ${s.placeName}`, {
-          direction: "top",
-          sticky: true,
-          opacity: 0.95,
-          className: "map-pin-tip",
-        })
-        .addTo(map)
-    );
-
     const stopIdx = stopIndicesOnLine(roadLine, stepsWithGeo);
     map.fitBounds(L.latLngBounds(roadLine).pad(0.22));
-    await waitMs(280);
+    await waitMs(400);
 
-    revealMapPin(markers[0]);
-    await waitMs(520);
+    // точка 1 — только старт, ещё до движения линии
+    placeStopMarker(map, stepsWithGeo[0], markerPos[0], 0);
+    await waitMs(700);
 
     for (let leg = 0; leg < stopIdx.length - 1; leg++) {
       const from = stopIdx[leg];
       const to = stopIdx[leg + 1];
       const span = Math.max(0, to - from);
       if (span < 4) {
+        // та же локация: линия почти не растёт, точку ставим после короткой паузы
         line.setLatLngs(roadLine.slice(0, to + 1));
         glow.setLatLngs(roadLine.slice(0, to + 1));
-        revealMapPin(markers[leg + 1]);
-        await waitMs(320);
+        await waitMs(450);
+        placeStopMarker(map, stepsWithGeo[leg + 1], markerPos[leg + 1], leg + 1);
+        await waitMs(500);
         continue;
       }
-      const duration = Math.min(2200, Math.max(1100, 700 + span * 16));
+      // сначала дорисовываем путь до следующей точки, и только потом пин
+      const duration = Math.min(3800, Math.max(2000, 1200 + span * 28));
       await animatePolylineTo(line, glow, roadLine, from, to, duration);
-      revealMapPin(markers[leg + 1]);
-      await waitMs(380);
+      await waitMs(180);
+      placeStopMarker(map, stepsWithGeo[leg + 1], markerPos[leg + 1], leg + 1);
+      await waitMs(550);
     }
 
     line.setLatLngs(roadLine);
