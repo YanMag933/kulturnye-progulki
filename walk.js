@@ -37,6 +37,7 @@
     document.body.classList.toggle("char-snow", id === "gogol");
     let fx = document.getElementById("char-fx");
     if (id === "gogol") {
+      // Снег на body: #app.innerHTML в shell() иначе стирает слой каждый экран.
       if (!fx) {
         fx = document.createElement("div");
         fx.id = "char-fx";
@@ -57,8 +58,7 @@
         fx.innerHTML =
           flakes.join("") +
           '<div class="char-devil" title=""></div><div class="char-inkblot a"></div><div class="char-inkblot b"></div>';
-        const host = document.querySelector(".phone-shell") || document.body;
-        host.appendChild(fx);
+        document.body.appendChild(fx);
       }
     } else if (fx) {
       fx.remove();
@@ -254,30 +254,50 @@
     return pos;
   }
 
-  function openRoutePoints(stepsWithGeo) {
-    const linePts = stepsWithGeo.map((s) => [s.lat, s.lon]);
-    if (linePts.length < 2) return linePts;
-    const first = linePts[0];
-    const last = linePts[linePts.length - 1];
-    const sameEnds =
-      Math.abs(first[0] - last[0]) < 0.00015 && Math.abs(first[1] - last[1]) < 0.00015;
-    return sameEnds ? linePts.slice(0, -1) : linePts;
+  function approxDist(a, b) {
+    return Math.hypot(a[0] - b[0], (a[1] - b[1]) * 1.6);
   }
 
-  async function fetchRoadGeometry(latLngs) {
-    if (!latLngs || latLngs.length < 2) return latLngs || [];
-    const coords = latLngs.map(([lat, lon]) => `${lon},${lat}`).join(";");
-    const url = `https://router.project-osrm.org/route/v1/foot/${coords}?overview=full&geometries=geojson&steps=false`;
+  /**
+   * Waypoints для OSRM: схлопываем соседние точки в одном месте
+   * (несколько заданий у памятника), но петлю возврата к старту сохраняем.
+   */
+  function osrmWaypoints(stepsWithGeo) {
+    const pts = [];
+    const eps = 0.00035; // ~40 м
+    for (const s of stepsWithGeo) {
+      const p = [Number(s.lat), Number(s.lon)];
+      if (!pts.length || approxDist(p, pts[pts.length - 1]) > eps) pts.push(p);
+    }
+    if (pts.length >= 2) return pts;
+    return stepsWithGeo.map((s) => [Number(s.lat), Number(s.lon)]);
+  }
+
+  async function fetchOneFootLeg(a, b) {
+    const url = `https://router.project-osrm.org/route/v1/foot/${a[1]},${a[0]};${b[1]},${b[0]}?overview=full&geometries=geojson&steps=false`;
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      const res = await fetch(url, { signal: AbortSignal.timeout(7000) });
       if (!res.ok) throw new Error("osrm");
       const data = await res.json();
       const geom = data?.routes?.[0]?.geometry?.coordinates;
       if (!geom || !geom.length) throw new Error("empty");
       return geom.map(([lon, lat]) => [lat, lon]);
     } catch (_) {
-      return latLngs;
+      return null;
     }
+  }
+
+  /** Геометрия пешком: попарно по сегментам — короче и логичнее, чем один multi-via. */
+  async function fetchRoadGeometry(latLngs) {
+    if (!latLngs || latLngs.length < 2) return latLngs || [];
+    const out = [];
+    for (let i = 0; i < latLngs.length - 1; i++) {
+      const leg = await fetchOneFootLeg(latLngs[i], latLngs[i + 1]);
+      const pts = leg && leg.length >= 2 ? leg : [latLngs[i], latLngs[i + 1]];
+      if (!out.length) out.push(...pts);
+      else out.push(...pts.slice(1));
+    }
+    return out.length >= 2 ? out : latLngs;
   }
 
   function routeBearing(a, b) {
@@ -289,10 +309,13 @@
     return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
   }
 
-  function nearestLineIndex(line, latlng) {
-    let best = 0;
+  /** Ближайшая точка на линии только вперёд от cursor — иначе возврат к старту
+   *  (Пушкин 9–10, Гоголь 6) цепляется к началу маршрута и пины вспыхивают рано. */
+  function nearestLineIndexFrom(line, latlng, fromIdx) {
+    const start = Math.max(0, Math.min(fromIdx | 0, line.length - 1));
+    let best = start;
     let bestD = Infinity;
-    for (let i = 0; i < line.length; i++) {
+    for (let i = start; i < line.length; i++) {
       const d = Math.hypot(line[i][0] - latlng[0], (line[i][1] - latlng[1]) * 1.6);
       if (d < bestD) {
         bestD = d;
@@ -303,11 +326,20 @@
   }
 
   function stopIndicesOnLine(roadLine, stepsWithGeo) {
-    const idxs = stepsWithGeo.map((s) => nearestLineIndex(roadLine, [Number(s.lat), Number(s.lon)]));
-    for (let i = 1; i < idxs.length; i++) {
-      if (idxs[i] <= idxs[i - 1]) idxs[i] = Math.min(roadLine.length - 1, idxs[i - 1] + 2);
+    const idxs = [];
+    let cursor = 0;
+    for (let i = 0; i < stepsWithGeo.length; i++) {
+      const s = stepsWithGeo[i];
+      let idx = nearestLineIndexFrom(roadLine, [Number(s.lat), Number(s.lon)], cursor);
+      if (i > 0 && idx <= idxs[i - 1]) {
+        idx = Math.min(roadLine.length - 1, idxs[i - 1] + 1);
+      }
+      idxs.push(idx);
+      cursor = idx;
     }
-    idxs[idxs.length - 1] = Math.max(idxs[idxs.length - 1], roadLine.length - 1);
+    if (idxs.length) {
+      idxs[idxs.length - 1] = Math.max(idxs[idxs.length - 1], roadLine.length - 1);
+    }
     return idxs;
   }
 
@@ -469,7 +501,7 @@
         attribution: "",
       }).addTo(mapInstance);
 
-      const openLine = openRoutePoints(stepsWithGeo);
+      const openLine = osrmWaypoints(stepsWithGeo);
       const roadLine = await fetchRoadGeometry(openLine);
       const markerPos = markerPositions(stepsWithGeo);
       setTimeout(() => mapInstance && mapInstance.invalidateSize(), 80);
@@ -713,6 +745,7 @@
       ${inner}
       ${footerHtml || ""}
     `;
+    applyCharacterTheme(quest.characterId);
   }
 
   function footer(canNext, feedback) {
