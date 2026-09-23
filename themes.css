@@ -1639,6 +1639,7 @@ html[data-character="gogol"] .a4-sheet.a4-mosaic {
   overflow: hidden;
   opacity: 0;
   visibility: hidden;
+  --cameo-lane: 58vh;
 }
 .poet-cameo.is-playing {
   opacity: 1;
@@ -1648,107 +1649,106 @@ html[data-character="gogol"] .a4-sheet.a4-mosaic {
 .cameo-anim {
   position: absolute;
   left: 0;
-  top: 0;
+  top: var(--cameo-lane);
   width: auto;
   height: clamp(78px, 19vw, 118px);
   object-fit: contain;
+  object-position: bottom center;
   background: transparent !important;
   border: 0 !important;
-  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.45));
+  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.4));
   user-select: none;
   -webkit-user-drag: none;
   will-change: transform, opacity;
-  image-rendering: auto;
+  transform: translateX(-40vw);
 }
 
+/* одна горизонтальная линия: только translateX, Y фиксирован через top */
 .poet-cameo--pushkin .cameo-cat-peek {
-  height: clamp(70px, 17vw, 104px);
+  height: clamp(64px, 15vw, 96px);
   opacity: 0;
-  animation: cameo-cat-peek-move 9.2s ease-in-out both;
+  animation: cameo-cat-peek-move 8.5s linear both;
 }
 .poet-cameo--pushkin .cameo-cat-walk {
-  height: clamp(76px, 18vw, 112px);
+  height: clamp(72px, 17vw, 108px);
   opacity: 0;
-  animation: cameo-cat-walk-move 9.2s cubic-bezier(0.4, 0.05, 0.2, 1) both;
-  transform-origin: 50% 100%;
+  animation: cameo-cat-walk-move 8.5s linear both;
 }
 @keyframes cameo-cat-peek-move {
-  0%, 2% { opacity: 0; transform: translate(-12vw, 68vh) scale(0.9); }
-  8% { opacity: 1; transform: translate(2vw, 66vh) scale(1); }
-  16% { transform: translate(4vw, 65vh) scale(1.04); }
-  22%, 100% { opacity: 0; transform: translate(-10vw, 68vh) scale(0.92); }
+  0%, 3% { opacity: 0; transform: translateX(-14vw); }
+  8% { opacity: 1; transform: translateX(2vw); }
+  18% { opacity: 1; transform: translateX(5vw); }
+  22%, 100% { opacity: 0; transform: translateX(-10vw); }
 }
 @keyframes cameo-cat-walk-move {
-  0%, 20% { opacity: 0; transform: translate(-28vw, 76vh); }
-  24% { opacity: 1; transform: translate(4vw, 74vh); }
-  46% { opacity: 1; transform: translate(calc(var(--cameo-btn-x, 70vw) - 52px), calc(var(--cameo-btn-y, 82vh) + 4px)); }
-  52% { transform: translate(calc(var(--cameo-btn-x, 70vw) - 44px), calc(var(--cameo-btn-y, 82vh) - 78px)) scale(1.08); }
-  60% { transform: translate(calc(var(--cameo-btn-x, 70vw) - 44px), calc(var(--cameo-btn-y, 82vh) - 72px)) scale(1); }
-  66% { transform: translate(calc(var(--cameo-btn-x, 70vw) - 36px), 74vh); }
-  88% { opacity: 1; transform: translate(110vw, 72vh); }
-  100% { opacity: 0; transform: translate(125vw, 72vh); }
+  0%, 20% { opacity: 0; transform: translateX(-30vw); }
+  24% { opacity: 1; transform: translateX(0vw); }
+  55% { opacity: 1; transform: translateX(48vw); }
+  62% { opacity: 1; transform: translateX(52vw); }
+  88% { opacity: 1; transform: translateX(110vw); }
+  100% { opacity: 0; transform: translateX(120vw); }
 }
 
 .poet-cameo--mayakovsky .cameo-worker {
-  height: clamp(100px, 24vw, 148px);
+  height: clamp(210px, 52vw, 300px);
+  width: auto;
   left: 50%;
-  margin-left: calc(clamp(100px, 24vw, 148px) / -2);
+  margin-left: calc(clamp(210px, 52vw, 300px) * -0.28);
   opacity: 0;
-  animation: cameo-worker-move 7.2s cubic-bezier(0.33, 0.1, 0.2, 1) both;
-  transform-origin: 50% 100%;
+  animation: cameo-worker-move 7.5s linear both;
 }
 @keyframes cameo-worker-move {
-  0% { opacity: 0; transform: translateY(42vh) scale(0.85); }
-  10% { opacity: 1; transform: translateY(58vh) scale(1); }
-  55% { opacity: 1; transform: translateY(56vh) scale(1.04); }
-  78% { opacity: 1; transform: translate(-48vw, 58vh) scale(0.96); }
-  100% { opacity: 0; transform: translate(-70vw, 62vh) scale(0.9); }
+  0% { opacity: 0; transform: translateX(-8vw); }
+  12% { opacity: 1; transform: translateX(0); }
+  70% { opacity: 1; transform: translateX(0); }
+  88% { opacity: 1; transform: translateX(-55vw); }
+  100% { opacity: 0; transform: translateX(-70vw); }
 }
 
 .poet-cameo--gogol .cameo-devil {
-  height: clamp(82px, 20vw, 124px);
+  height: clamp(78px, 18vw, 112px);
   opacity: 0;
   z-index: 2;
-  animation: cameo-devil-move 9.8s cubic-bezier(0.4, 0.05, 0.25, 1) both;
+  animation: cameo-devil-move 10s linear both;
 }
 .poet-cameo--gogol .cameo-baba {
-  height: clamp(104px, 25vw, 152px);
+  height: clamp(130px, 30vw, 180px);
   opacity: 0;
   z-index: 3;
-  animation: cameo-baba-move 9.8s cubic-bezier(0.35, 0.05, 0.2, 1) both;
+  animation: cameo-baba-move 10s linear both;
 }
 @keyframes cameo-devil-move {
-  0%, 4% { opacity: 0; transform: translate(108vw, 70vh); }
-  12% { opacity: 1; transform: translate(62vw, 68vh); }
-  28% { transform: translate(40vw, 70vh); }
-  42% { transform: translate(26vw, 66vh); }
-  55% { transform: translate(58vw, 68vh); }
-  72% { opacity: 1; transform: translate(96vw, 66vh); }
-  90%, 100% { opacity: 0; transform: translate(122vw, 70vh); }
+  0%, 5% { opacity: 0; transform: translateX(110vw); }
+  14% { opacity: 1; transform: translateX(70vw); }
+  35% { opacity: 1; transform: translateX(32vw); }
+  55% { opacity: 1; transform: translateX(55vw); }
+  78% { opacity: 1; transform: translateX(100vw); }
+  92%, 100% { opacity: 0; transform: translateX(125vw); }
 }
 @keyframes cameo-baba-move {
-  0%, 16% { opacity: 0; transform: translate(-48vw, 62vh); }
-  26% { opacity: 1; transform: translate(6vw, 60vh); }
-  48% { transform: translate(32vw, 58vh); }
-  68% { transform: translate(70vw, 60vh); }
-  84% { opacity: 1; transform: translate(108vw, 58vh); }
-  96%, 100% { opacity: 0; transform: translate(128vw, 62vh); }
+  0%, 18% { opacity: 0; transform: translateX(-45vw); }
+  28% { opacity: 1; transform: translateX(5vw); }
+  50% { opacity: 1; transform: translateX(35vw); }
+  72% { opacity: 1; transform: translateX(72vw); }
+  88% { opacity: 1; transform: translateX(110vw); }
+  98%, 100% { opacity: 0; transform: translateX(128vw); }
 }
 
 .poet-cameo--griboedov .cameo-carriage {
-  height: clamp(72px, 18vw, 120px);
-  width: clamp(160px, 46vw, 300px);
-  max-width: 78vw;
+  height: clamp(70px, 17vw, 110px);
+  width: clamp(170px, 48vw, 300px);
+  max-width: 80vw;
   opacity: 0;
-  animation: cameo-carriage-move 7.8s cubic-bezier(0.35, 0.05, 0.2, 1) both;
+  animation: cameo-carriage-move 9s linear both;
 }
+/* спокойно вправо → пауза в центре → дальше вправо по одной линии */
 @keyframes cameo-carriage-move {
-  0% { opacity: 0; transform: translate(-60vw, 72vh); }
-  8% { opacity: 1; transform: translate(-8vw, 70vh); }
-  40% { transform: translate(36vw, 68vh); }
-  52% { transform: translate(44vw, 70vh); }
-  78% { opacity: 1; transform: translate(100vw, 68vh); }
-  100% { opacity: 0; transform: translate(130vw, 72vh); }
+  0% { opacity: 0; transform: translateX(-60vw); }
+  10% { opacity: 1; transform: translateX(-20vw); }
+  40% { opacity: 1; transform: translateX(28vw); }
+  55% { opacity: 1; transform: translateX(30vw); }
+  88% { opacity: 1; transform: translateX(115vw); }
+  100% { opacity: 0; transform: translateX(130vw); }
 }
 
 @media (prefers-reduced-motion: reduce) {
