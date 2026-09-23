@@ -888,7 +888,25 @@ html[data-theme="marble"] .theme-swatch::after {
     0 -2px 4px rgba(40, 28, 16, 0.35) inset,
     0 4px 10px rgba(20, 12, 6, 0.45),
     0 0 0 1.5px rgba(92, 64, 32, 0.55);
-  transform: translateZ(0);
+  transform: scale(0.4);
+  opacity: 0;
+}
+.map-pin-wrap.is-revealed .map-pin {
+  animation: map-pin-pop 0.48s cubic-bezier(0.22, 1.15, 0.36, 1) forwards;
+}
+@keyframes map-pin-pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  65% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 .map-pin-num {
   font-family: var(--font-ui, sans-serif);
@@ -1389,12 +1407,12 @@ html[data-character="gogol"] .a4-sheet.a4-mosaic {
 .scrap-piece-text {
   margin: 0;
   width: 100%;
-  font-family: "Playfair Display", Georgia, serif;
-  font-size: clamp(11px, 3vw, 13px);
-  font-style: italic;
+  font-family: "Caveat", "Marck Script", Georgia, cursive;
+  font-size: clamp(15px, 4.2vw, 18px);
+  font-style: normal;
   font-weight: 500;
-  line-height: 1.4;
-  color: #1e140c !important;
+  line-height: 1.35;
+  color: #1a1008 !important;
   text-align: left;
   text-shadow:
     0 1px 0 rgba(255, 250, 235, 0.75),
@@ -1403,15 +1421,15 @@ html[data-character="gogol"] .a4-sheet.a4-mosaic {
   text-wrap: pretty;
 }
 .scrap-reveal .scrap-piece-text {
-  font-size: clamp(16px, 4.6vw, 19px);
-  line-height: 1.52;
+  font-size: clamp(1.25rem, 5.2vw, 1.55rem);
+  line-height: 1.4;
   text-align: left;
   max-width: 28ch;
   margin: 0 auto;
 }
 .a4-tray-item .scrap-piece-text {
-  font-size: clamp(9px, 2.3vw, 11px);
-  line-height: 1.28;
+  font-size: clamp(12px, 3.2vw, 15px);
+  line-height: 1.25;
 }
 .scrap-piece.is-right .scrap-piece-text,
 .a4-slot.is-right .scrap-piece-text {
@@ -1578,8 +1596,8 @@ html[data-character="gogol"] .a4-sheet.a4-mosaic {
   box-sizing: border-box;
 }
 .a4-slot .scrap-piece-text {
-  font-size: clamp(8.5px, 2.15vw, 11px);
-  line-height: 1.32;
+  font-size: clamp(11px, 2.8vw, 14px);
+  line-height: 1.28;
 }
 .a4-tray-rail {
   display: flex;

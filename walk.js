@@ -289,8 +289,62 @@
     return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
   }
 
+  function nearestLineIndex(line, latlng) {
+    let best = 0;
+    let bestD = Infinity;
+    for (let i = 0; i < line.length; i++) {
+      const d = Math.hypot(line[i][0] - latlng[0], (line[i][1] - latlng[1]) * 1.6);
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  function stopIndicesOnLine(roadLine, stepsWithGeo) {
+    const idxs = stepsWithGeo.map((s) => nearestLineIndex(roadLine, [Number(s.lat), Number(s.lon)]));
+    for (let i = 1; i < idxs.length; i++) {
+      if (idxs[i] <= idxs[i - 1]) idxs[i] = Math.min(roadLine.length - 1, idxs[i - 1] + 2);
+    }
+    idxs[idxs.length - 1] = Math.max(idxs[idxs.length - 1], roadLine.length - 1);
+    return idxs;
+  }
+
+  function waitMs(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  function animatePolylineTo(line, glow, roadLine, fromIdx, toIdx, durationMs) {
+    const start = performance.now();
+    const from = Math.max(0, fromIdx);
+    const to = Math.max(from, toIdx);
+    return new Promise((resolve) => {
+      const frame = (now) => {
+        if (!mapInstance) {
+          resolve();
+          return;
+        }
+        const t = Math.min(1, (now - start) / durationMs);
+        const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+        const end = Math.floor(from + (to - from) * ease);
+        const pts = roadLine.slice(0, Math.max(end, from) + 1);
+        line.setLatLngs(pts);
+        if (glow) glow.setLatLngs(pts);
+        if (t < 1) requestAnimationFrame(frame);
+        else {
+          line.setLatLngs(roadLine.slice(0, to + 1));
+          if (glow) glow.setLatLngs(roadLine.slice(0, to + 1));
+          resolve();
+        }
+      };
+      requestAnimationFrame(frame);
+    });
+  }
+
   function addRouteArrows(map, latLngs) {
-    if (!latLngs || latLngs.length < 2) return;
+    if (!latLngs || latLngs.length < 2) return [];
+    const markers = [];
     const total = latLngs.length;
     const count = Math.min(14, Math.max(6, Math.floor(total / 18)));
     const step = Math.max(1, Math.floor(total / (count + 1)));
@@ -298,7 +352,7 @@
       const a = latLngs[i];
       const b = latLngs[Math.min(i + Math.max(2, Math.floor(step / 3)), total - 1)];
       const deg = routeBearing(a, b);
-      L.marker(a, {
+      const m = L.marker(a, {
         interactive: false,
         keyboard: false,
         zIndexOffset: 200,
@@ -311,7 +365,78 @@
           iconAnchor: [9, 9],
         }),
       }).addTo(map);
+      markers.push(m);
     }
+    return markers;
+  }
+
+  function revealMapPin(marker) {
+    const el = marker && marker.getElement && marker.getElement();
+    if (el) el.classList.add("is-revealed");
+  }
+
+  async function playRouteReveal(map, roadLine, stepsWithGeo, markerPos) {
+    const glow = L.polyline([], {
+      color: "#3d2e22",
+      weight: 7,
+      opacity: 0.28,
+      lineCap: "round",
+      lineJoin: "round",
+      interactive: false,
+    }).addTo(map);
+    const line = L.polyline([], {
+      color: "#6b5340",
+      weight: 4,
+      opacity: 0.95,
+      dashArray: "7 11",
+      lineCap: "round",
+      lineJoin: "round",
+      className: "route-dash",
+    }).addTo(map);
+
+    const markers = stepsWithGeo.map((s, i) =>
+      L.marker(markerPos[i], {
+        icon: stopPinIcon(s.slot || i + 1),
+        keyboard: false,
+        riseOnHover: true,
+        zIndexOffset: 400 + i,
+      })
+        .bindTooltip(`${s.slot || i + 1}. ${s.placeName}`, {
+          direction: "top",
+          sticky: true,
+          opacity: 0.95,
+          className: "map-pin-tip",
+        })
+        .addTo(map)
+    );
+
+    const stopIdx = stopIndicesOnLine(roadLine, stepsWithGeo);
+    map.fitBounds(L.latLngBounds(roadLine).pad(0.22));
+    await waitMs(280);
+
+    revealMapPin(markers[0]);
+    await waitMs(520);
+
+    for (let leg = 0; leg < stopIdx.length - 1; leg++) {
+      const from = stopIdx[leg];
+      const to = stopIdx[leg + 1];
+      const span = Math.max(0, to - from);
+      if (span < 4) {
+        line.setLatLngs(roadLine.slice(0, to + 1));
+        glow.setLatLngs(roadLine.slice(0, to + 1));
+        revealMapPin(markers[leg + 1]);
+        await waitMs(320);
+        continue;
+      }
+      const duration = Math.min(2200, Math.max(1100, 700 + span * 16));
+      await animatePolylineTo(line, glow, roadLine, from, to, duration);
+      revealMapPin(markers[leg + 1]);
+      await waitMs(380);
+    }
+
+    line.setLatLngs(roadLine);
+    glow.setLatLngs(roadLine);
+    addRouteArrows(map, roadLine);
   }
 
   async function mountLeafletMap() {
@@ -341,43 +466,9 @@
 
       const openLine = openRoutePoints(stepsWithGeo);
       const roadLine = await fetchRoadGeometry(openLine);
-      L.polyline(roadLine, {
-        color: "#3d2e22",
-        weight: 7,
-        opacity: 0.28,
-        lineCap: "round",
-        lineJoin: "round",
-        interactive: false,
-      }).addTo(mapInstance);
-      const line = L.polyline(roadLine, {
-        color: "#6b5340",
-        weight: 4,
-        opacity: 0.95,
-        dashArray: "7 11",
-        lineCap: "round",
-        lineJoin: "round",
-        className: "route-dash",
-      }).addTo(mapInstance);
-      addRouteArrows(mapInstance, roadLine);
-
       const markerPos = markerPositions(stepsWithGeo);
-      stepsWithGeo.forEach((s, i) => {
-        L.marker(markerPos[i], {
-          icon: stopPinIcon(s.slot || i + 1),
-          keyboard: false,
-          riseOnHover: true,
-          zIndexOffset: 400 + i,
-        })
-          .bindTooltip(`${s.slot || i + 1}. ${s.placeName}`, {
-            direction: "top",
-            sticky: true,
-            opacity: 0.95,
-            className: "map-pin-tip",
-          })
-          .addTo(mapInstance);
-      });
-      mapInstance.fitBounds(line.getBounds().pad(0.22));
       setTimeout(() => mapInstance && mapInstance.invalidateSize(), 80);
+      await playRouteReveal(mapInstance, roadLine, stepsWithGeo, markerPos);
       return true;
     } catch (_) {
       return false;
