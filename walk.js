@@ -1157,7 +1157,7 @@
     const align = piece.x >= 50 ? " is-right" : " is-left";
     return `<div class="scrap-piece scrap-rect scrap-${piece.id}${blur}${placed}${tray}${align}" data-piece="${piece.id}" data-order="${piece.order}" style="clip-path:${clip};-webkit-clip-path:${clip};--scrap-rot:${rot}deg">
       <div class="scrap-piece-face">
-        <p class="scrap-piece-text">${letterLines(piece.text)}</p>
+        <div class="scrap-piece-text">${letterLines(piece.text)}</div>
       </div>
     </div>`;
   }
@@ -1703,7 +1703,7 @@
         return `<div class="a4-slot${filled ? " is-filled" : ""}${align}" data-order="${p.order}" data-piece="${p.id}" style="left:${p.x}%;top:${p.y}%;width:${p.w}%;height:${p.h}%;clip-path:${clip};-webkit-clip-path:${clip}">
           ${
             filled
-              ? `<div class="a4-slot-face"><p class="scrap-piece-text">${letterLines(p.text)}</p></div>`
+              ? `<div class="a4-slot-face"><div class="scrap-piece-text">${letterLines(p.text)}</div></div>`
               : `<div class="a4-slot-ghost" aria-hidden="true"></div>`
           }
         </div>`;
@@ -1720,7 +1720,7 @@
         return `<div class="a4-tray-item" data-piece="${p.id}">
           <div class="scrap-piece scrap-rect is-tray${align}" data-piece="${p.id}" data-order="${p.order}" style="clip-path:${clip};-webkit-clip-path:${clip};--scrap-rot:${rot}deg">
             <div class="scrap-piece-face">
-              <p class="scrap-piece-text">${letterLines(p.text)}</p>
+              <div class="scrap-piece-text">${letterLines(p.text)}</div>
             </div>
           </div>
         </div>`;
