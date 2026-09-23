@@ -1128,7 +1128,7 @@ html[data-theme="crystal"] .home-premium h1 {
     0 14px 32px rgba(0, 0, 0, 0.4);
   background:
     linear-gradient(165deg, rgba(255, 248, 230, 0.18) 0%, transparent 42%),
-    #e6d7b8 url("assets/ui/antique-letter.jpg") center / cover no-repeat;
+    #e6d7b8 url("assets/ui/paper/paper-fill.jpg") center / cover no-repeat;
   border: 1px solid rgba(92, 64, 32, 0.35);
 }
 .letter-sheet::before {
@@ -1238,7 +1238,7 @@ html[data-theme="crystal"] .home-premium h1 {
   text-align: center;
   background:
     linear-gradient(165deg, rgba(255, 248, 230, 0.2) 0%, transparent 45%),
-    #e6d7b8 url("assets/ui/antique-letter.jpg") center / cover no-repeat;
+    #e6d7b8 url("assets/ui/paper/paper-fill.jpg") center / cover no-repeat;
   border: 1px solid rgba(92, 64, 32, 0.4);
   box-shadow:
     0 1px 0 rgba(255, 248, 230, 0.35) inset,
@@ -1281,7 +1281,7 @@ html[data-theme="crystal"] .home-premium h1 {
     0 0 0 1px rgba(120, 80, 30, 0.2);
 }
 
-/* Обрывки письма · А4 мозаика */
+/* Обрывки письма · форма = clip-path надрыва, заливка = текстура бумаги (не фото обрывка) */
 .scrap-reveal {
   margin: 0 0 14px;
   display: flex;
@@ -1299,26 +1299,58 @@ html[data-theme="crystal"] .home-premium h1 {
   display: flex;
   align-items: stretch;
   justify-content: stretch;
-  background:
-    linear-gradient(165deg, rgba(255, 248, 230, 0.2) 0%, transparent 42%),
-    #e4d4b4 url("assets/ui/paper/scrap-torn-corner.jpg") center / cover no-repeat;
+  isolation: isolate;
+  background-color: #e8dcc0;
+  background-image:
+    linear-gradient(165deg, rgba(255, 250, 235, 0.35) 0%, transparent 45%),
+    radial-gradient(ellipse 70% 50% at 20% 80%, rgba(120, 80, 40, 0.12), transparent 60%),
+    url("assets/ui/paper/paper-fill.jpg");
+  background-size: auto, auto, cover;
+  background-position: center;
   box-shadow:
-    0 1px 0 rgba(255, 248, 230, 0.35) inset,
-    0 10px 22px rgba(0, 0, 0, 0.28);
-  filter: drop-shadow(0 6px 10px rgba(40, 28, 16, 0.22));
+    0 1px 0 rgba(255, 248, 230, 0.55) inset,
+    0 0 0 1px rgba(90, 60, 30, 0.18) inset;
+  filter:
+    drop-shadow(0 1px 0 rgba(255, 250, 235, 0.45))
+    drop-shadow(0 8px 14px rgba(30, 20, 10, 0.35));
+}
+/* волокнистый край поверх clip-path */
+.scrap-piece::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background:
+    radial-gradient(circle at 8% 22%, rgba(255, 248, 230, 0.55) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 92% 38%, rgba(255, 248, 230, 0.4) 0 1px, transparent 2px),
+    radial-gradient(circle at 18% 78%, rgba(70, 45, 20, 0.25) 0 1.5px, transparent 3px),
+    radial-gradient(circle at 78% 12%, rgba(70, 45, 20, 0.2) 0 1px, transparent 2.5px);
+  mix-blend-mode: soft-light;
+  opacity: 0.85;
 }
 html[data-character="mayakovsky"] .scrap-piece {
-  background:
-    linear-gradient(165deg, rgba(255, 248, 230, 0.15) 0%, transparent 40%),
-    #ddd8ce url("assets/ui/paper/scrap-graph.jpg") center / cover no-repeat;
+  background-color: #ddd8ce;
+  background-image:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.2) 0%, transparent 40%),
+    url("assets/ui/paper/scrap-graph.jpg");
+  background-size: auto, cover;
 }
 html[data-character="gogol"] .scrap-piece,
 html[data-character="gogol"] .a4-sheet.a4-mosaic {
-  background:
+  background-color: #d8c4a0;
+  background-image:
     linear-gradient(165deg, rgba(255, 248, 230, 0.12) 0%, transparent 40%),
-    #d8c4a0 url("assets/ui/paper/scrap-burnt.png") center / cover no-repeat;
+    url("assets/ui/paper/paper-fill-torn.jpg");
+  background-size: auto, cover;
+  filter:
+    drop-shadow(0 1px 0 rgba(255, 230, 200, 0.25))
+    drop-shadow(0 8px 14px rgba(20, 10, 5, 0.4))
+    brightness(0.96) saturate(0.9);
 }
 .scrap-piece-face {
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: 100%;
   padding: 16px 18px 18px;
@@ -1337,13 +1369,13 @@ html[data-character="gogol"] .a4-sheet.a4-mosaic {
   font-family: "Playfair Display", Georgia, serif;
   font-size: clamp(11px, 3vw, 13px);
   font-style: italic;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.4;
-  color: #2a1c10;
+  color: #1e140c !important;
   text-align: left;
   text-shadow:
-    0 1px 0 rgba(255, 248, 230, 0.7),
-    0 1px 2px rgba(40, 28, 16, 0.28);
+    0 1px 0 rgba(255, 250, 235, 0.85),
+    0 0 2px rgba(232, 220, 192, 0.9);
   white-space: pre-line;
   text-wrap: pretty;
 }
@@ -1440,7 +1472,7 @@ html[data-character="gogol"] .a4-sheet.a4-mosaic {
   border-radius: 2px;
   background:
     linear-gradient(180deg, rgba(255, 248, 230, 0.18), transparent 30%),
-    #e4d4b4 url("assets/ui/torn-paper-texture.jpg") center / cover no-repeat;
+    #e4d4b4 url("assets/ui/paper/paper-fill.jpg") center / cover no-repeat;
   border: 1px solid rgba(92, 64, 32, 0.35);
   box-shadow:
     0 1px 0 rgba(255, 248, 230, 0.35) inset,
