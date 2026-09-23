@@ -1866,6 +1866,58 @@ html[data-character="gogol"] .a4-sheet.a4-mosaic {
   }
 }
 
+/* Грибоедов · карета («Карету подали») */
+.poet-cameo--griboedov .cameo-carriage {
+  height: clamp(64px, 16vw, 100px);
+  width: auto;
+  max-width: min(78vw, 340px);
+  left: 0;
+  top: 0;
+  bottom: auto;
+  opacity: 0;
+  animation: cameo-carriage-ride 7.8s cubic-bezier(0.35, 0.05, 0.2, 1) both;
+  transform-origin: 50% 100%;
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.5));
+}
+@keyframes cameo-carriage-ride {
+  0% {
+    opacity: 0;
+    transform: translate(-55vw, 78vh) scaleX(-1);
+  }
+  8% {
+    opacity: 1;
+    transform: translate(-5vw, 76vh) scaleX(-1) translateY(0);
+  }
+  18% {
+    transform: translate(12vw, 75vh) scaleX(-1) translateY(-3px);
+  }
+  28% {
+    transform: translate(28vw, 76vh) scaleX(-1) translateY(0);
+  }
+  38% {
+    transform: translate(42vw, 74vh) scaleX(-1) translateY(-4px) rotate(-1deg);
+  }
+  48% {
+    /* лёгкая остановка — «подали» */
+    transform: translate(48vw, 76vh) scaleX(-1) translateY(0) rotate(0deg);
+  }
+  56% {
+    transform: translate(52vw, 75vh) scaleX(-1) translateY(-2px) rotate(1deg);
+  }
+  72% {
+    opacity: 1;
+    transform: translate(95vw, 74vh) scaleX(-1) translateY(0);
+  }
+  88% {
+    opacity: 1;
+    transform: translate(118vw, 76vh) scaleX(-1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(130vw, 78vh) scaleX(-1);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .poet-cameo.is-playing {
     display: none;

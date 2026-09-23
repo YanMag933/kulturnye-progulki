@@ -718,7 +718,7 @@
     if (progress.stepIndex !== 1) return;
     if (progress.cameoPlayed) return;
     const id = quest.characterId;
-    if (id !== "pushkin" && id !== "mayakovsky" && id !== "gogol") return;
+    if (id !== "pushkin" && id !== "mayakovsky" && id !== "gogol" && id !== "griboedov") return;
     clearTimeout(window.__poetCameoTimer);
     window.__poetCameoTimer = setTimeout(() => playPoetCameo(id), 500);
   }
@@ -768,6 +768,9 @@
       html = `
         <img class="cameo-sprite cameo-devil" src="${base}/poet-devil.png" alt="" draggable="false" />
         <img class="cameo-sprite cameo-baba" src="${base}/poet-baba-broom.png" alt="" draggable="false" />`;
+    } else if (id === "griboedov") {
+      duration = 7800;
+      html = `<img class="cameo-sprite cameo-carriage" src="${base}/poet-carriage.png" alt="" draggable="false" />`;
     }
 
     layer.className = `poet-cameo poet-cameo--${id} is-playing`;
