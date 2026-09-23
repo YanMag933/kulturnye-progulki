@@ -42,8 +42,21 @@
         fx.id = "char-fx";
         fx.className = "char-fx char-fx-gogol";
         fx.setAttribute("aria-hidden", "true");
+        const flakes = [];
+        for (let i = 0; i < 56; i++) {
+          const x = (i * 17 + (i % 7) * 9) % 100;
+          const size = 2 + (i % 5);
+          const dur = 7 + (i % 9) * 1.1;
+          const delay = -((i * 0.37) % 14);
+          const drift = ((i % 2 === 0 ? 1 : -1) * (8 + (i % 18))).toFixed(0);
+          const op = (0.55 + (i % 5) * 0.08).toFixed(2);
+          flakes.push(
+            `<span class="char-snowflake" style="--x:${x}%;--size:${size}px;--dur:${dur}s;--delay:${delay}s;--drift:${drift}px;--op:${op}"></span>`
+          );
+        }
         fx.innerHTML =
-          '<div class="char-snow-layer"></div><div class="char-snow-layer char-snow-layer-b"></div><div class="char-devil" title=""></div><div class="char-inkblot a"></div><div class="char-inkblot b"></div>';
+          flakes.join("") +
+          '<div class="char-devil" title=""></div><div class="char-inkblot a"></div><div class="char-inkblot b"></div>';
         const host = document.querySelector(".phone-shell") || document.body;
         host.appendChild(fx);
       }

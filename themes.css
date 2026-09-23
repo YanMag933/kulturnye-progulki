@@ -344,7 +344,7 @@ html[data-character] .a4-done-note {
   pointer-events: none;
   position: absolute;
   inset: 0;
-  z-index: 3;
+  z-index: 4;
   overflow: hidden;
 }
 .phone-shell {
@@ -355,37 +355,38 @@ html[data-character] .home-shell {
   position: relative;
   z-index: 2;
 }
-.char-snow-layer {
+.char-snowflake {
   position: absolute;
-  inset: -30% 0 0;
-  background-image:
-    radial-gradient(2.5px 2.5px at 8% 12%, rgba(255, 255, 255, 0.95), transparent),
-    radial-gradient(1.5px 1.5px at 18% 42%, rgba(255, 255, 255, 0.8), transparent),
-    radial-gradient(2px 2px at 28% 78%, rgba(255, 255, 255, 0.85), transparent),
-    radial-gradient(1px 1px at 38% 22%, rgba(255, 255, 255, 0.7), transparent),
-    radial-gradient(2.5px 2.5px at 48% 55%, rgba(255, 255, 255, 0.9), transparent),
-    radial-gradient(1.5px 1.5px at 58% 8%, rgba(255, 255, 255, 0.75), transparent),
-    radial-gradient(2px 2px at 68% 68%, rgba(255, 255, 255, 0.88), transparent),
-    radial-gradient(1px 1px at 78% 34%, rgba(255, 255, 255, 0.65), transparent),
-    radial-gradient(2.5px 2.5px at 88% 88%, rgba(255, 255, 255, 0.92), transparent),
-    radial-gradient(1.5px 1.5px at 94% 48%, rgba(255, 255, 255, 0.7), transparent);
-  background-size: 160px 200px;
-  animation: char-snow-fall 14s linear infinite;
-  opacity: 0.72;
+  top: -8%;
+  left: var(--x, 50%);
+  width: var(--size, 3px);
+  height: var(--size, 3px);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.45);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: char-flake-fall var(--dur, 10s) linear infinite;
+  animation-delay: var(--delay, 0s);
 }
-.char-snow-layer-b {
-  background-size: 220px 280px;
-  animation-duration: 22s;
-  animation-direction: reverse;
-  opacity: 0.45;
+@keyframes char-flake-fall {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  8% {
+    opacity: var(--op, 0.85);
+  }
+  85% {
+    opacity: var(--op, 0.85);
+  }
+  100% {
+    transform: translate3d(var(--drift, 18px), 115vh, 0);
+    opacity: 0;
+  }
 }
-@keyframes char-snow-fall {
-  from { transform: translateY(-12%); }
-  to { transform: translateY(45%); }
-}
-body.char-snow .walk-screen,
-body.char-snow .panel {
-  /* снег поверх фона, контент читается */
+.char-snow-layer {
+  display: none;
 }
 .char-devil {
   position: absolute;
@@ -1198,31 +1199,33 @@ html[data-theme="crystal"] .home-premium h1 {
 }
 .letter-title {
   margin: 0 0 12px;
-  font-family: "Marck Script", "Caveat", Georgia, cursive;
-  font-size: clamp(1.55rem, 6.5vw, 2rem);
-  font-weight: 400;
-  line-height: 1.25;
-  color: #1a1008;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(1.35rem, 5.5vw, 1.7rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: #2a1c10;
   letter-spacing: 0.01em;
   text-align: center;
   text-wrap: balance;
   text-shadow:
-    0 1px 0 rgba(255, 248, 230, 0.55),
-    0 0 1px rgba(40, 28, 16, 0.35);
+    0 1px 0 rgba(255, 248, 230, 0.75),
+    0 1px 2px rgba(40, 28, 16, 0.35),
+    0 0 1px rgba(40, 28, 16, 0.4);
 }
 .letter-body {
   margin: 0;
-  font-family: "Caveat", "Marck Script", Georgia, cursive;
-  font-size: clamp(1.2rem, 4.8vw, 1.45rem);
+  font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+  font-size: 15.5px;
   font-weight: 500;
-  font-style: normal;
-  line-height: 1.45;
-  color: #1e140c;
+  font-style: italic;
+  line-height: 1.55;
+  color: #2f2116;
   text-align: center;
   text-wrap: pretty;
   text-shadow:
-    0 1px 0 rgba(255, 248, 230, 0.5),
-    0 0 1px rgba(40, 28, 16, 0.25);
+    0 1px 0 rgba(255, 248, 230, 0.7),
+    0 1px 2px rgba(40, 28, 16, 0.32),
+    0 0 1px rgba(40, 28, 16, 0.35);
 }
 .letter-assembled .letter-body {
   text-align: left;
@@ -1276,16 +1279,16 @@ html[data-theme="crystal"] .home-premium h1 {
 }
 .scroll-card.letter-scroll-card .scroll-body {
   margin: 0 0 20px;
-  font-family: "Caveat", "Marck Script", Georgia, cursive;
-  font-size: clamp(1.25rem, 5vw, 1.5rem);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 16px;
   font-weight: 500;
-  font-style: normal;
-  line-height: 1.4;
-  color: #1e140c;
+  font-style: italic;
+  line-height: 1.55;
+  color: #2a1c10;
   text-align: center;
   text-shadow:
-    0 1px 0 rgba(255, 248, 230, 0.55),
-    0 0 1px rgba(40, 28, 16, 0.25);
+    0 1px 0 rgba(255, 248, 230, 0.7),
+    0 1px 2px rgba(40, 28, 16, 0.32);
 }
 .scroll-card.letter-scroll-card .btn,
 .letter-premium-btn {
@@ -1356,13 +1359,6 @@ html[data-theme="crystal"] .home-premium h1 {
   mix-blend-mode: soft-light;
   opacity: 0.85;
 }
-html[data-character="mayakovsky"] .scrap-piece {
-  background-color: #ddd8ce;
-  background-image:
-    linear-gradient(165deg, rgba(255, 255, 255, 0.2) 0%, transparent 40%),
-    url("assets/ui/paper/scrap-graph.jpg");
-  background-size: auto, cover;
-}
 html[data-character="gogol"] .scrap-piece,
 html[data-character="gogol"] .a4-sheet.a4-mosaic {
   background-color: #d8c4a0;
@@ -1393,11 +1389,11 @@ html[data-character="gogol"] .a4-sheet.a4-mosaic {
 .scrap-piece-text {
   margin: 0;
   width: 100%;
-  font-family: "Caveat", "Marck Script", Georgia, cursive;
-  font-size: clamp(15px, 4.2vw, 18px);
-  font-style: normal;
-  font-weight: 550;
-  line-height: 1.35;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(11px, 3vw, 13px);
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.4;
   color: #1e140c !important;
   text-align: left;
   text-shadow:
@@ -1407,15 +1403,15 @@ html[data-character="gogol"] .a4-sheet.a4-mosaic {
   text-wrap: pretty;
 }
 .scrap-reveal .scrap-piece-text {
-  font-size: clamp(1.25rem, 5.2vw, 1.55rem);
-  line-height: 1.4;
+  font-size: clamp(16px, 4.6vw, 19px);
+  line-height: 1.52;
   text-align: left;
   max-width: 28ch;
   margin: 0 auto;
 }
 .a4-tray-item .scrap-piece-text {
-  font-size: clamp(12px, 3vw, 15px);
-  line-height: 1.25;
+  font-size: clamp(9px, 2.3vw, 11px);
+  line-height: 1.28;
 }
 .scrap-piece.is-right .scrap-piece-text,
 .a4-slot.is-right .scrap-piece-text {
@@ -1538,9 +1534,9 @@ html[data-character="gogol"] .a4-sheet.a4-mosaic {
   font-family: "Caveat", "Marck Script", Georgia, cursive;
   font-style: normal;
   font-weight: 500;
-  font-size: clamp(1.15rem, 4.4vw, 1.4rem);
-  line-height: 1.45;
-  color: #1e140c;
+  font-size: clamp(1.2rem, 4.6vw, 1.45rem);
+  line-height: 1.42;
+  color: #1a1008;
   white-space: pre-line;
   text-wrap: pretty;
   text-shadow:
