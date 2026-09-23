@@ -1,5 +1,5 @@
 /* Service worker - offline PWA cache */
-const CACHE = "kultprogulki-v55";
+const CACHE = "kultprogulki-v56";
 const ASSETS = [
   "./",
   "./index.html",
@@ -21,6 +21,12 @@ const ASSETS = [
   "./demo-quest.js",
   "./story-pushkin.js",
   "./assets/ui/frames/wood-metal-leaves.jpg",
+  "./assets/ui/frames/wood-frame.png",
+  "./assets/ui/frames/wood-corner.png",
+  "./assets/ui/frames/wood-corner-tr.png",
+  "./assets/ui/frames/wood-corner-bl.png",
+  "./assets/ui/frames/wood-corner-br.png",
+  "./assets/ui/frames/wood-btn.png",
   "./assets/ui/paper/scrap-graph.jpg",
   "./assets/ui/paper/scrap-torn-corner.jpg",
   "./assets/ui/paper/scrap-burnt.png",
