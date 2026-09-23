@@ -43,8 +43,9 @@
         fx.className = "char-fx char-fx-gogol";
         fx.setAttribute("aria-hidden", "true");
         fx.innerHTML =
-          '<div class="char-snow-layer"></div><div class="char-devil" title=""></div><div class="char-inkblot a"></div><div class="char-inkblot b"></div>';
-        document.body.appendChild(fx);
+          '<div class="char-snow-layer"></div><div class="char-snow-layer char-snow-layer-b"></div><div class="char-devil" title=""></div><div class="char-inkblot a"></div><div class="char-inkblot b"></div>';
+        const host = document.querySelector(".phone-shell") || document.body;
+        host.appendChild(fx);
       }
     } else if (fx) {
       fx.remove();

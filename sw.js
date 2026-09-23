@@ -1,5 +1,5 @@
 /* Service worker - offline PWA cache */
-const CACHE = "kultprogulki-v57";
+const CACHE = "kultprogulki-v58";
 const ASSETS = [
   "./",
   "./index.html",
@@ -69,6 +69,8 @@ const ASSETS = [
   "./assets/fonts/Poppins-Bold.ttf",
   "./assets/fonts/Poppins-Regular.ttf",
   "./assets/fonts/PlayfairDisplay-Variable.ttf",
+  "./assets/fonts/Caveat-Variable.ttf",
+  "./assets/fonts/MarckScript-Regular.ttf",
   "./assets/fonts/Oswald-Variable.ttf",
   "./assets/contours/pushkin-side-sticker.png",
   "./assets/contours/pushkin-side-sticker-preview.png",

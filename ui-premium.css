@@ -245,12 +245,6 @@ html[data-character="mayakovsky"] .opt {
   color: #fff0e8 !important;
 }
 
-html[data-character="mayakovsky"] .home-cta,
-.home-body .home-cta[data-poet="mayakovsky"] {
-  border-radius: 4px !important;
-  border-color: rgba(229, 57, 53, 0.5) !important;
-}
-
 /* —— Грибоедов: emerald glass + brass bevel (салон) —— */
 html[data-character="griboedov"] .btn.primary {
   background:

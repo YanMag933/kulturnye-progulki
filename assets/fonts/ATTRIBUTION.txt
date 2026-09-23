@@ -7,9 +7,12 @@ Sources (Google Fonts / OFL):
 - Poppins — https://github.com/google/fonts/tree/main/ofl/poppins
 - Playfair Display — https://github.com/google/fonts/tree/main/ofl/playfairdisplay
 - Oswald — https://github.com/google/fonts/tree/main/ofl/oswald
+- Caveat — https://github.com/google/fonts/tree/main/ofl/caveat
+- Marck Script — https://github.com/google/fonts/tree/main/ofl/marckscript
 
 Theme mapping:
 - slate → Bebas Neue + Montserrat
 - crystal → Anton + Montserrat
 - marble → Playfair Display + Poppins
 - basalt → Oswald + Poppins
+- letters → Caveat + Marck Script
