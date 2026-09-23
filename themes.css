@@ -1630,7 +1630,7 @@ html[data-character="gogol"] .a4-sheet.a4-mosaic {
   /* legacy */
 }
 
-/* —— Мини-камео поэтов (тест: 2-е задание) —— */
+/* —— Мини-камео поэтов · спрайт-листы (кадры + движение) —— */
 .poet-cameo {
   pointer-events: none;
   position: fixed;
@@ -1646,275 +1646,242 @@ html[data-character="gogol"] .a4-sheet.a4-mosaic {
 }
 .cameo-sprite {
   position: absolute;
-  bottom: 12%;
   left: 0;
-  width: auto;
-  height: clamp(72px, 18vw, 112px);
-  object-fit: contain;
+  top: 0;
   filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.45));
   user-select: none;
-  -webkit-user-drag: none;
-  will-change: transform, opacity;
+  will-change: transform, opacity, background-position;
+}
+.cameo-sheet {
+  width: clamp(78px, 19vw, 118px);
+  height: clamp(78px, 19vw, 118px);
+  background-image: var(--sheet);
+  background-repeat: no-repeat;
+  background-size: calc(var(--frames, 4) * 100%) 100%;
+  background-position: 0 0;
+  image-rendering: auto;
+  animation: cameo-sheet-cycle calc(var(--frames, 4) * var(--frame-ms, 100ms)) steps(var(--frames, 4)) infinite;
+}
+@keyframes cameo-sheet-cycle {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: calc(var(--frames, 4) * -100%) 0;
+  }
 }
 
 /* Пушкин · кот */
 .poet-cameo--pushkin .cameo-cat-peek {
-  height: clamp(64px, 16vw, 96px);
-  left: -8%;
-  bottom: 22%;
+  width: clamp(70px, 17vw, 104px);
+  height: clamp(70px, 17vw, 104px);
   opacity: 0;
-  transform: translateX(-20%) scale(0.92);
-  animation: cameo-cat-peek 9.2s ease-in-out both;
+  animation:
+    cameo-sheet-cycle calc(2 * var(--frame-ms, 250ms)) steps(2) infinite,
+    cameo-cat-peek-move 9.2s ease-in-out both;
 }
 .poet-cameo--pushkin .cameo-cat-walk {
-  height: clamp(70px, 17vw, 108px);
-  left: 0;
-  top: 0;
-  bottom: auto;
+  width: clamp(76px, 18vw, 112px);
+  height: clamp(76px, 18vw, 112px);
   opacity: 0;
-  animation: cameo-cat-walk 9.2s cubic-bezier(0.4, 0.05, 0.2, 1) both;
+  animation:
+    cameo-sheet-cycle calc(4 * var(--frame-ms, 100ms)) steps(4) infinite,
+    cameo-cat-walk-move 9.2s cubic-bezier(0.4, 0.05, 0.2, 1) both;
   transform-origin: 50% 100%;
 }
-@keyframes cameo-cat-peek {
+@keyframes cameo-cat-peek-move {
   0%,
   2% {
     opacity: 0;
-    transform: translateX(-28%) scale(0.9);
+    transform: translate(-12vw, 68vh) scale(0.9);
   }
   8% {
     opacity: 1;
-    transform: translateX(6%) scale(1);
+    transform: translate(2vw, 66vh) scale(1);
   }
-  14% {
-    transform: translateX(2%) scale(1) rotate(-2deg);
-  }
-  18% {
-    opacity: 1;
-    transform: translateX(8%) scale(1.02);
+  16% {
+    transform: translate(4vw, 65vh) scale(1.04);
   }
   22%,
   100% {
     opacity: 0;
-    transform: translateX(-18%) scale(0.94);
+    transform: translate(-10vw, 68vh) scale(0.92);
   }
 }
-@keyframes cameo-cat-walk {
+@keyframes cameo-cat-walk-move {
   0%,
   20% {
     opacity: 0;
-    transform: translate(-30vw, 78vh) scaleX(-1);
+    transform: translate(-28vw, 76vh);
   }
   24% {
     opacity: 1;
-    transform: translate(6vw, 76vh) scaleX(-1);
+    transform: translate(4vw, 74vh);
   }
   46% {
     opacity: 1;
-    transform: translate(calc(var(--cameo-btn-x, 70vw) - 52px), calc(var(--cameo-btn-y, 82vh) + 8px)) scaleX(-1);
+    transform: translate(calc(var(--cameo-btn-x, 70vw) - 52px), calc(var(--cameo-btn-y, 82vh) + 4px));
   }
   52% {
-    transform: translate(calc(var(--cameo-btn-x, 70vw) - 44px), calc(var(--cameo-btn-y, 82vh) - 78px)) scaleX(-1) scale(1.1);
+    transform: translate(calc(var(--cameo-btn-x, 70vw) - 44px), calc(var(--cameo-btn-y, 82vh) - 78px)) scale(1.08);
   }
   60% {
-    transform: translate(calc(var(--cameo-btn-x, 70vw) - 44px), calc(var(--cameo-btn-y, 82vh) - 72px)) scaleX(-1) scale(1);
+    transform: translate(calc(var(--cameo-btn-x, 70vw) - 44px), calc(var(--cameo-btn-y, 82vh) - 72px)) scale(1);
   }
   66% {
-    transform: translate(calc(var(--cameo-btn-x, 70vw) - 36px), 76vh) scaleX(-1);
+    transform: translate(calc(var(--cameo-btn-x, 70vw) - 36px), 74vh);
   }
   88% {
     opacity: 1;
-    transform: translate(110vw, 74vh) scaleX(-1);
+    transform: translate(110vw, 72vh);
   }
   100% {
     opacity: 0;
-    transform: translate(125vw, 74vh) scaleX(-1);
+    transform: translate(125vw, 72vh);
   }
 }
 
 /* Маяковский · рабочий */
 .poet-cameo--mayakovsky .cameo-worker {
-  height: clamp(96px, 24vw, 140px);
+  width: clamp(100px, 24vw, 148px);
+  height: clamp(100px, 24vw, 148px);
   left: 50%;
-  bottom: 10%;
-  margin-left: -48px;
+  margin-left: calc(clamp(100px, 24vw, 148px) / -2);
   opacity: 0;
-  animation: cameo-worker-shout 7.2s cubic-bezier(0.33, 0.1, 0.2, 1) both;
+  animation:
+    cameo-sheet-cycle calc(4 * var(--frame-ms, 140ms)) steps(4) infinite,
+    cameo-worker-move 7.2s cubic-bezier(0.33, 0.1, 0.2, 1) both;
   transform-origin: 50% 100%;
 }
-@keyframes cameo-worker-shout {
+@keyframes cameo-worker-move {
   0% {
     opacity: 0;
-    transform: translateY(40%) scale(0.85);
+    transform: translateY(42vh) scale(0.85);
   }
   10% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(58vh) scale(1);
   }
-  18% {
-    transform: translateY(0) scale(1.04) rotate(-3deg);
-  }
-  26% {
-    transform: translateY(-4%) scale(1.08) rotate(3deg);
-  }
-  34% {
-    transform: translateY(0) scale(1.02) rotate(-2deg);
-  }
-  42% {
-    transform: translateY(-6%) scale(1.1) rotate(4deg);
-  }
-  50% {
-    transform: translateY(0) scale(1.03) rotate(-1deg);
-  }
-  58% {
-    transform: translate(-6vw, -2%) scale(1.06) rotate(2deg);
-  }
-  70% {
+  55% {
     opacity: 1;
-    transform: translate(4vw, 0) scale(1);
+    transform: translateY(56vh) scale(1.04);
   }
-  88% {
+  78% {
     opacity: 1;
-    transform: translateX(-55vw) scale(0.95);
+    transform: translate(-48vw, 58vh) scale(0.96);
   }
   100% {
     opacity: 0;
-    transform: translateX(-70vw) scale(0.9);
+    transform: translate(-70vw, 62vh) scale(0.9);
   }
 }
 
-/* Гоголь · чёрт и баба */
+/* Гоголь · чёрный чёрт + баба */
 .poet-cameo--gogol .cameo-devil {
-  height: clamp(78px, 19vw, 118px);
-  left: 0;
-  bottom: 16%;
+  width: clamp(82px, 20vw, 124px);
+  height: clamp(82px, 20vw, 124px);
   opacity: 0;
-  animation: cameo-devil-run 9.8s cubic-bezier(0.4, 0.05, 0.25, 1) both;
-  transform-origin: 50% 100%;
   z-index: 2;
+  animation:
+    cameo-sheet-cycle calc(4 * var(--frame-ms, 100ms)) steps(4) infinite,
+    cameo-devil-move 9.8s cubic-bezier(0.4, 0.05, 0.25, 1) both;
 }
 .poet-cameo--gogol .cameo-baba {
-  height: clamp(100px, 24vw, 148px);
-  left: 0;
-  bottom: 10%;
+  width: clamp(104px, 25vw, 152px);
+  height: clamp(104px, 25vw, 152px);
   opacity: 0;
-  animation: cameo-baba-chase 9.8s cubic-bezier(0.35, 0.05, 0.2, 1) both;
-  transform-origin: 40% 100%;
   z-index: 3;
+  animation:
+    cameo-sheet-cycle calc(4 * var(--frame-ms, 125ms)) steps(4) infinite,
+    cameo-baba-move 9.8s cubic-bezier(0.35, 0.05, 0.2, 1) both;
 }
-@keyframes cameo-devil-run {
+@keyframes cameo-devil-move {
   0%,
   4% {
     opacity: 0;
-    transform: translateX(108vw) scaleX(-1);
+    transform: translate(108vw, 70vh);
   }
   12% {
     opacity: 1;
-    transform: translateX(62vw) scaleX(-1);
+    transform: translate(62vw, 68vh);
   }
-  22% {
-    transform: translateX(48vw) scaleX(-1) rotate(-4deg);
-  }
-  30% {
-    transform: translateX(40vw) scaleX(1);
+  28% {
+    transform: translate(40vw, 70vh);
   }
   42% {
-    transform: translateX(28vw) scaleX(1) translateY(-4%);
+    transform: translate(26vw, 66vh);
   }
   55% {
-    transform: translateX(58vw) scaleX(-1) translateY(0);
+    transform: translate(58vw, 68vh);
   }
   72% {
     opacity: 1;
-    transform: translateX(95vw) scaleX(-1);
+    transform: translate(96vw, 66vh);
   }
-  88%,
+  90%,
   100% {
     opacity: 0;
-    transform: translateX(120vw) scaleX(-1);
+    transform: translate(122vw, 70vh);
   }
 }
-@keyframes cameo-baba-chase {
+@keyframes cameo-baba-move {
   0%,
   16% {
     opacity: 0;
-    transform: translateX(-45vw) rotate(0deg);
+    transform: translate(-48vw, 62vh);
   }
   26% {
     opacity: 1;
-    transform: translateX(8vw) rotate(-4deg);
+    transform: translate(6vw, 60vh);
   }
-  36% {
-    transform: translateX(18vw) rotate(6deg);
-  }
-  46% {
-    transform: translateX(30vw) rotate(-8deg);
-  }
-  56% {
-    transform: translateX(48vw) rotate(7deg);
+  48% {
+    transform: translate(32vw, 58vh);
   }
   68% {
-    transform: translateX(68vw) rotate(-5deg);
+    transform: translate(70vw, 60vh);
   }
-  82% {
+  84% {
     opacity: 1;
-    transform: translateX(105vw) rotate(4deg);
+    transform: translate(108vw, 58vh);
   }
-  95%,
+  96%,
   100% {
     opacity: 0;
-    transform: translateX(125vw) rotate(0deg);
+    transform: translate(128vw, 62vh);
   }
 }
 
-/* Грибоедов · карета («Карету подали») */
+/* Грибоедов · карета */
 .poet-cameo--griboedov .cameo-carriage {
-  height: clamp(64px, 16vw, 100px);
-  width: auto;
-  max-width: min(78vw, 340px);
-  left: 0;
-  top: 0;
-  bottom: auto;
+  width: clamp(160px, 46vw, 300px);
+  height: clamp(72px, 18vw, 120px);
   opacity: 0;
-  animation: cameo-carriage-ride 7.8s cubic-bezier(0.35, 0.05, 0.2, 1) both;
-  transform-origin: 50% 100%;
-  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.5));
+  animation:
+    cameo-sheet-cycle calc(4 * var(--frame-ms, 110ms)) steps(4) infinite,
+    cameo-carriage-move 7.8s cubic-bezier(0.35, 0.05, 0.2, 1) both;
 }
-@keyframes cameo-carriage-ride {
+@keyframes cameo-carriage-move {
   0% {
     opacity: 0;
-    transform: translate(-55vw, 78vh) scaleX(-1);
+    transform: translate(-60vw, 72vh);
   }
   8% {
     opacity: 1;
-    transform: translate(-5vw, 76vh) scaleX(-1) translateY(0);
+    transform: translate(-8vw, 70vh);
   }
-  18% {
-    transform: translate(12vw, 75vh) scaleX(-1) translateY(-3px);
+  40% {
+    transform: translate(36vw, 68vh);
   }
-  28% {
-    transform: translate(28vw, 76vh) scaleX(-1) translateY(0);
+  52% {
+    transform: translate(44vw, 70vh);
   }
-  38% {
-    transform: translate(42vw, 74vh) scaleX(-1) translateY(-4px) rotate(-1deg);
-  }
-  48% {
-    /* лёгкая остановка — «подали» */
-    transform: translate(48vw, 76vh) scaleX(-1) translateY(0) rotate(0deg);
-  }
-  56% {
-    transform: translate(52vw, 75vh) scaleX(-1) translateY(-2px) rotate(1deg);
-  }
-  72% {
+  78% {
     opacity: 1;
-    transform: translate(95vw, 74vh) scaleX(-1) translateY(0);
-  }
-  88% {
-    opacity: 1;
-    transform: translate(118vw, 76vh) scaleX(-1);
+    transform: translate(100vw, 68vh);
   }
   100% {
     opacity: 0;
-    transform: translate(130vw, 78vh) scaleX(-1);
+    transform: translate(130vw, 72vh);
   }
 }
 

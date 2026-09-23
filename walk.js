@@ -753,24 +753,29 @@
     layer.style.setProperty("--cameo-btn-y", `${btn.y}px`);
 
     const base = "assets/fx/cameos";
+    const sheet = (cls, file, frames, fps) =>
+      `<div class="cameo-sprite cameo-sheet ${cls}" style="--frames:${frames};--frame-ms:${Math.round(
+        1000 / (fps || 8)
+      )}ms;--sheet:url('${base}/${file}')"></div>`;
+
     let html = "";
     let duration = 8500;
     if (id === "pushkin") {
       duration = 9200;
-      html = `
-        <img class="cameo-sprite cameo-cat-peek" src="${base}/poet-cat-peek.png" alt="" draggable="false" />
-        <img class="cameo-sprite cameo-cat-walk" src="${base}/poet-cat-walk.png" alt="" draggable="false" />`;
+      html =
+        sheet("cameo-cat-peek", "sheet-cat-peek.png", 2, 4) +
+        sheet("cameo-cat-walk", "sheet-cat-walk.png", 4, 10);
     } else if (id === "mayakovsky") {
       duration = 7200;
-      html = `<img class="cameo-sprite cameo-worker" src="${base}/poet-worker-shout.png" alt="" draggable="false" />`;
+      html = sheet("cameo-worker", "sheet-worker-shout.png", 4, 7);
     } else if (id === "gogol") {
       duration = 9800;
-      html = `
-        <img class="cameo-sprite cameo-devil" src="${base}/poet-devil.png" alt="" draggable="false" />
-        <img class="cameo-sprite cameo-baba" src="${base}/poet-baba-broom.png" alt="" draggable="false" />`;
+      html =
+        sheet("cameo-devil", "sheet-devil-run.png", 4, 10) +
+        sheet("cameo-baba", "sheet-baba-chase.png", 4, 8);
     } else if (id === "griboedov") {
       duration = 7800;
-      html = `<img class="cameo-sprite cameo-carriage" src="${base}/poet-carriage.png" alt="" draggable="false" />`;
+      html = sheet("cameo-carriage", "sheet-carriage.png", 4, 9);
     }
 
     layer.className = `poet-cameo poet-cameo--${id} is-playing`;

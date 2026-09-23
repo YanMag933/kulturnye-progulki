@@ -1,5 +1,5 @@
 /* Service worker - offline PWA cache */
-const CACHE = "kultprogulki-v67";
+const CACHE = "kultprogulki-v68";
 const ASSETS = [
   "./",
   "./index.html",
@@ -37,12 +37,12 @@ const ASSETS = [
   "./story-griboedov.js",
   "./story-gogol.js",
   "./walk.js",
-  "./assets/fx/cameos/poet-cat-walk.png",
-  "./assets/fx/cameos/poet-cat-peek.png",
-  "./assets/fx/cameos/poet-worker-shout.png",
-  "./assets/fx/cameos/poet-devil.png",
-  "./assets/fx/cameos/poet-baba-broom.png",
-  "./assets/fx/cameos/poet-carriage.png",
+  "./assets/fx/cameos/sheet-cat-walk.png",
+  "./assets/fx/cameos/sheet-cat-peek.png",
+  "./assets/fx/cameos/sheet-worker-shout.png",
+  "./assets/fx/cameos/sheet-devil-run.png",
+  "./assets/fx/cameos/sheet-baba-chase.png",
+  "./assets/fx/cameos/sheet-carriage.png",
   "./create.js",
   "./mechanics-data.js",
   "./manifest.json",
