@@ -32,6 +32,8 @@
     const id = characterId || "";
     if (id) root.setAttribute("data-character", id);
     else root.removeAttribute("data-character");
+    root.classList.toggle("poet-wood", !!(id && id !== "mayakovsky"));
+    root.classList.toggle("poet-industrial", id === "mayakovsky");
     document.body.classList.toggle("char-snow", id === "gogol");
     let fx = document.getElementById("char-fx");
     if (id === "gogol") {
@@ -696,6 +698,16 @@
     return !!(quest && (quest.letterEra || quest.characterId === "pushkin" || quest.storyId === "pushkin"));
   }
 
+  function letterPack() {
+    const id = (quest && (quest.characterId || quest.storyId)) || "";
+    const packs = window.KP_LETTERS || {};
+    if (id && packs[id] && packs[id].pieces && packs[id].pieces.length) return packs[id];
+    return {
+      full: window.KP_LETTER_FULL || "",
+      pieces: window.KP_LETTER_PIECES || [],
+    };
+  }
+
   function escapeHtml(s) {
     return String(s || "")
       .replace(/&/g, "&amp;")
@@ -717,7 +729,13 @@
   }
 
   function letterPieces() {
-    return (window.KP_LETTER_PIECES || []).slice().sort((a, b) => a.order - b.order);
+    return (letterPack().pieces || []).slice().sort((a, b) => a.order - b.order);
+  }
+
+  function letterFullText() {
+    const pack = letterPack();
+    if (pack.full) return pack.full;
+    return (pack.pieces || []).map((p) => p.text).join(" ");
   }
 
   function letterEdgeProfiles() {
@@ -1526,7 +1544,7 @@
       .join("");
 
     const sheetInner = uiState.done
-      ? `<div class="a4-full-letter"><p class="letter-body">${letterLines(window.KP_LETTER_FULL || pieces.map((p) => p.text).join(" "))}</p></div>`
+      ? `<div class="a4-full-letter"><p class="letter-body">${letterLines(letterFullText())}</p></div>`
       : slotsHtml;
 
     shell(

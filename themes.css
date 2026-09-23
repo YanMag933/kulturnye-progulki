@@ -1300,12 +1300,23 @@ html[data-theme="crystal"] .home-premium h1 {
   align-items: stretch;
   justify-content: stretch;
   background:
-    linear-gradient(165deg, rgba(255, 248, 230, 0.22) 0%, transparent 42%),
-    #e4d4b4 url("assets/ui/torn-paper-texture.jpg") center / cover no-repeat;
+    linear-gradient(165deg, rgba(255, 248, 230, 0.2) 0%, transparent 42%),
+    #e4d4b4 url("assets/ui/paper/scrap-torn-corner.jpg") center / cover no-repeat;
   box-shadow:
     0 1px 0 rgba(255, 248, 230, 0.35) inset,
     0 10px 22px rgba(0, 0, 0, 0.28);
   filter: drop-shadow(0 6px 10px rgba(40, 28, 16, 0.22));
+}
+html[data-character="mayakovsky"] .scrap-piece {
+  background:
+    linear-gradient(165deg, rgba(255, 248, 230, 0.15) 0%, transparent 40%),
+    #ddd8ce url("assets/ui/paper/scrap-graph.jpg") center / cover no-repeat;
+}
+html[data-character="gogol"] .scrap-piece,
+html[data-character="gogol"] .a4-sheet.a4-mosaic {
+  background:
+    linear-gradient(165deg, rgba(255, 248, 230, 0.12) 0%, transparent 40%),
+    #d8c4a0 url("assets/ui/paper/scrap-burnt.png") center / cover no-repeat;
 }
 .scrap-piece-face {
   width: 100%;
