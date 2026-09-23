@@ -1663,7 +1663,6 @@ html[data-character="gogol"] .a4-sheet.a4-mosaic {
   transform: translateX(-40vw);
 }
 
-/* одна горизонтальная линия: только translateX, Y фиксирован через top */
 .poet-cameo--pushkin .cameo-cat-peek {
   height: clamp(64px, 15vw, 96px);
   opacity: 0;
@@ -1709,29 +1708,30 @@ html[data-character="gogol"] .a4-sheet.a4-mosaic {
   height: clamp(78px, 18vw, 112px);
   opacity: 0;
   z-index: 2;
-  animation: cameo-devil-move 10s linear both;
+  animation: cameo-devil-move 11s linear both;
 }
 .poet-cameo--gogol .cameo-baba {
   height: clamp(130px, 30vw, 180px);
   opacity: 0;
   z-index: 3;
-  animation: cameo-baba-move 10s linear both;
+  animation: cameo-baba-move 11s linear both;
 }
+/* черт слева → середина → бабка гонит вправо */
 @keyframes cameo-devil-move {
-  0%, 5% { opacity: 0; transform: translateX(110vw); }
-  14% { opacity: 1; transform: translateX(70vw); }
-  35% { opacity: 1; transform: translateX(32vw); }
-  55% { opacity: 1; transform: translateX(55vw); }
-  78% { opacity: 1; transform: translateX(100vw); }
-  92%, 100% { opacity: 0; transform: translateX(125vw); }
+  0% { opacity: 0; transform: translateX(-40vw); }
+  6% { opacity: 1; transform: translateX(-25vw); }
+  30% { opacity: 1; transform: translateX(34vw); }
+  38% { opacity: 1; transform: translateX(36vw); }
+  52% { opacity: 1; transform: translateX(58vw); }
+  85% { opacity: 1; transform: translateX(115vw); }
+  100% { opacity: 0; transform: translateX(130vw); }
 }
 @keyframes cameo-baba-move {
-  0%, 18% { opacity: 0; transform: translateX(-45vw); }
-  28% { opacity: 1; transform: translateX(5vw); }
-  50% { opacity: 1; transform: translateX(35vw); }
-  72% { opacity: 1; transform: translateX(72vw); }
-  88% { opacity: 1; transform: translateX(110vw); }
-  98%, 100% { opacity: 0; transform: translateX(128vw); }
+  0%, 36% { opacity: 0; transform: translateX(-55vw); }
+  40% { opacity: 1; transform: translateX(-20vw); }
+  52% { opacity: 1; transform: translateX(40vw); }
+  85% { opacity: 1; transform: translateX(100vw); }
+  100% { opacity: 0; transform: translateX(120vw); }
 }
 
 .poet-cameo--griboedov .cameo-carriage {
@@ -1741,7 +1741,6 @@ html[data-character="gogol"] .a4-sheet.a4-mosaic {
   opacity: 0;
   animation: cameo-carriage-move 9s linear both;
 }
-/* спокойно вправо → пауза в центре → дальше вправо по одной линии */
 @keyframes cameo-carriage-move {
   0% { opacity: 0; transform: translateX(-60vw); }
   10% { opacity: 1; transform: translateX(-20vw); }
@@ -1753,4 +1752,6 @@ html[data-character="gogol"] .a4-sheet.a4-mosaic {
 
 @media (prefers-reduced-motion: reduce) {
   .poet-cameo.is-playing { display: none; }
+}
+
 }
