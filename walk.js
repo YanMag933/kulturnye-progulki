@@ -300,15 +300,6 @@
     return out.length >= 2 ? out : latLngs;
   }
 
-  function routeBearing(a, b) {
-    const lat1 = (a[0] * Math.PI) / 180;
-    const lat2 = (b[0] * Math.PI) / 180;
-    const dLon = ((b[1] - a[1]) * Math.PI) / 180;
-    const y = Math.sin(dLon) * Math.cos(lat2);
-    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-    return ((Math.atan2(y, x) * 180) / Math.PI + 360) % 360;
-  }
-
   /** Ближайшая точка на линии только вперёд от cursor — иначе возврат к старту
    *  (Пушкин 9–10, Гоголь 6) цепляется к началу маршрута и пины вспыхивают рано. */
   function nearestLineIndexFrom(line, latlng, fromIdx) {
@@ -372,34 +363,6 @@
       };
       requestAnimationFrame(frame);
     });
-  }
-
-  function addRouteArrows(map, latLngs) {
-    if (!latLngs || latLngs.length < 2) return [];
-    const markers = [];
-    const total = latLngs.length;
-    const count = Math.min(14, Math.max(6, Math.floor(total / 18)));
-    const step = Math.max(1, Math.floor(total / (count + 1)));
-    for (let i = step; i < total - 1; i += step) {
-      const a = latLngs[i];
-      const b = latLngs[Math.min(i + Math.max(2, Math.floor(step / 3)), total - 1)];
-      const deg = routeBearing(a, b);
-      const m = L.marker(a, {
-        interactive: false,
-        keyboard: false,
-        zIndexOffset: 200,
-        icon: L.divIcon({
-          className: "route-arrow-wrap",
-          html: `<div class="route-arrow" style="transform:rotate(${deg}deg)" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="16" height="16"><path d="M4 11h10l-3.5-3.5 1.4-1.4L18.8 12l-6.9 5.9-1.4-1.4L14 13H4z" fill="#6b5340"/></svg>
-          </div>`,
-          iconSize: [18, 18],
-          iconAnchor: [9, 9],
-        }),
-      }).addTo(map);
-      markers.push(m);
-    }
-    return markers;
   }
 
   function revealMapPin(marker) {
@@ -473,7 +436,6 @@
 
     line.setLatLngs(roadLine);
     glow.setLatLngs(roadLine);
-    addRouteArrows(map, roadLine);
   }
 
   async function mountLeafletMap() {

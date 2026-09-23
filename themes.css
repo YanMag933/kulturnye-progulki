@@ -851,24 +851,6 @@ html[data-theme="marble"] .theme-swatch::after {
   to { stroke-dashoffset: -18; }
 }
 
-.route-arrow-wrap {
-  background: transparent !important;
-  border: 0 !important;
-}
-.route-arrow {
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  filter: drop-shadow(0 1px 2px rgba(40, 28, 16, 0.45));
-  transform-origin: 50% 50%;
-}
-.route-arrow svg {
-  display: block;
-  overflow: visible;
-}
-
 .map-pin-wrap {
   background: transparent !important;
   border: 0 !important;
