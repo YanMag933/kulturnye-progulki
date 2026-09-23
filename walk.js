@@ -836,29 +836,23 @@
     layer.style.setProperty("--cameo-btn-y", `${btn.y}px`);
 
     const base = "assets/fx/cameos";
-    const sheet = (cls, file, frames, fps) =>
-      `<div class="cameo-sprite cameo-sheet ${cls}" style="--frames:${frames};--frame-ms:${Math.round(
-        1000 / (fps || 8)
-      )}ms;--sheet:url('${base}/${file}')"></div>`;
+    const anim = (cls, file) =>
+      `<img class="cameo-sprite cameo-anim ${cls}" src="${base}/${file}.webp" alt="" draggable="false" decoding="async" onerror="this.onerror=null;this.src='${base}/${file}.gif'" />`;
 
     let html = "";
     let duration = 8500;
     if (id === "pushkin") {
       duration = 9200;
-      html =
-        sheet("cameo-cat-peek", "sheet-cat-peek.png", 2, 4) +
-        sheet("cameo-cat-walk", "sheet-cat-walk.png", 4, 10);
+      html = anim("cameo-cat-peek", "anim-cat-peek") + anim("cameo-cat-walk", "anim-cat-walk");
     } else if (id === "mayakovsky") {
       duration = 7200;
-      html = sheet("cameo-worker", "sheet-worker-shout.png", 4, 7);
+      html = anim("cameo-worker", "anim-worker-shout");
     } else if (id === "gogol") {
       duration = 9800;
-      html =
-        sheet("cameo-devil", "sheet-devil-run.png", 4, 10) +
-        sheet("cameo-baba", "sheet-baba-chase.png", 4, 8);
+      html = anim("cameo-devil", "anim-devil-run") + anim("cameo-baba", "anim-baba-chase");
     } else if (id === "griboedov") {
       duration = 7800;
-      html = sheet("cameo-carriage", "sheet-carriage.png", 4, 9);
+      html = anim("cameo-carriage", "anim-carriage");
     }
 
     layer.className = `poet-cameo poet-cameo--${id} is-playing`;

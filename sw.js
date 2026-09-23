@@ -1,5 +1,5 @@
 /* Service worker - offline PWA cache */
-const CACHE = "kultprogulki-v69";
+const CACHE = "kultprogulki-v70";
 const ASSETS = [
   "./",
   "./index.html",
@@ -37,12 +37,18 @@ const ASSETS = [
   "./story-griboedov.js",
   "./story-gogol.js",
   "./walk.js",
-  "./assets/fx/cameos/sheet-cat-walk.png",
-  "./assets/fx/cameos/sheet-cat-peek.png",
-  "./assets/fx/cameos/sheet-worker-shout.png",
-  "./assets/fx/cameos/sheet-devil-run.png",
-  "./assets/fx/cameos/sheet-baba-chase.png",
-  "./assets/fx/cameos/sheet-carriage.png",
+  "./assets/fx/cameos/anim-cat-walk.webp",
+  "./assets/fx/cameos/anim-cat-peek.webp",
+  "./assets/fx/cameos/anim-worker-shout.webp",
+  "./assets/fx/cameos/anim-devil-run.webp",
+  "./assets/fx/cameos/anim-baba-chase.webp",
+  "./assets/fx/cameos/anim-carriage.webp",
+  "./assets/fx/cameos/anim-cat-walk.gif",
+  "./assets/fx/cameos/anim-cat-peek.gif",
+  "./assets/fx/cameos/anim-worker-shout.gif",
+  "./assets/fx/cameos/anim-devil-run.gif",
+  "./assets/fx/cameos/anim-baba-chase.gif",
+  "./assets/fx/cameos/anim-carriage.gif",
   "./create.js",
   "./mechanics-data.js",
   "./manifest.json",
