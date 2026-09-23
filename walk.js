@@ -164,6 +164,7 @@
     progress.mapReady = true;
     progress.letterScraps = [];
     progress.scrapDeal = null;
+    progress.cameoPlayed = false;
     uiState = {};
     ensureScrapDeal();
     if (mapInstance) {
@@ -183,6 +184,7 @@
     progress.startedAt = Date.now();
     progress.letterScraps = [];
     progress.scrapDeal = null;
+    progress.cameoPlayed = false;
     uiState = {};
     ensureScrapDeal();
     if (mapInstance) {
@@ -708,6 +710,75 @@
       ${footerHtml || ""}
     `;
     applyCharacterTheme(quest.characterId);
+    schedulePoetCameo();
+  }
+
+  /** Мини-сценки персонажей (тест: на 2-м задании после памятника). */
+  function schedulePoetCameo() {
+    if (progress.stepIndex !== 1) return;
+    if (progress.cameoPlayed) return;
+    const id = quest.characterId;
+    if (id !== "pushkin" && id !== "mayakovsky" && id !== "gogol") return;
+    clearTimeout(window.__poetCameoTimer);
+    window.__poetCameoTimer = setTimeout(() => playPoetCameo(id), 500);
+  }
+
+  function cameoBtnPoint() {
+    const btn =
+      document.querySelector(".walk-footer .btn.primary") ||
+      document.querySelector("#next") ||
+      document.querySelector(".btn.primary");
+    if (!btn) {
+      return { x: Math.round(window.innerWidth * 0.72), y: Math.round(window.innerHeight * 0.84) };
+    }
+    const r = btn.getBoundingClientRect();
+    return { x: Math.round(r.left + r.width * 0.55), y: Math.round(r.top + 4) };
+  }
+
+  function playPoetCameo(id) {
+    if (progress.cameoPlayed) return;
+    progress.cameoPlayed = true;
+    save();
+
+    let layer = document.getElementById("poet-cameo");
+    if (!layer) {
+      layer = document.createElement("div");
+      layer.id = "poet-cameo";
+      layer.setAttribute("aria-hidden", "true");
+      document.body.appendChild(layer);
+    }
+
+    const btn = cameoBtnPoint();
+    layer.style.setProperty("--cameo-btn-x", `${btn.x}px`);
+    layer.style.setProperty("--cameo-btn-y", `${btn.y}px`);
+
+    const base = "assets/fx/cameos";
+    let html = "";
+    let duration = 8500;
+    if (id === "pushkin") {
+      duration = 9200;
+      html = `
+        <img class="cameo-sprite cameo-cat-peek" src="${base}/poet-cat-peek.png" alt="" draggable="false" />
+        <img class="cameo-sprite cameo-cat-walk" src="${base}/poet-cat-walk.png" alt="" draggable="false" />`;
+    } else if (id === "mayakovsky") {
+      duration = 7200;
+      html = `<img class="cameo-sprite cameo-worker" src="${base}/poet-worker-shout.png" alt="" draggable="false" />`;
+    } else if (id === "gogol") {
+      duration = 9800;
+      html = `
+        <img class="cameo-sprite cameo-devil" src="${base}/poet-devil.png" alt="" draggable="false" />
+        <img class="cameo-sprite cameo-baba" src="${base}/poet-baba-broom.png" alt="" draggable="false" />`;
+    }
+
+    layer.className = `poet-cameo poet-cameo--${id} is-playing`;
+    layer.innerHTML = html;
+
+    clearTimeout(window.__poetCameoEnd);
+    window.__poetCameoEnd = setTimeout(() => {
+      layer.classList.remove("is-playing");
+      layer.innerHTML = "";
+      layer.className = "poet-cameo";
+    }, duration);
   }
 
   function footer(canNext, feedback) {

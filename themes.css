@@ -1629,3 +1629,245 @@ html[data-character="gogol"] .a4-sheet.a4-mosaic {
 .a4-assemble {
   /* legacy */
 }
+
+/* —— Мини-камео поэтов (тест: 2-е задание) —— */
+.poet-cameo {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+}
+.poet-cameo.is-playing {
+  opacity: 1;
+  visibility: visible;
+}
+.cameo-sprite {
+  position: absolute;
+  bottom: 12%;
+  left: 0;
+  width: auto;
+  height: clamp(72px, 18vw, 112px);
+  object-fit: contain;
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.45));
+  user-select: none;
+  -webkit-user-drag: none;
+  will-change: transform, opacity;
+}
+
+/* Пушкин · кот */
+.poet-cameo--pushkin .cameo-cat-peek {
+  height: clamp(64px, 16vw, 96px);
+  left: -8%;
+  bottom: 22%;
+  opacity: 0;
+  transform: translateX(-20%) scale(0.92);
+  animation: cameo-cat-peek 9.2s ease-in-out both;
+}
+.poet-cameo--pushkin .cameo-cat-walk {
+  height: clamp(70px, 17vw, 108px);
+  left: 0;
+  top: 0;
+  bottom: auto;
+  opacity: 0;
+  animation: cameo-cat-walk 9.2s cubic-bezier(0.4, 0.05, 0.2, 1) both;
+  transform-origin: 50% 100%;
+}
+@keyframes cameo-cat-peek {
+  0%,
+  2% {
+    opacity: 0;
+    transform: translateX(-28%) scale(0.9);
+  }
+  8% {
+    opacity: 1;
+    transform: translateX(6%) scale(1);
+  }
+  14% {
+    transform: translateX(2%) scale(1) rotate(-2deg);
+  }
+  18% {
+    opacity: 1;
+    transform: translateX(8%) scale(1.02);
+  }
+  22%,
+  100% {
+    opacity: 0;
+    transform: translateX(-18%) scale(0.94);
+  }
+}
+@keyframes cameo-cat-walk {
+  0%,
+  20% {
+    opacity: 0;
+    transform: translate(-30vw, 78vh) scaleX(-1);
+  }
+  24% {
+    opacity: 1;
+    transform: translate(6vw, 76vh) scaleX(-1);
+  }
+  46% {
+    opacity: 1;
+    transform: translate(calc(var(--cameo-btn-x, 70vw) - 52px), calc(var(--cameo-btn-y, 82vh) + 8px)) scaleX(-1);
+  }
+  52% {
+    transform: translate(calc(var(--cameo-btn-x, 70vw) - 44px), calc(var(--cameo-btn-y, 82vh) - 78px)) scaleX(-1) scale(1.1);
+  }
+  60% {
+    transform: translate(calc(var(--cameo-btn-x, 70vw) - 44px), calc(var(--cameo-btn-y, 82vh) - 72px)) scaleX(-1) scale(1);
+  }
+  66% {
+    transform: translate(calc(var(--cameo-btn-x, 70vw) - 36px), 76vh) scaleX(-1);
+  }
+  88% {
+    opacity: 1;
+    transform: translate(110vw, 74vh) scaleX(-1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(125vw, 74vh) scaleX(-1);
+  }
+}
+
+/* Маяковский · рабочий */
+.poet-cameo--mayakovsky .cameo-worker {
+  height: clamp(96px, 24vw, 140px);
+  left: 50%;
+  bottom: 10%;
+  margin-left: -48px;
+  opacity: 0;
+  animation: cameo-worker-shout 7.2s cubic-bezier(0.33, 0.1, 0.2, 1) both;
+  transform-origin: 50% 100%;
+}
+@keyframes cameo-worker-shout {
+  0% {
+    opacity: 0;
+    transform: translateY(40%) scale(0.85);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  18% {
+    transform: translateY(0) scale(1.04) rotate(-3deg);
+  }
+  26% {
+    transform: translateY(-4%) scale(1.08) rotate(3deg);
+  }
+  34% {
+    transform: translateY(0) scale(1.02) rotate(-2deg);
+  }
+  42% {
+    transform: translateY(-6%) scale(1.1) rotate(4deg);
+  }
+  50% {
+    transform: translateY(0) scale(1.03) rotate(-1deg);
+  }
+  58% {
+    transform: translate(-6vw, -2%) scale(1.06) rotate(2deg);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(4vw, 0) scale(1);
+  }
+  88% {
+    opacity: 1;
+    transform: translateX(-55vw) scale(0.95);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-70vw) scale(0.9);
+  }
+}
+
+/* Гоголь · чёрт и баба */
+.poet-cameo--gogol .cameo-devil {
+  height: clamp(78px, 19vw, 118px);
+  left: 0;
+  bottom: 16%;
+  opacity: 0;
+  animation: cameo-devil-run 9.8s cubic-bezier(0.4, 0.05, 0.25, 1) both;
+  transform-origin: 50% 100%;
+  z-index: 2;
+}
+.poet-cameo--gogol .cameo-baba {
+  height: clamp(100px, 24vw, 148px);
+  left: 0;
+  bottom: 10%;
+  opacity: 0;
+  animation: cameo-baba-chase 9.8s cubic-bezier(0.35, 0.05, 0.2, 1) both;
+  transform-origin: 40% 100%;
+  z-index: 3;
+}
+@keyframes cameo-devil-run {
+  0%,
+  4% {
+    opacity: 0;
+    transform: translateX(108vw) scaleX(-1);
+  }
+  12% {
+    opacity: 1;
+    transform: translateX(62vw) scaleX(-1);
+  }
+  22% {
+    transform: translateX(48vw) scaleX(-1) rotate(-4deg);
+  }
+  30% {
+    transform: translateX(40vw) scaleX(1);
+  }
+  42% {
+    transform: translateX(28vw) scaleX(1) translateY(-4%);
+  }
+  55% {
+    transform: translateX(58vw) scaleX(-1) translateY(0);
+  }
+  72% {
+    opacity: 1;
+    transform: translateX(95vw) scaleX(-1);
+  }
+  88%,
+  100% {
+    opacity: 0;
+    transform: translateX(120vw) scaleX(-1);
+  }
+}
+@keyframes cameo-baba-chase {
+  0%,
+  16% {
+    opacity: 0;
+    transform: translateX(-45vw) rotate(0deg);
+  }
+  26% {
+    opacity: 1;
+    transform: translateX(8vw) rotate(-4deg);
+  }
+  36% {
+    transform: translateX(18vw) rotate(6deg);
+  }
+  46% {
+    transform: translateX(30vw) rotate(-8deg);
+  }
+  56% {
+    transform: translateX(48vw) rotate(7deg);
+  }
+  68% {
+    transform: translateX(68vw) rotate(-5deg);
+  }
+  82% {
+    opacity: 1;
+    transform: translateX(105vw) rotate(4deg);
+  }
+  95%,
+  100% {
+    opacity: 0;
+    transform: translateX(125vw) rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .poet-cameo.is-playing {
+    display: none;
+  }
+}
