@@ -26,6 +26,8 @@
   }
   let uiState = {};
   let mapInstance = null;
+  /** Анимация карты: 1-й тап «К заданиям» — показать весь маршрут, 2-й — начать. */
+  let routeReveal = { active: false, done: false, skip: false };
 
   function applyCharacterTheme(characterId) {
     const root = document.documentElement;
@@ -337,7 +339,21 @@
   }
 
   function waitMs(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => {
+      const start = performance.now();
+      const tick = (now) => {
+        if (routeReveal.skip || !mapInstance) {
+          resolve();
+          return;
+        }
+        if (now - start >= ms) {
+          resolve();
+          return;
+        }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
   }
 
   function animatePolylineTo(line, glow, roadLine, fromIdx, toIdx, durationMs) {
@@ -346,7 +362,9 @@
     const to = Math.max(from, toIdx);
     return new Promise((resolve) => {
       const frame = (now) => {
-        if (!mapInstance) {
+        if (!mapInstance || routeReveal.skip) {
+          line.setLatLngs(roadLine.slice(0, to + 1));
+          if (glow) glow.setLatLngs(roadLine.slice(0, to + 1));
           resolve();
           return;
         }
@@ -389,6 +407,9 @@
   }
 
   async function playRouteReveal(map, roadLine, stepsWithGeo, markerPos) {
+    routeReveal.active = true;
+    routeReveal.done = false;
+    // skip мог быть нажат ещё во время загрузки OSRM
     const glow = L.polyline([], {
       color: "#3d2e22",
       weight: 6,
@@ -408,36 +429,94 @@
     }).addTo(map);
 
     const stopIdx = stopIndicesOnLine(roadLine, stepsWithGeo);
-    map.fitBounds(L.latLngBounds(roadLine).pad(0.22));
-    await waitMs(400);
+    const placed = new Set();
+    const place = (i) => {
+      if (placed.has(i) || !stepsWithGeo[i]) return;
+      placeStopMarker(map, stepsWithGeo[i], markerPos[i], i);
+      placed.add(i);
+    };
 
-    // точка 1 — только старт, ещё до движения линии
-    placeStopMarker(map, stepsWithGeo[0], markerPos[0], 0);
+    const finishAll = () => {
+      line.setLatLngs(roadLine);
+      glow.setLatLngs(roadLine);
+      for (let i = 0; i < stepsWithGeo.length; i++) place(i);
+    };
+
+    map.fitBounds(L.latLngBounds(roadLine).pad(0.22));
+
+    if (routeReveal.skip) {
+      finishAll();
+      routeReveal.done = true;
+      routeReveal.active = false;
+      syncRouteMapButton();
+      return;
+    }
+
+    await waitMs(400);
+    if (routeReveal.skip) {
+      finishAll();
+      routeReveal.done = true;
+      routeReveal.active = false;
+      syncRouteMapButton();
+      return;
+    }
+
+    place(0);
     await waitMs(700);
 
     for (let leg = 0; leg < stopIdx.length - 1; leg++) {
+      if (routeReveal.skip) break;
       const from = stopIdx[leg];
       const to = stopIdx[leg + 1];
       const span = Math.max(0, to - from);
       if (span < 4) {
-        // та же локация: линия почти не растёт, точку ставим после короткой паузы
         line.setLatLngs(roadLine.slice(0, to + 1));
         glow.setLatLngs(roadLine.slice(0, to + 1));
         await waitMs(450);
-        placeStopMarker(map, stepsWithGeo[leg + 1], markerPos[leg + 1], leg + 1);
+        if (routeReveal.skip) break;
+        place(leg + 1);
         await waitMs(500);
         continue;
       }
-      // сначала дорисовываем путь до следующей точки, и только потом пин
       const duration = Math.min(3800, Math.max(2000, 1200 + span * 28));
       await animatePolylineTo(line, glow, roadLine, from, to, duration);
+      if (routeReveal.skip) break;
       await waitMs(180);
-      placeStopMarker(map, stepsWithGeo[leg + 1], markerPos[leg + 1], leg + 1);
+      if (routeReveal.skip) break;
+      place(leg + 1);
       await waitMs(550);
     }
 
-    line.setLatLngs(roadLine);
-    glow.setLatLngs(roadLine);
+    finishAll();
+    routeReveal.done = true;
+    routeReveal.active = false;
+    syncRouteMapButton();
+  }
+
+  function syncRouteMapButton() {
+    const btn = document.getElementById("start-after-map");
+    if (!btn) return;
+    if (routeReveal.done) {
+      btn.textContent = "К заданиям";
+      btn.classList.add("is-ready");
+    } else if (routeReveal.active) {
+      btn.textContent = "Пропустить · показать маршрут";
+    } else {
+      btn.textContent = "К заданиям";
+    }
+  }
+
+  function onStartAfterMapClick() {
+    if (!routeReveal.done) {
+      // идёт анимация или ещё грузится — показать весь маршрут
+      routeReveal.skip = true;
+      if (!routeReveal.active) {
+        // анимация ещё не стартовала (ждём OSRM) — кнопка ждёт done из playRouteReveal
+        syncRouteMapButton();
+      }
+      return;
+    }
+    confirmRouteMap();
   }
 
   async function mountLeafletMap() {
@@ -477,6 +556,7 @@
   }
 
   async function renderRouteMap() {
+    routeReveal = { active: false, done: false, skip: false };
     shell(
       `<div class="start-hero">
         <p class="eyebrow">Сюжет · карта</p>
@@ -486,10 +566,11 @@
           <div id="route-map-el"></div>
           <div id="route-map-svg-host" hidden>${buildRouteSvg()}</div>
         </div>
-        <button type="button" class="btn primary" id="start-after-map">К заданиям</button>
+        <button type="button" class="btn primary" id="start-after-map">Пропустить · показать маршрут</button>
         <a class="btn ghost" href="index.html" style="display:block;text-align:center;margin-top:8px">В меню</a>
       </div>`
     );
+    document.getElementById("start-after-map").onclick = onStartAfterMapClick;
     const ok = await mountLeafletMap();
     if (!ok) {
       const host = document.getElementById("route-map-svg-host");
@@ -498,8 +579,10 @@
         el.replaceWith(host.firstElementChild || host);
         host.remove();
       }
+      routeReveal.done = true;
+      routeReveal.active = false;
+      syncRouteMapButton();
     }
-    document.getElementById("start-after-map").onclick = confirmRouteMap;
   }
 
   function prevStep() {
