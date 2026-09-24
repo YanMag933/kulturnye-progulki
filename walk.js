@@ -796,8 +796,11 @@
     schedulePoetCameo();
   }
 
-  /** Мини-сценки персонажей (тест: на 2-м задании после памятника). */
+  /** Мини-сценки персонажей — временно выкл. (вернуть: POET_CAMEOS_ENABLED = true). */
+  const POET_CAMEOS_ENABLED = false;
+
   function schedulePoetCameo() {
+    if (!POET_CAMEOS_ENABLED) return;
     if (progress.stepIndex !== 1) return;
     if (progress.cameoPlayed) return;
     const id = quest.characterId;
