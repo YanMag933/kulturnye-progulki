@@ -26,6 +26,8 @@
   }
   let uiState = {};
   let mapInstance = null;
+  /** Мини-карта «куда идти»: я + цель шага */
+  let navMap = { map: null, watchId: null, userMarker: null, targetMarker: null, line: null, fitted: false };
   /** Анимация карты: 1-й тап «К заданиям» — показать весь маршрут, 2-й — начать. */
   let routeReveal = { active: false, done: false, skip: false };
 
@@ -765,6 +767,7 @@
   }
 
   function shell(inner, footerHtml) {
+    destroyNavMap();
     const dots =
       progress.stepIndex < 0
         ? ""
@@ -867,6 +870,134 @@
       layer.innerHTML = "";
       layer.className = "poet-cameo";
     }, duration);
+  }
+
+  function destroyNavMap() {
+    if (navMap.watchId != null && navigator.geolocation) {
+      try {
+        navigator.geolocation.clearWatch(navMap.watchId);
+      } catch (_) {}
+    }
+    if (navMap.map) {
+      try {
+        navMap.map.remove();
+      } catch (_) {}
+    }
+    navMap = { map: null, watchId: null, userMarker: null, targetMarker: null, line: null, fitted: false };
+  }
+
+  function navMapHtml(step) {
+    if (!step || step.lat == null || step.lon == null) return "";
+    return `<div class="nav-map-wrap">
+      <button type="button" class="hint-pill nav-map-pill" id="nav-map-pill" aria-expanded="false">Карта · куда идти</button>
+      <div class="nav-map-panel" id="nav-map-panel" hidden>
+        <div class="nav-map-el" id="nav-map-el" role="img" aria-label="Карта: вы и цель"></div>
+        <p class="nav-map-legend"><span class="nav-dot me"></span> вы · <span class="nav-dot go"></span> ${escapeHtml(step.placeName || "цель")}</p>
+      </div>
+    </div>`;
+  }
+
+  function mountNavMap(step) {
+    const el = document.getElementById("nav-map-el");
+    if (!el || typeof L === "undefined" || step.lat == null || step.lon == null) return;
+
+    if (navMap.map) {
+      setTimeout(() => navMap.map && navMap.map.invalidateSize(), 40);
+      return;
+    }
+
+    const map = L.map(el, {
+      zoomControl: false,
+      attributionControl: false,
+      scrollWheelZoom: true,
+    });
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "",
+    }).addTo(map);
+
+    const goIcon = L.divIcon({
+      className: "nav-marker-go",
+      html: "<i></i>",
+      iconSize: [22, 22],
+      iconAnchor: [11, 11],
+    });
+    const meIcon = L.divIcon({
+      className: "nav-marker-me",
+      html: "<i></i>",
+      iconSize: [18, 18],
+      iconAnchor: [9, 9],
+    });
+
+    navMap.targetMarker = L.marker([step.lat, step.lon], { icon: goIcon })
+      .addTo(map)
+      .bindTooltip(step.placeName || "Цель", { direction: "top", offset: [0, -10] });
+    map.setView([step.lat, step.lon], 15);
+    navMap.map = map;
+    navMap.fitted = false;
+
+    const fitBoth = (userLat, userLon) => {
+      if (!navMap.map || navMap.fitted) return;
+      const bounds = L.latLngBounds([
+        [userLat, userLon],
+        [step.lat, step.lon],
+      ]);
+      navMap.map.fitBounds(bounds.pad(0.4), { maxZoom: 16, animate: false });
+      navMap.fitted = true;
+    };
+
+    const updateUser = (lat, lon) => {
+      if (!navMap.map) return;
+      const ll = L.latLng(lat, lon);
+      if (!navMap.userMarker) {
+        navMap.userMarker = L.marker(ll, { icon: meIcon }).addTo(navMap.map);
+      } else {
+        navMap.userMarker.setLatLng(ll);
+      }
+      if (navMap.line) {
+        navMap.line.setLatLngs([ll, [step.lat, step.lon]]);
+      } else {
+        navMap.line = L.polyline([ll, [step.lat, step.lon]], {
+          color: "#c9a227",
+          weight: 2.5,
+          opacity: 0.75,
+          dashArray: "6 8",
+        }).addTo(navMap.map);
+      }
+      fitBoth(lat, lon);
+    };
+
+    setTimeout(() => navMap.map && navMap.map.invalidateSize(), 60);
+    setTimeout(() => navMap.map && navMap.map.invalidateSize(), 220);
+
+    if (!navigator.geolocation) {
+      setFeedback("Гео недоступно — на карте только цель", "bad");
+      return;
+    }
+    navMap.watchId = navigator.geolocation.watchPosition(
+      (pos) => updateUser(pos.coords.latitude, pos.coords.longitude),
+      () => {
+        if (!navMap.userMarker) setFeedback("Жду GPS для вашей точки…", "");
+      },
+      { enableHighAccuracy: true, maximumAge: 2000, timeout: 12000 }
+    );
+  }
+
+  function bindNavMap(step) {
+    const pill = document.getElementById("nav-map-pill");
+    const panel = document.getElementById("nav-map-panel");
+    if (!pill || !panel) return;
+    pill.onclick = () => {
+      const willOpen = panel.hidden;
+      panel.hidden = !willOpen;
+      pill.setAttribute("aria-expanded", willOpen ? "true" : "false");
+      pill.classList.toggle("is-open", willOpen);
+      if (willOpen) {
+        requestAnimationFrame(() => mountNavMap(step));
+      } else {
+        destroyNavMap();
+      }
+    };
   }
 
   function footer(canNext, feedback) {
@@ -1579,11 +1710,13 @@
           <span class="chip">${step.slot} / ${quest.steps.length}</span>
         </div>
         <h2 class="place">${hidePlace ? "???" : escapeHtml(step.placeName)}</h2>
+        ${navMapHtml(hidePlace ? null : step)}
         ${taskCard}
         ${bodyHtml}
       </div>`,
       footerHtml
     );
+    if (!hidePlace) bindNavMap(step);
   }
 
   function stopCamera() {
