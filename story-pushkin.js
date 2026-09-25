@@ -111,7 +111,7 @@ window.KP_LETTER_PIECES = [
 window.STORY_ROUTES.pushkin = {
   id: "story-pushkin-moscow-v10",
   title: "Пушкин в Москве",
-  subtitle: "Невидимое письмо: обрывки проступают там, где жили.",
+  subtitle: "Невидимое письмо: обрывки проступают там, где жили — и где любили.",
   zone: "garden",
   zoneLabel: "Центр · Пушкин",
   difficulty: "story",

@@ -72,6 +72,15 @@
       this.hintText = opts.hintText || "Подсказка открыта.";
     this.letterEra = !!opts.letterEra;
       this.demo = !!opts.demo;
+      this.accuracyM = null;
+      this._gpsFixAt = 0;
+      this._gpsError = null;
+      this.accuracyM = null;
+      this._gpsFixAt = 0;
+      this._gpsError = null;
+      this.accuracyM = null;
+      this._gpsFixAt = 0;
+      this._gpsError = null;
       this.fitMode = !!opts.fitMode; // прогон сейфов: без автопоказа
       this.safeOnly = !!opts.safeOnly; // задание без гео: сразу сейф, без кристалла
       this.skipScroll = opts.skipScroll != null ? !!opts.skipScroll : !!opts.safeOnly;
@@ -529,20 +538,45 @@
 
       this.watchId = navigator.geolocation.watchPosition(
         (pos) => {
-          this.userLat = pos.coords.latitude;
-          this.userLon = pos.coords.longitude;
+          const c = pos.coords;
+          this.userLat = c.latitude;
+          this.userLon = c.longitude;
+          this.accuracyM = typeof c.accuracy === "number" ? c.accuracy : null;
+          this._gpsFixAt = Date.now();
+          this._gpsError = null;
           this._updateMetrics();
         },
         (err) => {
-          this.elStatus.textContent = "GPS: " + (err.message || "ошибка") + " — демо";
-          this.demo = true;
-          this.demoDist = Math.max(this.revealM - 20, 260);
-          this._syncDemoSafeUi();
+          this._gpsError = err;
+          // Не сразу в демо: краткий сбой GPS — покажем статус, оставим прошлую точку
+          if (this.userLat == null) {
+            this.elStatus.textContent = "GPS: " + (err.message || "ошибка") + " — демо";
+            this.demo = true;
+            this.demoDist = Math.max(this.revealM - 20, 260);
+            this._syncDemoSafeUi();
+          } else if (this.elStatus) {
+            this.elStatus.textContent = "GPS слабо — держу последнюю точку";
+          }
           this._updateMetrics();
         },
-        { enableHighAccuracy: true, maximumAge: 1000, timeout: 15000 }
+        { enableHighAccuracy: true, maximumAge: 2000, timeout: 12000 }
       );
       this._tick();
+    }
+
+    _effectiveUnlockM() {
+      // Учитываем погрешность прибора: в городе ±20–50 м часто «съедают» радиус
+      const base = this.unlockM || 35;
+      const acc = this.accuracyM;
+      if (acc == null || !Number.isFinite(acc)) return base;
+      if (acc > 100) return base; // слишком грязный фикс — без расширения
+      return base + Math.min(acc * 0.45, 28);
+    }
+
+    _gpsReliable() {
+      if (this.demo) return true;
+      if (this.accuracyM == null) return true;
+      return this.accuracyM <= 80;
     }
 
     _updateMetrics() {
@@ -584,10 +618,16 @@
         if (this.elBearing) this.elBearing.textContent = "сейф ≤ " + this.unlockM + " м";
         return;
       }
+      const unlockEff = this._effectiveUnlockM();
+      const acc = this.accuracyM;
       this.elDist.textContent = Math.round(this.distance) + " м";
-      if (this.elBearing) this.elBearing.textContent = "сейф ≤ " + this.unlockM + " м";
+      if (this.elBearing) {
+        const accTxt =
+          acc != null && Number.isFinite(acc) ? " · GPS ±" + Math.round(acc) + " м" : "";
+        this.elBearing.textContent = "сейф ≤ " + Math.round(unlockEff) + " м" + accTxt;
+      }
 
-      const inRange = this.distance <= this.unlockM;
+      const inRange = this.distance <= unlockEff && this._gpsReliable();
       // верхняя «Открыть сейф» убрана — открытие только у сейфа снизу
       if (this.elOpenSafe) this.elOpenSafe.hidden = true;
 
@@ -598,7 +638,9 @@
 
       if (this.unlocked) this.elStatus.textContent = "ПОДСКАЗКА ОТКРЫТА";
       else if (this.chestOpened) this.elStatus.textContent = "СВИТОК!";
-      else if (this.chestReady || inRange) {
+      else if (!this._gpsReliable() && this.distance <= unlockEff) {
+        this.elStatus.textContent = "GPS СЛИШКОМ ГРУБО — ПОДОЙДИ БЛИЖЕ";
+      } else if (this.chestReady || inRange) {
         const t = this.safeType;
         if (t === "year") this.elStatus.textContent = "ПРОКРУТИТЕ ГОД";
         else if (t === "code") this.elStatus.textContent = "ВВЕДИТЕ КОД";
@@ -616,7 +658,8 @@
       if (this.unlocked || this.chestOpened) return;
       // прогон сейфов: не всплывать само — только после выбора типа
       if (this.fitMode && !this._demoSafePicked) return;
-      if (this.distance == null || this.distance > this.unlockM) return;
+      if (this.distance == null || this.distance > this._effectiveUnlockM()) return;
+      if (!this._gpsReliable()) return;
       if (this.chestReady) {
         this._refreshHud();
         return;

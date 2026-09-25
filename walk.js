@@ -912,6 +912,57 @@
     el.className = "feedback " + (cls || "");
   }
 
+  /** Голос отклика по персонажу — короткие человеческие реплики вместо «Засчитано». */
+  function voiceOk(kind) {
+    const id = quest?.characterId || "";
+    const map = {
+      scrap: {
+        pushkin: "Обрывок лёг на лист.",
+        mayakovsky: "Кусок афиши — в карман.",
+        gogol: "Обрывок не растаял.",
+        griboedov: "Ещё один шёпот на бумаге.",
+        _: "Обрывок получен",
+      },
+      ok: {
+        pushkin: "Так. Письмо слышит.",
+        mayakovsky: "Верно. Голос совпал.",
+        gogol: "Верно. Тень кивает.",
+        griboedov: "Верно. Гостиная затихла.",
+        _: "Верно",
+      },
+      miss: {
+        pushkin: "Мимо — открой намёк, друг мой.",
+        mayakovsky: "Мимо — возьми намёк, не стой.",
+        gogol: "Мимо — намёк тише крика.",
+        griboedov: "Мимо — намёк умнее спора.",
+        _: "Мимо — открой намёк",
+      },
+      letter: {
+        pushkin: "Письмо собрано. Читай.",
+        mayakovsky: "Письмо собрано. Читай громко.",
+        gogol: "Письмо собрано. Снег ещё падает.",
+        griboedov: "Письмо собрано. Карету подали.",
+        _: "Письмо собрано",
+      },
+      piece: {
+        pushkin: "Кусок на месте.",
+        mayakovsky: "Край сошёлся.",
+        gogol: "Кусок лёг на снег.",
+        griboedov: "Зуб в паз — как молва с фактом.",
+        _: "Кусок на месте",
+      },
+      safe: {
+        pushkin: "Замок открыт.",
+        mayakovsky: "Сейф сдался.",
+        gogol: "Скрипнул замок.",
+        griboedov: "Замок щёлкнул — как сплетня.",
+        _: "Сейф открыт",
+      },
+    };
+    const pack = map[kind] || map.ok;
+    return pack[id] || pack._;
+  }
+
   function checkText(expected, alternatives = []) {
     const norm = (s) =>
       String(s || "")
@@ -1481,11 +1532,11 @@
       if (ok) {
         uiState.done = true;
         collectScrap(step);
-        setFeedback(isLetterEra() ? "Обрывок получен" : "Засчитано", "ok");
+        setFeedback(isLetterEra() ? voiceOk("scrap") : "Засчитано", "ok");
         const fact = document.getElementById("fact");
         if (fact) fact.innerHTML = scrapRevealHtml(step);
         bindNext(true);
-      } else setFeedback(isLetterEra() ? "Мимо — открой намёк" : "Мимо — откройте подсказку", "bad");
+      } else setFeedback(isLetterEra() ? voiceOk("miss") : "Мимо — откройте подсказку", "bad");
     };
     bindNext(!!uiState.done);
   }
@@ -1667,7 +1718,12 @@
           stopCamera();
           uiState.done = true;
           uiState.phase = "done";
-          setFeedback(`Совпало (${pct}%, погрешность ~${errPct}%). Засчитано.`, "ok");
+          setFeedback(
+            isLetterEra()
+              ? `Совпало (${pct}%). ${voiceOk("ok")}`
+              : `Совпало (${pct}%, погрешность ~${errPct}%). Засчитано.`,
+            "ok"
+          );
           document.getElementById("extra").innerHTML = scrapRevealHtml(step) || factLetterHtml(step.fact);
           collectScrap(step);
           bindNext(true);
@@ -1907,9 +1963,9 @@
       const all = pieces.every((p) => uiState.placed[p.id]);
       if (all) {
         uiState.done = true;
-        setFeedback("Письмо собрано", "ok");
+        setFeedback(voiceOk("letter"), "ok");
       } else {
-        setFeedback("Кусок на месте", "ok");
+        setFeedback(voiceOk("piece"), "ok");
       }
       renderLetterPuzzle(step);
       return true;
@@ -2177,7 +2233,7 @@
           onUnlock: () => {
             uiState.unlocked = true;
             collectScrap(step);
-            setFeedback(isLetterEra() ? "Обрывок получен" : "Сейф открыт. Подсказка получена.", "ok");
+            setFeedback(isLetterEra() ? voiceOk("scrap") : "Сейф открыт. Подсказка получена.", "ok");
             bindNext(true);
           },
           onClose: () => {
@@ -2211,10 +2267,10 @@
           btn.classList.add(ok ? "correct" : "wrong");
           if (ok) {
             uiState.done = true;
-            setFeedback("Верно", "ok");
+            setFeedback(isLetterEra() ? voiceOk("ok") : "Верно", "ok");
             document.getElementById("fact").innerHTML = `<div class="fact-box">${step.fact}</div>`;
             bindNext(true);
-          } else setFeedback("Не то", "bad");
+          } else setFeedback(isLetterEra() ? voiceOk("miss") : "Не то", "bad");
         };
       });
       bindNext(!!uiState.done);
@@ -2254,7 +2310,7 @@
               hintText: step.fact || (isLetterEra() ? "Строка открыта." : "Открыто!"),
               onUnlock: () => {
                 uiState.done = true;
-                setFeedback("Сейф открыт", "ok");
+                setFeedback(isLetterEra() ? voiceOk("safe") : "Сейф открыт", "ok");
                 bindNext(true);
               },
               onClose: () => {
@@ -2288,10 +2344,10 @@
         } else ok = checkText(step.expected, step.alternatives || []);
         if (ok) {
           uiState.done = true;
-          setFeedback("Засчитано", "ok");
+          setFeedback(isLetterEra() ? voiceOk("ok") : "Засчитано", "ok");
           document.getElementById("fact").innerHTML = `<div class="fact-box">${step.fact}</div>`;
           bindNext(true);
-        } else setFeedback("Пока мимо", "bad");
+        } else setFeedback(isLetterEra() ? voiceOk("miss") : "Пока мимо", "bad");
       };
       bindNext(!!uiState.done);
       return;
@@ -2326,10 +2382,10 @@
         const ok = step.statements.every((s, i) => uiState.marks[i] === s.truth);
         if (ok) {
           uiState.done = true;
-          setFeedback("Верно", "ok");
+          setFeedback(isLetterEra() ? voiceOk("ok") : "Верно", "ok");
           document.getElementById("fact").innerHTML = `<div class="fact-box">${step.fact}</div>`;
           bindNext(true);
-        } else setFeedback("Есть ошибка", "bad");
+        } else setFeedback(isLetterEra() ? voiceOk("miss") : "Есть ошибка", "bad");
       };
       bindNext(!!uiState.done);
       return;
