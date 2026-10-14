@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="slate">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0e0e10" />
+  <title>Тест игр · Культурные прогулки</title>
+  <link rel="stylesheet" href="styles.css?v=77" />
+  <link rel="stylesheet" href="themes.css?v=77" />
+  <link rel="stylesheet" href="ui-premium.css?v=77" />
+  <link rel="stylesheet" href="games.css?v=77" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <script src="theme.js?v=77"></script>
+</head>
+<body class="home-body games-body">
+  <div class="phone-shell home-shell">
+    <div class="home-atmosphere" aria-hidden="true"></div>
+    <main class="home home-premium games-app" id="games-app">
+      <!-- filled by games.js -->
+    </main>
+  </div>
+  <script src="games.js?v=77"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js?v=77").catch(() => {});
+    }
+  </script>
+</body>
+</html>
