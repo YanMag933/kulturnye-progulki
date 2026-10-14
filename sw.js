@@ -1,5 +1,5 @@
-/* Service worker - offline PWA cache */
-const CACHE = "kultprogulki-v75";
+﻿/* Service worker - offline PWA cache */
+const CACHE = "kultprogulki-v76";
 const ASSETS = [
   "./",
   "./index.html",
@@ -72,9 +72,15 @@ const ASSETS = [
   "./assets/fonts/Caveat-Variable.ttf",
   "./assets/fonts/MarckScript-Regular.ttf",
   "./assets/fonts/Oswald-Variable.ttf",
+  "./assets/contours/pushkin-sticker.png",
+  "./assets/contours/pushkin-sticker-preview.png",
+  "./assets/contours/pushkin-sticker-mask.png",
   "./assets/contours/pushkin-side-sticker.png",
   "./assets/contours/pushkin-side-sticker-preview.png",
   "./assets/contours/pushkin-side-sticker-mask.png",
+  "./assets/contours/gogol-sticker.png",
+  "./assets/contours/gogol-sticker-preview.png",
+  "./assets/contours/gogol-sticker-mask.png",
 ];
 
 self.addEventListener("install", (event) => {
